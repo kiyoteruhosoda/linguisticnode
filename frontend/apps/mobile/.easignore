@@ -1,0 +1,20 @@
+# Ignore parent workspace files
+../../node_modules/
+../../packages/
+../../apps/web/
+../../coverage/
+../../dist/
+../../.vite/
+../../e2e/
+../../stories/
+../../src/
+../../index.html
+../../vite.config.ts
+../../vitest.config.ts
+../../playwright.config.ts
+../../eslint.config.js
+../../tsconfig.json
+../../tsconfig.app.json
+../../tsconfig.node.json
+../../package.json
+../../package-lock.json
