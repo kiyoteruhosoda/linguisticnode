@@ -56,7 +56,7 @@ class AuthService:
             User dict if authenticated, None otherwise
         """
         users_data = storage.read_json(storage.users_file_path())
-        users = users_data.get("users", [])
+        users: list[dict[str, Any]] = users_data.get("users", [])
         
         for user in users:
             if user["username"] == username:

@@ -6,7 +6,7 @@ Uses HS256 (HMAC-SHA256) for signing.
 
 import jwt
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class JWTProvider:
             Decoded payload if valid, None otherwise
         """
         try:
-            payload = jwt.decode(
+            payload: Dict[str, Any] = jwt.decode(
                 token,
                 self.secret_key,
                 algorithms=[self.algorithm],

@@ -5,7 +5,7 @@ Internationalization support for error messages.
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 # Load message resources
 _RESOURCES: Dict[str, Dict] = {}
@@ -41,7 +41,7 @@ def get_message(message_key: str, lang: str = "ja") -> str:
     
     # Navigate nested dict with dot notation
     keys = message_key.split(".")
-    value = messages
+    value: Any = messages
     for key in keys:
         if isinstance(value, dict):
             value = value.get(key)

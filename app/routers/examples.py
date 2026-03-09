@@ -59,22 +59,22 @@ async def get_next_example(
     
     # Pick random example
     selected = random.choice(available_examples)
-    word: WordEntry = selected["word"]
-    example: ExampleSentence = selected["example"]
-    
+    selected_word: WordEntry = selected["word"]
+    selected_example: ExampleSentence = selected["example"]
+
     # Return example with word info
     return {
         "example": {
-            "id": example.id,
-            "en": example.en,
-            "ja": example.ja,
-            "source": example.source,
+            "id": selected_example.id,
+            "en": selected_example.en,
+            "ja": selected_example.ja,
+            "source": selected_example.source,
             "word": {
-                "id": word.id,
-                "headword": word.headword,
-                "pos": word.pos,
-                "meaningJa": word.meaningJa,
-                "tags": word.tags
+                "id": selected_word.id,
+                "headword": selected_word.headword,
+                "pos": selected_word.pos,
+                "meaningJa": selected_word.meaningJa,
+                "tags": selected_word.tags
             }
         }
     }

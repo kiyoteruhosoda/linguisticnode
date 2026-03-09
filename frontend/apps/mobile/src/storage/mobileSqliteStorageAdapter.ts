@@ -3,7 +3,7 @@ import {
   createSqliteStorageAdapter,
   type SqliteStorageDriver,
   type StorageAdapter,
-} from "../../../src/core/storage";
+} from "../../../../src/core/storage";
 
 const TABLE_NAME = "kv_storage";
 

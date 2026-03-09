@@ -185,7 +185,7 @@ def create_app() -> FastAPI:
     )
     
     # Set custom OpenAPI schema
-    app.openapi = lambda: _get_custom_openapi(app)
+    app.openapi = lambda: _get_custom_openapi(app)  # type: ignore[method-assign]
 
     web_origin = os.getenv("VOCAB_WEB_ORIGIN", "http://localhost:8080")
     app.add_middleware(
@@ -276,7 +276,7 @@ def create_app() -> FastAPI:
         request_id = _rid(request)
         status_code = exc.status_code
         code = http_error_code(status_code)
-        detail_value = exc.detail
+        detail_value: Any = exc.detail
 
         app_logger.warning(
             "http_error",

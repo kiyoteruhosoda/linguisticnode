@@ -6,7 +6,6 @@ Authentication endpoints using JWT access + refresh token rotation.
 from __future__ import annotations
 import logging
 from datetime import datetime, timezone
-from typing import cast, Literal
 from fastapi import APIRouter, HTTPException, Response, status, Depends, Cookie, Request
 from ..models import RegisterRequest, LoginRequest, MeResponse
 from ..services import register_user, delete_user, find_user_by_id, find_user_by_username
@@ -196,7 +195,7 @@ async def login(req: LoginRequest, response: Response, request: Request):
         value=refresh_token,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=cast(Literal["lax", "strict", "none"], settings.cookie_samesite),
+        samesite=settings.cookie_samesite,
         path="/",  # Send to all endpoints
         max_age=30 * 24 * 60 * 60,  # 30 days
     )
@@ -280,7 +279,7 @@ async def refresh(
             value=new_refresh_token,
             httponly=True,
             secure=settings.cookie_secure,
-            samesite=cast(Literal["lax", "strict", "none"], settings.cookie_samesite),
+            samesite=settings.cookie_samesite,
             path="/",
             max_age=30 * 24 * 60 * 60,  # 30 days
         )

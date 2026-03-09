@@ -3,7 +3,7 @@ import {
   createAsyncStorageAdapter,
   type AsyncStorageDriver,
   type StorageAdapter,
-} from "../../../src/core/storage";
+} from "../../../../src/core/storage";
 
 export const reactNativeAsyncStorageDriver: AsyncStorageDriver = {
   async getItem(key: string): Promise<string | null> {
@@ -16,7 +16,7 @@ export const reactNativeAsyncStorageDriver: AsyncStorageDriver = {
     await AsyncStorage.removeItem(key);
   },
   async getAllKeys(): Promise<string[]> {
-    return AsyncStorage.getAllKeys();
+    return [...await AsyncStorage.getAllKeys()];
   },
 };
 

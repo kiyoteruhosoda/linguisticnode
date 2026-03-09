@@ -34,7 +34,8 @@ def user_dir(userId: str) -> Path:
 def read_json(path: Path) -> Dict[str, Any]:
     if not path.exists():
         return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+    result: Dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return result
 
 def atomic_write_json(path: Path, data: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)

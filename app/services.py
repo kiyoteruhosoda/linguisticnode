@@ -20,18 +20,20 @@ def _init_users_if_missing() -> None:
         return
     storage.atomic_write_json(p, {"schemaVersion": 1, "users": []})
 
-def find_user_by_username(username: str) -> Optional[dict]:
+def find_user_by_username(username: str) -> Optional[Dict[str, Any]]:
     _init_users_if_missing()
     data = storage.read_json(storage.users_file_path())
-    for u in data.get("users", []):
+    users: List[Dict[str, Any]] = data.get("users", [])
+    for u in users:
         if u.get("username") == username:
             return u
     return None
 
-def find_user_by_id(userId: str) -> Optional[dict]:
+def find_user_by_id(userId: str) -> Optional[Dict[str, Any]]:
     _init_users_if_missing()
     data = storage.read_json(storage.users_file_path())
-    for u in data.get("users", []):
+    users: List[Dict[str, Any]] = data.get("users", [])
+    for u in users:
         if u.get("userId") == userId:
             return u
     return None
@@ -336,9 +338,9 @@ def validate_import_data(app_data: AppDataForImport) -> Dict[str, Any]:
             errors.append(f"Word '{word.headword}': missing or empty meaningJa")
             continue
         
-        if not word.pos:
-            errors.append(f"Word '{word.headword}': missing pos")
-            continue
+        if not word.pos:  # type: ignore[unreachable]
+            errors.append(f"Word '{word.headword}': missing pos")  # type: ignore[unreachable]
+            continue  # type: ignore[unreachable]
         
         # Check pos is valid
         if word.pos not in valid_pos_values:
@@ -514,15 +516,15 @@ def import_appdata(userId: str, app: AppData | AppDataForImport, mode: str) -> N
     added_mem = 0
     updated_mem = 0
     for m in app.memory:
-        cur = existing_mem.get(m.wordId)
-        if not cur:
+        cur_mem = existing_mem.get(m.wordId)
+        if not cur_mem:
             logger.debug(f"Adding new memory state: {m.wordId}")
             existing_mem[m.wordId] = m
             added_mem += 1
         else:
             # dueAtが新しい方を採用（簡易）
             try:
-                if _parse_iso(m.dueAt) >= _parse_iso(cur.dueAt):
+                if _parse_iso(m.dueAt) >= _parse_iso(cur_mem.dueAt):
                     logger.debug(f"Updating memory state {m.wordId} (new due date >= old due date)")
                     existing_mem[m.wordId] = m
                     updated_mem += 1
