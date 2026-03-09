@@ -114,13 +114,79 @@ stages:
             displayName: 'Publish frontend artifact'
 
   # ──────────────────────────────────────────
-  # Stage 3: Docker build
+  # Stage 3: Android (Expo / React Native)
+  # ──────────────────────────────────────────
+  - stage: Android
+    displayName: 'Android CI'
+    jobs:
+      # ── Job A: TypeScript check ──────────────
+      - job: MobileTypecheck
+        displayName: 'Typecheck (mobile)'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(nodeVersion)'
+            displayName: 'Setup Node.js $(nodeVersion)'
+
+          - script: npm ci
+            workingDirectory: frontend
+            displayName: 'Install npm dependencies'
+
+          - script: npx tsc --noEmit
+            workingDirectory: frontend/apps/mobile
+            displayName: 'TypeScript type check (mobile)'
+
+      # ── Job B: EAS Android build (main/master only) ──
+      - job: EASAndroidBuild
+        displayName: 'EAS Build (Android AAB)'
+        # EAS build は main/master へのプッシュ時のみ実行
+        condition: >
+          and(
+            succeeded(),
+            in(variables['Build.SourceBranchName'], 'main', 'master'),
+            eq(variables['Build.Reason'], 'IndividualCI')
+          )
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(nodeVersion)'
+            displayName: 'Setup Node.js $(nodeVersion)'
+
+          - script: npm ci
+            workingDirectory: frontend
+            displayName: 'Install npm dependencies'
+
+          - script: npm install -g eas-cli
+            displayName: 'Install EAS CLI'
+
+          # EXPO_TOKEN は Azure DevOps の Secret 変数として設定してください
+          # (Pipelines → Edit → Variables → EXPO_TOKEN を追加)
+          - script: |
+              eas build \
+                --platform android \
+                --profile production \
+                --non-interactive \
+                --no-wait
+            workingDirectory: frontend/apps/mobile
+            displayName: 'EAS build (Android production AAB)'
+            env:
+              EXPO_TOKEN: $(EXPO_TOKEN)
+              EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
+              EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
+
+  # ──────────────────────────────────────────
+  # Stage 4: Docker build
   # ──────────────────────────────────────────
   - stage: Docker
     displayName: 'Docker Build'
     dependsOn:
       - Backend
       - Frontend
+      - Android
     condition: succeeded()
     jobs:
       - job: DockerBuild
