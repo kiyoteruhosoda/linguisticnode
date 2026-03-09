@@ -138,10 +138,10 @@ stages:
             workingDirectory: frontend/apps/mobile
             displayName: 'TypeScript type check (mobile)'
 
-      # ── Job B: EAS Android build (main/master only) ──
-      - job: EASAndroidBuild
-        displayName: 'EAS Build (Android AAB)'
-        # EAS build は main/master へのプッシュ時のみ実行
+      # ── Job B: Local Android build (main/master only) ──
+      - job: AndroidLocalBuild
+        displayName: 'Local Build (Android AAB)'
+        # main/master へのプッシュ時のみ実行
         condition: >
           and(
             succeeded(),
@@ -156,27 +156,55 @@ stages:
               versionSpec: '$(nodeVersion)'
             displayName: 'Setup Node.js $(nodeVersion)'
 
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+            displayName: 'Setup Java 17'
+
           - script: npm ci
             workingDirectory: frontend
             displayName: 'Install npm dependencies'
 
-          - script: npm install -g eas-cli
-            displayName: 'Install EAS CLI'
-
-          # EXPO_TOKEN は Azure DevOps の Secret 変数として設定してください
-          # (Pipelines → Edit → Variables → EXPO_TOKEN を追加)
           - script: |
-              eas build \
+              npx expo prebuild \
                 --platform android \
-                --profile production \
-                --non-interactive \
-                --no-wait
+                --clean \
+                --no-install
             workingDirectory: frontend/apps/mobile
-            displayName: 'EAS build (Android production AAB)'
+            displayName: 'expo prebuild (generate native Android project)'
             env:
-              EXPO_TOKEN: $(EXPO_TOKEN)
               EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
               EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
+              EXPO_PUBLIC_ANDROID_APPLICATION_ID: com.linguisticnode.app
+
+          # キーストアファイルを Secure Files からダウンロード
+          # 事前に Pipelines → Library → Secure files へ keystore を登録してください
+          - task: DownloadSecureFile@1
+            name: androidKeystore
+            inputs:
+              secureFile: 'linguisticnode-release.keystore'
+            displayName: 'Download release keystore'
+
+          - script: |
+              ./gradlew bundleRelease \
+                -Pandroid.injected.signing.store.file=$(androidKeystore.secureFilePath) \
+                -Pandroid.injected.signing.store.password=$(KEYSTORE_PASSWORD) \
+                -Pandroid.injected.signing.key.alias=$(KEY_ALIAS) \
+                -Pandroid.injected.signing.key.password=$(KEY_PASSWORD)
+            workingDirectory: frontend/apps/mobile/android
+            displayName: 'Gradle bundleRelease (AAB)'
+            env:
+              KEYSTORE_PASSWORD: $(KEYSTORE_PASSWORD)
+              KEY_ALIAS: $(KEY_ALIAS)
+              KEY_PASSWORD: $(KEY_PASSWORD)
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'frontend/apps/mobile/android/app/build/outputs/bundle/release'
+              artifact: 'android-aab'
+            displayName: 'Publish AAB artifact'
 
   # ──────────────────────────────────────────
   # Stage 4: Docker build
