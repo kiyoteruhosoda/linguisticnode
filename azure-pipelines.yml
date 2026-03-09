@@ -4,6 +4,7 @@ trigger:
       - main
       - master
       - develop
+      - production
 
 pr:
   branches:
@@ -138,14 +139,65 @@ stages:
             workingDirectory: frontend/apps/mobile
             displayName: 'TypeScript type check (mobile)'
 
-      # ── Job B: Local Android build (main/master only) ──
-      - job: AndroidLocalBuild
-        displayName: 'Local Build (Android AAB)'
-        # main/master へのプッシュ時のみ実行
+      # ── Job B: Debug build (production 以外のブランチ) ──
+      - job: AndroidDebugBuild
+        displayName: 'Debug Build (Android APK)'
         condition: >
           and(
             succeeded(),
-            in(variables['Build.SourceBranchName'], 'main', 'master'),
+            ne(variables['Build.SourceBranchName'], 'production'),
+            eq(variables['Build.Reason'], 'IndividualCI')
+          )
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(nodeVersion)'
+            displayName: 'Setup Node.js $(nodeVersion)'
+
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+            displayName: 'Setup Java 17'
+
+          - script: npm ci
+            workingDirectory: frontend
+            displayName: 'Install npm dependencies'
+
+          - script: |
+              npx expo prebuild \
+                --platform android \
+                --clean \
+                --no-install
+            workingDirectory: frontend/apps/mobile
+            displayName: 'expo prebuild (generate native Android project)'
+            env:
+              EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
+              EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
+              EXPO_PUBLIC_ANDROID_APPLICATION_ID: com.linguisticnode.app
+
+          - script: |
+              ./gradlew assembleDebug
+            workingDirectory: frontend/apps/mobile/android
+            displayName: 'Gradle assembleDebug (APK)'
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'frontend/apps/mobile/android/app/build/outputs/apk/debug'
+              artifact: 'android-debug-apk'
+            displayName: 'Publish debug APK artifact'
+
+      # ── Job C: Release build (production ブランチのみ) ──
+      - job: AndroidReleaseBuild
+        displayName: 'Release Build (Android AAB)'
+        # production へのプッシュ時のみ実行
+        condition: >
+          and(
+            succeeded(),
+            eq(variables['Build.SourceBranchName'], 'production'),
             eq(variables['Build.Reason'], 'IndividualCI')
           )
         pool:
