@@ -87,3 +87,4 @@ app/git_version.txt
 
 # Images
 *.png
+*.keystore
