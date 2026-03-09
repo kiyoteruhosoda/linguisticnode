@@ -10,5 +10,11 @@
       "@linguisticnode/core": ["./packages/core/src/index.ts"],
       "@linguisticnode/core/*": ["./packages/core/src/*"]
     }
-  }
+  },
+  "include": [
+    "src",
+    "App.tsx",
+    "app.config.ts",
+    "../../src/types/**/*.d.ts"
+  ]
 }
