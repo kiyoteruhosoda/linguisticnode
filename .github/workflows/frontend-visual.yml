@@ -33,7 +33,18 @@ jobs:
       - name: Run frontend quality gate
         run: npm run test:ci
 
+      - name: Check if snapshots exist
+        id: check_snapshots
+        run: |
+          if find e2e/specs -type d -name "*-snapshots" -exec find {} -name "*.png" \; 2>/dev/null | grep -q .; then
+            echo "exist=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exist=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No baseline snapshots found. Run the update-snapshots workflow to generate them."
+          fi
+
       - name: Run visual regression
+        if: steps.check_snapshots.outputs.exist == 'true'
         run: npm run test:e2e:ci
 
   update-snapshots:
