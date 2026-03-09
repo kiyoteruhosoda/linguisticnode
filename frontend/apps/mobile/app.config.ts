@@ -17,8 +17,10 @@ const config: ExpoConfig = {
 
   ios: {
     bundleIdentifier: process.env.EXPO_PUBLIC_IOS_BUNDLE_ID ?? 'com.linguisticnode.app',
-    // iOS のビルド番号（文字列）。App Store 提出を見据えるなら入れておくのが無難
-    buildNumber: process.env.EXPO_PUBLIC_IOS_BUILD_NUMBER ?? '1',
+    infoPlist: {
+      // 標準アルゴリズム（HTTPS/TLS）のみ使用。輸出規制の免除対象
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
 
   android: {
