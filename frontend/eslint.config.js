@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default [
-  { ignores: ['dist', '**/dist/**', 'coverage', 'node_modules'] },
+  { ignores: ['dist', '**/dist/**', 'coverage', 'node_modules', '**/metro.config.js'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
