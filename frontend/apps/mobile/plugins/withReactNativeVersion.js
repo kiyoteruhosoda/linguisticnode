@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef */
 /**
  * Expo config plugin that sets the reactNativeVersion ext property
  * in the root Android build.gradle.

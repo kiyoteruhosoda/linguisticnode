@@ -52,7 +52,6 @@ export function RnwButton({
   // a11y: icon-only なら aria-label が欲しい
   if (process.env.NODE_ENV !== "production") {
     if (isIconOnly && !ariaLabel) {
-      // eslint-disable-next-line no-console
       console.warn("RnwButton: icon-only button requires `title` (aria-label).");
     }
   }
