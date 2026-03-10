@@ -216,13 +216,9 @@ stages:
               jdkSourceOption: 'PreInstalled'
             displayName: 'Setup Java 17'
 
-          - script: npm ci
+          - script: npm install --legacy-peer-deps
             workingDirectory: frontend
             displayName: 'Install npm dependencies'
-
-          - script: npm install metro@0.80.9 --legacy-peer-deps --no-save
-            workingDirectory: frontend
-            displayName: 'Pin metro to 0.80.9 (Expo SDK 52 requires ~0.80.x)'
 
           - script: |
               npx expo prebuild \
@@ -288,13 +284,9 @@ stages:
               jdkSourceOption: 'PreInstalled'
             displayName: 'Setup Java 17'
 
-          - script: npm ci
+          - script: npm install --legacy-peer-deps
             workingDirectory: frontend
             displayName: 'Install npm dependencies'
-
-          - script: npm install metro@0.80.9 --legacy-peer-deps --no-save
-            workingDirectory: frontend
-            displayName: 'Pin metro to 0.80.9 (Expo SDK 52 requires ~0.80.x)'
 
           - script: |
               npx expo prebuild \
