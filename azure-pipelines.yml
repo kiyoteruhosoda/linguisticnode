@@ -250,6 +250,8 @@ stages:
               KEYSTORE_PASSWORD: $(KEYSTORE_PASSWORD)
               KEY_ALIAS: $(KEY_ALIAS)
               KEY_PASSWORD: $(KEY_PASSWORD)
+              NODE_ENV: production
+              NODE_PATH: $(Build.SourcesDirectory)/frontend/node_modules
 
           - task: PublishPipelineArtifact@1
             inputs:
@@ -318,6 +320,8 @@ stages:
               KEYSTORE_PASSWORD: $(KEYSTORE_PASSWORD)
               KEY_ALIAS: $(KEY_ALIAS)
               KEY_PASSWORD: $(KEY_PASSWORD)
+              NODE_ENV: production
+              NODE_PATH: $(Build.SourcesDirectory)/frontend/node_modules
 
           - task: PublishPipelineArtifact@1
             inputs:
