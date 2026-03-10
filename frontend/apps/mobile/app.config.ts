@@ -40,6 +40,7 @@ const config: ExpoConfig = {
         },
       },
     ],
+    './plugins/withReactNativeVersion',
   ],
   extra: {
     eas: {
