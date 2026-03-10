@@ -4,6 +4,7 @@ trigger:
       - main
       - master
       - develop
+      - preview
       - production
 
 pr:
@@ -139,13 +140,14 @@ stages:
             workingDirectory: frontend/apps/mobile
             displayName: 'TypeScript type check (mobile)'
 
-      # ── Job B: Debug build (production 以外のブランチ) ──
+      # ── Job B: Debug build (production / preview 以外のブランチ) ──
       - job: AndroidDebugBuild
         displayName: 'Debug Build (Android APK)'
         condition: >
           and(
             succeeded(),
             ne(variables['Build.SourceBranchName'], 'production'),
+            ne(variables['Build.SourceBranchName'], 'preview'),
             eq(variables['Build.Reason'], 'IndividualCI')
           )
         pool:
@@ -190,7 +192,72 @@ stages:
               artifact: 'android-debug-apk'
             displayName: 'Publish debug APK artifact'
 
-      # ── Job C: Release build (production ブランチのみ) ──
+      # ── Job C: Preview build (preview ブランチのみ・署名付き APK) ──
+      - job: AndroidPreviewBuild
+        displayName: 'Preview Build (Android APK, signed)'
+        condition: >
+          and(
+            succeeded(),
+            eq(variables['Build.SourceBranchName'], 'preview'),
+            eq(variables['Build.Reason'], 'IndividualCI')
+          )
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(nodeVersion)'
+            displayName: 'Setup Node.js $(nodeVersion)'
+
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+            displayName: 'Setup Java 17'
+
+          - script: npm ci
+            workingDirectory: frontend
+            displayName: 'Install npm dependencies'
+
+          - script: |
+              npx expo prebuild \
+                --platform android \
+                --clean \
+                --no-install
+            workingDirectory: frontend/apps/mobile
+            displayName: 'expo prebuild (generate native Android project)'
+            env:
+              EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
+              EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
+              EXPO_PUBLIC_ANDROID_APPLICATION_ID: com.linguisticnode.app
+
+          - task: DownloadSecureFile@1
+            name: androidKeystore
+            inputs:
+              secureFile: 'linguisticnode-release.keystore'
+            displayName: 'Download release keystore'
+
+          - script: |
+              ./gradlew assembleRelease \
+                -Pandroid.injected.signing.store.file=$(androidKeystore.secureFilePath) \
+                -Pandroid.injected.signing.store.password=$(KEYSTORE_PASSWORD) \
+                -Pandroid.injected.signing.key.alias=$(KEY_ALIAS) \
+                -Pandroid.injected.signing.key.password=$(KEY_PASSWORD)
+            workingDirectory: frontend/apps/mobile/android
+            displayName: 'Gradle assembleRelease (signed APK)'
+            env:
+              KEYSTORE_PASSWORD: $(KEYSTORE_PASSWORD)
+              KEY_ALIAS: $(KEY_ALIAS)
+              KEY_PASSWORD: $(KEY_PASSWORD)
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'frontend/apps/mobile/android/app/build/outputs/apk/release'
+              artifact: 'android-preview-apk'
+            displayName: 'Publish preview APK artifact'
+
+      # ── Job D: Release build (production ブランチのみ) ──
       - job: AndroidReleaseBuild
         displayName: 'Release Build (Android AAB)'
         # production へのプッシュ時のみ実行
