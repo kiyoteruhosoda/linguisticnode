@@ -216,7 +216,7 @@ stages:
               jdkSourceOption: 'PreInstalled'
             displayName: 'Setup Java 17'
 
-          - script: npm install --legacy-peer-deps
+          - script: npm ci
             workingDirectory: frontend
             displayName: 'Install npm dependencies'
 
@@ -284,7 +284,7 @@ stages:
               jdkSourceOption: 'PreInstalled'
             displayName: 'Setup Java 17'
 
-          - script: npm install --legacy-peer-deps
+          - script: npm ci
             workingDirectory: frontend
             displayName: 'Install npm dependencies'
 
