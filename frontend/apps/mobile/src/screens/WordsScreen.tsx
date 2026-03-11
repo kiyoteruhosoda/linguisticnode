@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   FlatList,
   Keyboard,
@@ -515,7 +515,7 @@ function WordFormView({
           <Divider />
           <FieldRow label="発音">
             <TextInput
-              value={draft.pronunciation}
+              value={draft.pronunciation ?? ""}
               onChangeText={(v) => set("pronunciation", v)}
               placeholder="例: /ɪˈfem.ər.əl/"
               placeholderTextColor="#adb5bd"
@@ -573,7 +573,7 @@ function WordFormView({
           <Divider />
           <FieldRow label="メモ">
             <TextInput
-              value={draft.memo}
+              value={draft.memo ?? ""}
               onChangeText={(v) => set("memo", v)}
               placeholder="任意のメモ"
               placeholderTextColor="#adb5bd"
@@ -856,7 +856,7 @@ function PosBadge({ pos }: { pos: Pos }) {
   );
 }
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
       <Text style={labelStyle}>{label}</Text>
