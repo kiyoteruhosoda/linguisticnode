@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import type { ExampleSentence, MemoryState, Pos } from "../../../../src/api/types";
+import type { MemoryState, Pos } from "../../../../src/api/types";
 import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
