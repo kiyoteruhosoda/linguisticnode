@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
@@ -21,10 +21,19 @@ function getMemoryInfo(level: number): { label: string; color: string; bg: strin
   return { label: "Mastered", color: "#2b8a3e", bg: "#ebfbee" };
 }
 
-export function StudyScreen({ studyService }: { studyService: MobileStudyService }) {
+export function StudyScreen({
+  studyService,
+  preferredWordId,
+  onNavigateToQuiz,
+}: {
+  studyService: MobileStudyService;
+  preferredWordId?: string | null;
+  onNavigateToQuiz?: (wordId: string) => void;
+}) {
   const [card, setCard] = useState<Card>(null);
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const preferredWordIdRef = useRef<string | null>(preferredWordId ?? null);
 
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
@@ -41,7 +50,11 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
     setLoading(true);
     setRevealed(false);
     try {
-      const next = await studyService.fetchNextCard(appliedTags.length ? appliedTags : undefined);
+      const preferred = preferredWordIdRef.current;
+      const next = await studyService.fetchNextCard(appliedTags.length ? appliedTags : undefined, preferred);
+      if (preferred) {
+        preferredWordIdRef.current = null;
+      }
       setCard(next);
     } finally {
       setLoading(false);
@@ -363,6 +376,27 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                 ))}
               </View>
             </View>
+          )}
+
+          {/* Practice in Quiz button */}
+          {revealed && onNavigateToQuiz && card && (
+            <Pressable
+              onPress={() => onNavigateToQuiz(card.word.id)}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                paddingVertical: 12,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderColor: "#0d6efd",
+                backgroundColor: pressed ? "#e7f1ff" : "#fff",
+              })}
+            >
+              <Ionicons name="pencil-outline" size={18} color="#0d6efd" />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#0d6efd" }}>Practice in Quiz</Text>
+            </Pressable>
           )}
 
           {/* Rating Buttons */}

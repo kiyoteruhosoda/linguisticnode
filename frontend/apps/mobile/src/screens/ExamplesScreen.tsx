@@ -8,11 +8,20 @@ import { mobileSpeechService } from "../app/mobileSpeechApplication";
 
 type Feedback = "correct" | "incorrect" | null;
 
-export function ExamplesScreen({ examplesService }: { examplesService: MobileExamplesService }) {
+export function ExamplesScreen({
+  examplesService,
+  preferredWordId,
+  onNavigateToStudy,
+}: {
+  examplesService: MobileExamplesService;
+  preferredWordId?: string | null;
+  onNavigateToStudy?: (wordId: string) => void;
+}) {
   const [example, setExample] = useState<ExampleTestItem | null>(null);
   const [blankedSentence, setBlankedSentence] = useState("");
   const [actualWord, setActualWord] = useState<string | null>(null);
   const lastExampleIdRef = useRef<string | null>(null);
+  const preferredWordIdRef = useRef<string | null>(preferredWordId ?? null);
 
   const [userInput, setUserInput] = useState("");
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -43,7 +52,11 @@ export function ExamplesScreen({ examplesService }: { examplesService: MobileExa
     setLoading(true);
     try {
       const tags = appliedTags.length > 0 ? appliedTags : undefined;
-      const next = await examplesService.fetchNextExample(tags, cursor);
+      const preferred = cursor ? null : preferredWordIdRef.current;
+      const next = await examplesService.fetchNextExample(tags, cursor, preferred);
+      if (preferred) {
+        preferredWordIdRef.current = null;
+      }
       if (!next) {
         setExample(null);
         setBlankedSentence("");
@@ -400,6 +413,27 @@ export function ExamplesScreen({ examplesService }: { examplesService: MobileExa
                         <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 4, fontStyle: "italic" }}>{example.ja}</Text>
                       ) : null}
                     </View>
+                  )}
+
+                  {/* Open in Study button */}
+                  {onNavigateToStudy && example && (
+                    <Pressable
+                      onPress={() => onNavigateToStudy(example.word.id)}
+                      style={({ pressed }) => ({
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        paddingVertical: 12,
+                        borderRadius: 10,
+                        borderWidth: 1.5,
+                        borderColor: "#0d6efd",
+                        backgroundColor: pressed ? "#e7f1ff" : "#fff",
+                      })}
+                    >
+                      <Ionicons name="school-outline" size={17} color="#0d6efd" />
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#0d6efd" }}>Open in Study</Text>
+                    </Pressable>
                   )}
 
                   {/* Next button */}
