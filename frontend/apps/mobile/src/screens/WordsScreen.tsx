@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { MemoryState, Pos } from "../../../../src/api/types";
 import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
@@ -244,7 +245,7 @@ function WordListView({
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontSize: 16 }}>{showSearch ? "✕" : "🔍"}</Text>
+            <Ionicons name={showSearch ? "close" : "search"} size={18} color={showSearch ? "#0d6efd" : "#495057"} />
           </Pressable>
         </View>
 
@@ -288,7 +289,7 @@ function WordListView({
 
       {words.length === 0 && !busy ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingBottom: 80 }}>
-          <Text style={{ fontSize: 40 }}>📭</Text>
+          <Ionicons name="file-tray-outline" size={48} color="#adb5bd" />
           <Text style={{ fontSize: 15, color: "#6c757d" }}>単語がありません</Text>
           <Text style={{ fontSize: 13, color: "#adb5bd" }}>下の＋ボタンで追加しましょう</Text>
         </View>
@@ -373,7 +374,7 @@ function WordListView({
           elevation: 6,
         })}
       >
-        <Text style={{ fontSize: 28, color: "#fff", lineHeight: 34, marginTop: -2 }}>+</Text>
+        <Ionicons name="add" size={32} color="#fff" />
       </Pressable>
     </View>
   );
@@ -461,7 +462,7 @@ function WordFormView({
         }}
       >
         <Pressable onPress={onBack} hitSlop={8} style={{ padding: 4 }}>
-          <Text style={{ fontSize: 22, color: "#0d6efd" }}>←</Text>
+          <Ionicons name="arrow-back" size={24} color="#0d6efd" />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: "#212529", flex: 1 }}>
           {mode === "create" ? "単語を追加" : "単語を編集"}
@@ -475,7 +476,10 @@ function WordFormView({
       >
         {errorMsg ? (
           <View style={{ backgroundColor: "#fff3f3", borderWidth: 1, borderColor: "#f5c2c7", borderRadius: 10, padding: 12 }}>
-            <Text style={{ color: "#842029", fontSize: 14 }}>⚠️ {errorMsg}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="warning-outline" size={16} color="#842029" />
+              <Text style={{ color: "#842029", fontSize: 14 }}>{errorMsg}</Text>
+            </View>
           </View>
         ) : null}
 
@@ -507,7 +511,7 @@ function WordFormView({
                     justifyContent: "center",
                   })}
                 >
-                  <Text style={{ fontSize: 16 }}>🔊</Text>
+                  <Ionicons name="volume-high-outline" size={18} color={!draft.headword.trim() ? "#adb5bd" : "#0d6efd"} />
                 </Pressable>
               )}
             </View>
@@ -660,7 +664,7 @@ function WordFormView({
                             justifyContent: "center",
                           })}
                         >
-                          <Text style={{ fontSize: 14 }}>🔊</Text>
+                          <Ionicons name="volume-high-outline" size={16} color={!ex.en.trim() ? "#adb5bd" : "#0d6efd"} />
                         </Pressable>
                       )}
                     </View>
@@ -716,7 +720,10 @@ function WordFormView({
                 backgroundColor: pressed ? "#fff4e6" : "#fff",
               })}
             >
-              <Text style={{ color: "#fd7e14", fontWeight: "700", fontSize: 15 }}>🔄 記憶レベルをリセット</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Ionicons name="refresh-outline" size={18} color="#fd7e14" />
+                <Text style={{ color: "#fd7e14", fontWeight: "700", fontSize: 15 }}>記憶レベルをリセット</Text>
+              </View>
             </Pressable>
 
             <Pressable
@@ -731,7 +738,10 @@ function WordFormView({
                 backgroundColor: pressed ? "#fff5f5" : "#fff",
               })}
             >
-              <Text style={{ color: "#dc3545", fontWeight: "700", fontSize: 15 }}>🗑️ 単語を削除</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Ionicons name="trash-outline" size={18} color="#dc3545" />
+                <Text style={{ color: "#dc3545", fontWeight: "700", fontSize: 15 }}>単語を削除</Text>
+              </View>
             </Pressable>
           </View>
         )}
