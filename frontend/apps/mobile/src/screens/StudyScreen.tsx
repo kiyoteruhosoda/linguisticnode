@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
 import type { MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 
 type Card = Awaited<ReturnType<MobileStudyService["fetchNextCard"]>>;
 
-const RATINGS: { value: Rating; label: string; emoji: string; color: string; bg: string }[] = [
-  { value: "again", label: "もう一度", emoji: "🔁", color: "#dc3545", bg: "#fff5f5" },
-  { value: "hard", label: "難しい", emoji: "😓", color: "#fd7e14", bg: "#fff8f0" },
-  { value: "good", label: "良い", emoji: "👍", color: "#198754", bg: "#f0fff4" },
-  { value: "easy", label: "簡単", emoji: "⚡", color: "#0d6efd", bg: "#f0f8ff" },
+const RATINGS: { value: Rating; label: string; color: string; bg: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: "again", label: "Again", icon: "refresh", color: "#dc3545", bg: "#fff5f5" },
+  { value: "hard", label: "Hard", icon: "hand-left-outline", color: "#fd7e14", bg: "#fff8f0" },
+  { value: "good", label: "Good", icon: "thumbs-up-outline", color: "#198754", bg: "#f0fff4" },
+  { value: "easy", label: "Easy", icon: "flash-outline", color: "#0d6efd", bg: "#f0f8ff" },
 ];
 
 function getMemoryInfo(level: number): { label: string; color: string; bg: string } {
-  if (level === 0) return { label: "新規", color: "#6c757d", bg: "#f1f3f5" };
-  if (level <= 3) return { label: "学習中", color: "#e67700", bg: "#fff3bf" };
-  if (level <= 6) return { label: "復習", color: "#1971c2", bg: "#e7f5ff" };
-  return { label: "定着", color: "#2b8a3e", bg: "#ebfbee" };
+  if (level === 0) return { label: "New", color: "#6c757d", bg: "#f1f3f5" };
+  if (level <= 3) return { label: "Learning", color: "#e67700", bg: "#fff3bf" };
+  if (level <= 6) return { label: "Review", color: "#1971c2", bg: "#e7f5ff" };
+  return { label: "Mastered", color: "#2b8a3e", bg: "#ebfbee" };
 }
 
 export function StudyScreen({ studyService }: { studyService: MobileStudyService }) {
@@ -25,7 +26,6 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Tag filter state
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -33,7 +33,6 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
 
   const canSpeak = mobileSpeechService.canSpeak();
 
-  // Load available tags
   useEffect(() => {
     studyService.getAllTags().then(setAllTags).catch(() => {});
   }, [studyService]);
@@ -79,8 +78,8 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#f8f9fa" }}>
-        <Text style={{ fontSize: 32 }}>🧠</Text>
-        <Text style={{ fontSize: 15, color: "#6c757d", marginTop: 8 }}>読み込み中...</Text>
+        <Ionicons name="school-outline" size={40} color="#adb5bd" />
+        <Text style={{ fontSize: 15, color: "#6c757d", marginTop: 12 }}>Loading...</Text>
       </View>
     );
   }
@@ -100,9 +99,8 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
           justifyContent: "space-between",
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>学習</Text>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Study</Text>
 
-        {/* Tag filter button */}
         {allTags.length > 0 && (
           <Pressable
             onPress={() => {
@@ -121,9 +119,9 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
               backgroundColor: appliedTags.length > 0 ? "#e7f1ff" : pressed ? "#f1f3f5" : "#fff",
             })}
           >
-            <Text style={{ fontSize: 14 }}>🏷️</Text>
+            <Ionicons name="pricetag-outline" size={15} color={appliedTags.length > 0 ? "#0d6efd" : "#495057"} />
             <Text style={{ fontSize: 13, fontWeight: "600", color: appliedTags.length > 0 ? "#0d6efd" : "#495057" }}>
-              {appliedTags.length > 0 ? `タグ (${appliedTags.length})` : "タグ"}
+              {appliedTags.length > 0 ? `Tags (${appliedTags.length})` : "Tags"}
             </Text>
           </Pressable>
         )}
@@ -174,7 +172,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                 alignItems: "center",
               })}
             >
-              <Text style={{ fontSize: 14, fontWeight: "600", color: "#6c757d" }}>クリア</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: "#6c757d" }}>Clear</Text>
             </Pressable>
             <Pressable
               onPress={applyTagFilter}
@@ -186,7 +184,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                 alignItems: "center",
               })}
             >
-              <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>適用</Text>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>Apply</Text>
             </Pressable>
           </View>
         </View>
@@ -195,12 +193,12 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
       {/* No card state */}
       {!card ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 }}>
-          <Text style={{ fontSize: 56 }}>🎉</Text>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529", textAlign: "center" }}>お疲れ様でした！</Text>
+          <Ionicons name="checkmark-circle-outline" size={56} color="#2b8a3e" />
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529", textAlign: "center" }}>All done!</Text>
           <Text style={{ fontSize: 15, color: "#6c757d", textAlign: "center" }}>
             {appliedTags.length > 0
-              ? "選択したタグの学習カードがありません。"
-              : "学習するカードがありません。新しい単語を追加するか、あとでまた来てください。"}
+              ? "No cards due for the selected tags."
+              : "No cards due. Add new words or come back later."}
           </Text>
           <Pressable
             onPress={() => void loadNext()}
@@ -212,7 +210,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
               paddingHorizontal: 24,
             })}
           >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>再確認する</Text>
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Review All</Text>
           </Pressable>
         </View>
       ) : (
@@ -236,7 +234,6 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
               overflow: "hidden",
             }}
           >
-            {/* Card Header: memory level + speak */}
             <View
               style={{
                 flexDirection: "row",
@@ -260,7 +257,6 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                   </View>
                 );
               })()}
-
               {canSpeak && (
                 <Pressable
                   onPress={() => mobileSpeechService.speakEnglish(card.word.headword)}
@@ -273,26 +269,21 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                     justifyContent: "center",
                   })}
                 >
-                  <Text style={{ fontSize: 16 }}>🔊</Text>
+                  <Ionicons name="volume-high-outline" size={18} color="#495057" />
                 </Pressable>
               )}
             </View>
 
-            {/* Card Body */}
             <View style={{ padding: 28, alignItems: "center", gap: 10 }}>
               <Text style={{ fontSize: 34, fontWeight: "800", color: "#212529", textAlign: "center" }}>
                 {card.word.headword}
               </Text>
-              {card.word.pronunciation ? (
-                <Text style={{ fontSize: 16, color: "#6c757d", textAlign: "center" }}>{card.word.pronunciation}</Text>
-              ) : null}
               <View style={{ backgroundColor: "#e7f1ff", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}>
                 <Text style={{ fontSize: 12, fontWeight: "600", color: "#0d6efd" }}>{card.word.pos}</Text>
               </View>
 
               <View style={{ width: "60%", height: 1, backgroundColor: "#e9ecef", marginVertical: 4 }} />
 
-              {/* Answer */}
               {revealed ? (
                 <View style={{ alignItems: "center", gap: 10, width: "100%" }}>
                   <Text style={{ fontSize: 22, fontWeight: "700", color: "#198754", textAlign: "center" }}>
@@ -324,13 +315,13 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                     marginTop: 4,
                   })}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>答えを見る</Text>
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Show Answer</Text>
                 </Pressable>
               )}
             </View>
           </View>
 
-          {/* Examples (revealed) */}
+          {/* Examples */}
           {revealed && card.word.examples.length > 0 && (
             <View
               style={{
@@ -342,7 +333,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
               }}
             >
               <View style={{ paddingHorizontal: 14, paddingVertical: 10, backgroundColor: "#fafafa", borderBottomWidth: 1, borderBottomColor: "#f1f3f5" }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: "#495057" }}>例文</Text>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#495057" }}>Examples</Text>
               </View>
               <View style={{ padding: 14, gap: 12 }}>
                 {card.word.examples.map((ex) => (
@@ -361,7 +352,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                             justifyContent: "center",
                           })}
                         >
-                          <Text style={{ fontSize: 13 }}>🔊</Text>
+                          <Ionicons name="volume-high-outline" size={15} color="#495057" />
                         </Pressable>
                       )}
                     </View>
@@ -374,11 +365,11 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
             </View>
           )}
 
-          {/* Rating Buttons (revealed) */}
+          {/* Rating Buttons */}
           {revealed && (
             <View>
               <Text style={{ fontSize: 13, color: "#6c757d", textAlign: "center", marginBottom: 12 }}>
-                どれくらい覚えていましたか？
+                How well did you remember?
               </Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 {RATINGS.map((r) => (
@@ -396,7 +387,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
                       gap: 4,
                     })}
                   >
-                    <Text style={{ fontSize: 20 }}>{r.emoji}</Text>
+                    <Ionicons name={r.icon} size={20} color={r.color} />
                     <Text style={{ fontSize: 11, fontWeight: "700", color: r.color }}>{r.label}</Text>
                   </Pressable>
                 ))}
@@ -417,11 +408,11 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
               gap: 8,
             }}
           >
-            <Text style={{ fontSize: 16 }}>📊</Text>
+            <Ionicons name="calendar-outline" size={18} color="#6c757d" />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, color: "#6c757d" }}>
-                復習予定:{" "}
-                {new Date(card.memory.dueAt).toLocaleString("ja-JP", {
+                Due:{" "}
+                {new Date(card.memory.dueAt).toLocaleString("en-US", {
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",
@@ -430,7 +421,7 @@ export function StudyScreen({ studyService }: { studyService: MobileStudyService
               </Text>
               {card.memory.reviewCount > 0 && (
                 <Text style={{ fontSize: 12, color: "#adb5bd", marginTop: 2 }}>
-                  復習回数: {card.memory.reviewCount} 回
+                  Reviews: {card.memory.reviewCount}
                 </Text>
               )}
             </View>

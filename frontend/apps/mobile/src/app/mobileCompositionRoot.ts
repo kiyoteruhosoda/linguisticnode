@@ -1,17 +1,20 @@
 import { WordApplicationService } from "../../../../src/core/word/wordApplicationService";
 import { StudyApplicationService } from "../../../../src/core/study/studyApplicationService";
 import { SyncApplicationService } from "../../../../src/core/sync/syncApplicationService";
+import { ExamplesApplicationService } from "../../../../src/core/examples/examplesApplicationService";
 import { MobileLearningRepository, PersistedMobileLearningRepository } from "../domain/mobileLearningRepository";
 import type { MobileLearningRepositoryPort } from "../domain/mobileLearningRepository.types";
 import { createMobileWordGateway } from "../infra/mobileWordGateway";
 import { createMobileStudyGateway } from "../infra/mobileStudyGateway";
 import { createMobileSyncGateway } from "../infra/mobileSyncGateway";
+import { createMobileExamplesGateway } from "../infra/mobileExamplesGateway";
 import { resolveMobileStorageAdapter } from "./mobileStorageRuntime";
 
 export interface MobileCompositionRoot {
   wordService: WordApplicationService;
   studyService: StudyApplicationService;
   syncService: SyncApplicationService;
+  examplesService: ExamplesApplicationService;
 }
 
 function readMobileSyncConfig() {
@@ -40,5 +43,6 @@ export async function createMobileCompositionRoot(): Promise<MobileCompositionRo
     wordService: new WordApplicationService(createMobileWordGateway(repository)),
     studyService: new StudyApplicationService(createMobileStudyGateway(repository)),
     syncService: new SyncApplicationService(createMobileSyncGateway(repository, syncConfig)),
+    examplesService: new ExamplesApplicationService(createMobileExamplesGateway(repository)),
   };
 }
