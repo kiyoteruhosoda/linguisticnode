@@ -51,8 +51,12 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
 
   listWords(query: WordListQuery): WordListResult {
     const q = query.q?.trim().toLowerCase();
+    const tagSet = query.tags && query.tags.length > 0 ? new Set(query.tags) : null;
     const filtered = this.words.filter((word) => {
       if (query.pos && word.pos !== query.pos) {
+        return false;
+      }
+      if (tagSet && !word.tags.some((tag) => tagSet.has(tag))) {
         return false;
       }
       if (!q) {

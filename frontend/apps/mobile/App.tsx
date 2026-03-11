@@ -6,13 +6,15 @@ import { createMobileCompositionRoot, type MobileCompositionRoot } from "./src/a
 import { WordsScreen } from "./src/screens/WordsScreen";
 import { StudyScreen } from "./src/screens/StudyScreen";
 import { SyncScreen } from "./src/screens/SyncScreen";
+import { ExamplesScreen } from "./src/screens/ExamplesScreen";
 
-type MobileRoute = "words" | "study" | "sync";
+type MobileRoute = "words" | "study" | "quiz" | "sync";
 
 const TABS: { route: MobileRoute; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { route: "words", label: "単語帳", icon: "book-outline" },
-  { route: "study", label: "学習", icon: "school-outline" },
-  { route: "sync", label: "同期", icon: "cloud-outline" },
+  { route: "words", label: "Words", icon: "book-outline" },
+  { route: "study", label: "Study", icon: "school-outline" },
+  { route: "quiz", label: "Quiz", icon: "pencil-outline" },
+  { route: "sync", label: "Sync", icon: "cloud-outline" },
 ];
 
 export default function App() {
@@ -39,13 +41,17 @@ function AppContent() {
       return (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
           <Ionicons name="book-outline" size={40} color="#6c757d" />
-          <Text style={{ fontSize: 16, color: "#6c757d" }}>起動中...</Text>
+          <Text style={{ fontSize: 16, color: "#6c757d" }}>Loading...</Text>
         </View>
       );
     }
 
     if (route === "study") {
       return <StudyScreen studyService={compositionRoot.studyService} />;
+    }
+
+    if (route === "quiz") {
+      return <ExamplesScreen examplesService={compositionRoot.examplesService} />;
     }
 
     if (route === "sync") {
@@ -59,12 +65,11 @@ function AppContent() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      {/* Main Content Area */}
       <View style={{ flex: 1 }}>
         {routeContent}
       </View>
 
-      {/* Bottom Tab Bar — includes bottom safe area inset */}
+      {/* Bottom Tab Bar */}
       <View
         style={{
           flexDirection: "row",
@@ -113,7 +118,7 @@ function BottomTab({
       <Ionicons name={icon} size={24} color={active ? "#0d6efd" : "#6c757d"} />
       <Text
         style={{
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: active ? "700" : "400",
           color: active ? "#0d6efd" : "#6c757d",
         }}

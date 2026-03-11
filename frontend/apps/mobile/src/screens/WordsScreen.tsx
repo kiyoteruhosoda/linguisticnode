@@ -35,10 +35,10 @@ const EMPTY_DRAFT: WordDraft = {
 // ─── Memory level helpers ─────────────────────────────────────────────────────
 
 function getMemoryInfo(level: number): { label: string; color: string; bg: string } {
-  if (level === 0) return { label: "新規", color: "#6c757d", bg: "#f1f3f5" };
-  if (level <= 3) return { label: "学習中", color: "#e67700", bg: "#fff3bf" };
-  if (level <= 6) return { label: "復習", color: "#1971c2", bg: "#e7f5ff" };
-  return { label: "定着", color: "#2b8a3e", bg: "#ebfbee" };
+  if (level === 0) return { label: "New", color: "#6c757d", bg: "#f1f3f5" };
+  if (level <= 3) return { label: "Learning", color: "#e67700", bg: "#fff3bf" };
+  if (level <= 6) return { label: "Review", color: "#1971c2", bg: "#e7f5ff" };
+  return { label: "Mastered", color: "#2b8a3e", bg: "#ebfbee" };
 }
 
 // ─── WordsScreen (root) ───────────────────────────────────────────────────────
@@ -47,7 +47,6 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
   const [subRoute, setSubRoute] = useState<SubRoute>("list");
   const [query, setQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [selectedPos, setSelectedPos] = useState<Pos | undefined>(undefined);
   const [words, setWords] = useState<WordItem[]>([]);
   const [memoryMap, setMemoryMap] = useState<Record<string, MemoryState>>({});
   const [selectedWord, setSelectedWord] = useState<WordItem | null>(null);
@@ -55,20 +54,44 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Tag filter state
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [showTagPanel, setShowTagPanel] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [appliedTags, setAppliedTags] = useState<string[]>([]);
+
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      const listed = await service.listWords({ q: query, pos: selectedPos });
+      const listed = await service.listWords({ q: query, tags: appliedTags.length ? appliedTags : undefined });
       setWords(listed.items);
       setMemoryMap(listed.memoryMap);
     } finally {
       setBusy(false);
     }
-  }, [query, selectedPos, service]);
+  }, [query, appliedTags, service]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+    service.getTags().then(setAllTags).catch(() => {});
+  }, [load, service]);
+
+  const applyTagFilter = () => {
+    setAppliedTags([...selectedTags]);
+    setShowTagPanel(false);
+  };
+
+  const clearTagFilter = () => {
+    setSelectedTags([]);
+    setAppliedTags([]);
+    setShowTagPanel(false);
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
 
   const openCreate = () => {
     setDraft(EMPTY_DRAFT);
@@ -93,7 +116,7 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
 
   const submitCreate = async () => {
     if (!draft.headword.trim() || !draft.meaningJa.trim()) {
-      setErrorMsg("見出し語と日本語訳は必須です");
+      setErrorMsg("Headword and meaning are required");
       return;
     }
     Keyboard.dismiss();
@@ -104,7 +127,7 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
       await load();
       setSubRoute("list");
     } catch {
-      setErrorMsg("登録に失敗しました");
+      setErrorMsg("Failed to save");
     } finally {
       setBusy(false);
     }
@@ -120,7 +143,7 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
       await load();
       setSubRoute("list");
     } catch {
-      setErrorMsg("更新に失敗しました");
+      setErrorMsg("Failed to update");
     } finally {
       setBusy(false);
     }
@@ -134,7 +157,7 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
       await load();
       setSubRoute("list");
     } catch {
-      setErrorMsg("削除に失敗しました");
+      setErrorMsg("Failed to delete");
     } finally {
       setBusy(false);
     }
@@ -146,11 +169,10 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
     try {
       await service.resetWordMemory(selectedWord.id);
       setErrorMsg(null);
-      // Reload to update memory display
       await load();
       setSubRoute("list");
     } catch {
-      setErrorMsg("リセットに失敗しました");
+      setErrorMsg("Failed to reset");
     } finally {
       setBusy(false);
     }
@@ -178,14 +200,23 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
       memoryMap={memoryMap}
       query={query}
       showSearch={showSearch}
-      selectedPos={selectedPos}
+      allTags={allTags}
+      showTagPanel={showTagPanel}
+      selectedTags={selectedTags}
+      appliedTags={appliedTags}
       busy={busy}
       onQueryChange={setQuery}
       onToggleSearch={() => {
         setShowSearch((v) => !v);
         if (showSearch) setQuery("");
       }}
-      onPosChange={setSelectedPos}
+      onToggleTagPanel={() => {
+        setSelectedTags([...appliedTags]);
+        setShowTagPanel((v) => !v);
+      }}
+      onToggleTag={toggleTag}
+      onApplyTags={applyTagFilter}
+      onClearTags={clearTagFilter}
       onSelectWord={openEdit}
       onAdd={openCreate}
     />
@@ -199,11 +230,17 @@ function WordListView({
   memoryMap,
   query,
   showSearch,
-  selectedPos,
+  allTags,
+  showTagPanel,
+  selectedTags,
+  appliedTags,
   busy,
   onQueryChange,
   onToggleSearch,
-  onPosChange,
+  onToggleTagPanel,
+  onToggleTag,
+  onApplyTags,
+  onClearTags,
   onSelectWord,
   onAdd,
 }: {
@@ -211,11 +248,17 @@ function WordListView({
   memoryMap: Record<string, MemoryState>;
   query: string;
   showSearch: boolean;
-  selectedPos: Pos | undefined;
+  allTags: string[];
+  showTagPanel: boolean;
+  selectedTags: string[];
+  appliedTags: string[];
   busy: boolean;
   onQueryChange: (q: string) => void;
   onToggleSearch: () => void;
-  onPosChange: (pos: Pos | undefined) => void;
+  onToggleTagPanel: () => void;
+  onToggleTag: (tag: string) => void;
+  onApplyTags: () => void;
+  onClearTags: () => void;
   onSelectWord: (w: WordItem) => void;
   onAdd: () => void;
 }) {
@@ -233,27 +276,46 @@ function WordListView({
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>単語帳</Text>
-          <Pressable
-            onPress={onToggleSearch}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              backgroundColor: showSearch ? "#e7f1ff" : "#f1f3f5",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name={showSearch ? "close" : "search"} size={18} color={showSearch ? "#0d6efd" : "#495057"} />
-          </Pressable>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Vocabulary</Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {allTags.length > 0 && (
+              <Pressable
+                onPress={onToggleTagPanel}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: appliedTags.length > 0 ? "#e7f1ff" : "#f1f3f5",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: appliedTags.length > 0 ? 1 : 0,
+                  borderColor: "#0d6efd",
+                }}
+              >
+                <Ionicons name="pricetag-outline" size={17} color={appliedTags.length > 0 ? "#0d6efd" : "#495057"} />
+              </Pressable>
+            )}
+            <Pressable
+              onPress={onToggleSearch}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: showSearch ? "#e7f1ff" : "#f1f3f5",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name={showSearch ? "close" : "search"} size={18} color={showSearch ? "#0d6efd" : "#495057"} />
+            </Pressable>
+          </View>
         </View>
 
         {showSearch && (
           <TextInput
             value={query}
             onChangeText={onQueryChange}
-            placeholder="見出し語・意味で検索"
+            placeholder="Search words"
             placeholderTextColor="#adb5bd"
             autoFocus
             style={{
@@ -269,29 +331,82 @@ function WordListView({
             }}
           />
         )}
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginTop: 10 }}
-          contentContainerStyle={{ gap: 6 }}
-        >
-          <PosChip label="すべて" active={!selectedPos} onPress={() => onPosChange(undefined)} />
-          {POS_OPTIONS.map((pos) => (
-            <PosChip key={pos} label={pos} active={selectedPos === pos} onPress={() => onPosChange(pos)} />
-          ))}
-        </ScrollView>
       </View>
 
+      {/* Tag Filter Panel */}
+      {showTagPanel && allTags.length > 0 && (
+        <View
+          style={{
+            backgroundColor: "#fff",
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: "#e9ecef",
+            gap: 10,
+          }}
+        >
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {allTags.map((tag) => (
+              <Pressable
+                key={tag}
+                onPress={() => onToggleTag(tag)}
+                style={{
+                  paddingVertical: 5,
+                  paddingHorizontal: 12,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: selectedTags.includes(tag) ? "#0d6efd" : "#dee2e6",
+                  backgroundColor: selectedTags.includes(tag) ? "#e7f1ff" : "#f8f9fa",
+                }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: selectedTags.includes(tag) ? "700" : "400", color: selectedTags.includes(tag) ? "#0d6efd" : "#495057" }}>
+                  {selectedTags.includes(tag) ? "✓ " : ""}{tag}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable
+              onPress={onClearTags}
+              style={({ pressed }) => ({
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: "#dee2e6",
+                backgroundColor: pressed ? "#f1f3f5" : "#fff",
+                alignItems: "center",
+              })}
+            >
+              <Text style={{ fontSize: 14, fontWeight: "600", color: "#6c757d" }}>Clear</Text>
+            </Pressable>
+            <Pressable
+              onPress={onApplyTags}
+              style={({ pressed }) => ({
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 8,
+                backgroundColor: pressed ? "#0b5ed7" : "#0d6efd",
+                alignItems: "center",
+              })}
+            >
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>Apply</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-        <Text style={{ fontSize: 13, color: "#6c757d" }}>{busy ? "読み込み中..." : `${words.length} 件`}</Text>
+        <Text style={{ fontSize: 13, color: "#6c757d" }}>
+          {busy ? "Loading..." : `${words.length} word${words.length !== 1 ? "s" : ""}`}
+        </Text>
       </View>
 
       {words.length === 0 && !busy ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingBottom: 80 }}>
           <Ionicons name="file-tray-outline" size={48} color="#adb5bd" />
-          <Text style={{ fontSize: 15, color: "#6c757d" }}>単語がありません</Text>
-          <Text style={{ fontSize: 13, color: "#adb5bd" }}>下の＋ボタンで追加しましょう</Text>
+          <Text style={{ fontSize: 15, color: "#6c757d" }}>No words yet</Text>
+          <Text style={{ fontSize: 13, color: "#adb5bd" }}>Tap + to add your first word</Text>
         </View>
       ) : (
         <FlatList
@@ -320,9 +435,6 @@ function WordListView({
                 <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 17, fontWeight: "700", color: "#212529" }}>{item.headword}</Text>
-                    {item.pronunciation ? (
-                      <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 1 }}>{item.pronunciation}</Text>
-                    ) : null}
                     <Text style={{ fontSize: 15, color: "#495057", marginTop: 4 }}>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
@@ -345,7 +457,7 @@ function WordListView({
                     </View>
                   ) : <View style={{ flex: 1 }} />}
                   {item.examples.length > 0 && (
-                    <Text style={{ fontSize: 11, color: "#adb5bd" }}>例文 {item.examples.length}件</Text>
+                    <Text style={{ fontSize: 11, color: "#adb5bd" }}>{item.examples.length} example{item.examples.length !== 1 ? "s" : ""}</Text>
                   )}
                 </View>
               </Pressable>
@@ -413,7 +525,6 @@ function WordFormView({
 
   const isValid = useMemo(() => draft.headword.trim() && draft.meaningJa.trim(), [draft]);
 
-  // Sync draft.examples to local DraftExample state
   const draftExamples: DraftExample[] = (draft.examples ?? []).map((e) => ({
     id: e.id,
     en: e.en,
@@ -465,7 +576,7 @@ function WordFormView({
           <Ionicons name="arrow-back" size={24} color="#0d6efd" />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: "#212529", flex: 1 }}>
-          {mode === "create" ? "単語を追加" : "単語を編集"}
+          {mode === "create" ? "Add Word" : "Edit Word"}
         </Text>
       </View>
 
@@ -487,12 +598,12 @@ function WordFormView({
         <View style={{ backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#e9ecef", overflow: "hidden" }}>
           {/* Headword + Speak */}
           <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
-            <Text style={labelStyle}>見出し語 *</Text>
+            <Text style={labelStyle}>Headword *</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <TextInput
                 value={draft.headword}
                 onChangeText={(v) => set("headword", v)}
-                placeholder="例: ephemeral"
+                placeholder="e.g. ephemeral"
                 placeholderTextColor="#adb5bd"
                 style={[fieldInputStyle, { flex: 1 }]}
               />
@@ -517,21 +628,11 @@ function WordFormView({
             </View>
           </View>
           <Divider />
-          <FieldRow label="発音">
-            <TextInput
-              value={draft.pronunciation ?? ""}
-              onChangeText={(v) => set("pronunciation", v)}
-              placeholder="例: /ɪˈfem.ər.əl/"
-              placeholderTextColor="#adb5bd"
-              style={fieldInputStyle}
-            />
-          </FieldRow>
-          <Divider />
-          <FieldRow label="日本語訳 *">
+          <FieldRow label="Meaning (JA) *">
             <TextInput
               value={draft.meaningJa}
               onChangeText={(v) => set("meaningJa", v)}
-              placeholder="例: 短命の、はかない"
+              placeholder="e.g. 短命の、はかない"
               placeholderTextColor="#adb5bd"
               style={fieldInputStyle}
             />
@@ -540,7 +641,7 @@ function WordFormView({
 
         {/* POS Selector */}
         <View>
-          <Text style={[labelStyle, { marginBottom: 8 }]}>品詞</Text>
+          <Text style={[labelStyle, { marginBottom: 8 }]}>Part of Speech</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
             {POS_OPTIONS.map((pos) => (
               <Pressable
@@ -565,21 +666,21 @@ function WordFormView({
 
         {/* Tags + Memo */}
         <View style={{ backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#e9ecef", overflow: "hidden" }}>
-          <FieldRow label="タグ (カンマ区切り)">
+          <FieldRow label="Tags (comma-separated)">
             <TextInput
               value={(draft.tags ?? []).join(", ")}
               onChangeText={(v) => set("tags", v.split(",").map((t) => t.trim()).filter(Boolean))}
-              placeholder="例: TOEFL, 重要"
+              placeholder="e.g. TOEFL, important"
               placeholderTextColor="#adb5bd"
               style={fieldInputStyle}
             />
           </FieldRow>
           <Divider />
-          <FieldRow label="メモ">
+          <FieldRow label="Memo">
             <TextInput
               value={draft.memo ?? ""}
               onChangeText={(v) => set("memo", v)}
-              placeholder="任意のメモ"
+              placeholder="Optional note"
               placeholderTextColor="#adb5bd"
               multiline
               numberOfLines={2}
@@ -591,7 +692,7 @@ function WordFormView({
         {/* Examples Section */}
         <View>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <Text style={[labelStyle]}>例文 ({draftExamples.length})</Text>
+            <Text style={[labelStyle]}>Examples ({draftExamples.length})</Text>
             <Pressable
               onPress={addExample}
               style={({ pressed }) => ({
@@ -606,13 +707,13 @@ function WordFormView({
                 backgroundColor: pressed ? "#e7f1ff" : "#fff",
               })}
             >
-              <Text style={{ fontSize: 14, color: "#0d6efd", fontWeight: "700" }}>＋ 追加</Text>
+              <Text style={{ fontSize: 14, color: "#0d6efd", fontWeight: "700" }}>+ Add</Text>
             </Pressable>
           </View>
 
           {draftExamples.length === 0 ? (
             <View style={{ backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#e9ecef", padding: 16, alignItems: "center" }}>
-              <Text style={{ fontSize: 13, color: "#adb5bd" }}>例文はまだありません</Text>
+              <Text style={{ fontSize: 13, color: "#adb5bd" }}>No examples yet</Text>
             </View>
           ) : (
             <View style={{ gap: 10 }}>
@@ -629,23 +730,23 @@ function WordFormView({
                 >
                   {/* Example header */}
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 8, backgroundColor: "#f8f9fa", borderBottomWidth: 1, borderBottomColor: "#e9ecef" }}>
-                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#6c757d" }}>例文 {index + 1}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#6c757d" }}>Example {index + 1}</Text>
                     <Pressable
                       onPress={() => removeExample(ex.id)}
                       hitSlop={8}
                     >
-                      <Text style={{ fontSize: 13, color: "#dc3545", fontWeight: "600" }}>削除</Text>
+                      <Text style={{ fontSize: 13, color: "#dc3545", fontWeight: "600" }}>Remove</Text>
                     </Pressable>
                   </View>
 
                   {/* English */}
                   <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
-                    <Text style={labelStyle}>英文</Text>
+                    <Text style={labelStyle}>English</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                       <TextInput
                         value={ex.en}
                         onChangeText={(v) => updateExample(ex.id, "en", v)}
-                        placeholder="英語の例文"
+                        placeholder="English sentence"
                         placeholderTextColor="#adb5bd"
                         style={[fieldInputStyle, { flex: 1 }]}
                       />
@@ -671,11 +772,11 @@ function WordFormView({
                   </View>
                   <Divider />
                   {/* Japanese */}
-                  <FieldRow label="日本語訳 (任意)">
+                  <FieldRow label="Japanese (optional)">
                     <TextInput
                       value={ex.ja}
                       onChangeText={(v) => updateExample(ex.id, "ja", v)}
-                      placeholder="日本語訳"
+                      placeholder="Japanese translation"
                       placeholderTextColor="#adb5bd"
                       style={fieldInputStyle}
                     />
@@ -698,7 +799,7 @@ function WordFormView({
           })}
         >
           <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>
-            {busy ? "処理中..." : mode === "create" ? "追加する" : "更新する"}
+            {busy ? "Saving..." : mode === "create" ? "Add Word" : "Update"}
           </Text>
         </Pressable>
 
@@ -706,7 +807,7 @@ function WordFormView({
         {mode === "edit" && (
           <View style={{ gap: 10 }}>
             <View style={{ height: 1, backgroundColor: "#e9ecef" }} />
-            <Text style={{ fontSize: 12, color: "#adb5bd", textAlign: "center" }}>危険な操作</Text>
+            <Text style={{ fontSize: 12, color: "#adb5bd", textAlign: "center" }}>Danger Zone</Text>
 
             <Pressable
               onPress={() => setConfirmAction("reset")}
@@ -722,7 +823,7 @@ function WordFormView({
             >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Ionicons name="refresh-outline" size={18} color="#fd7e14" />
-                <Text style={{ color: "#fd7e14", fontWeight: "700", fontSize: 15 }}>記憶レベルをリセット</Text>
+                <Text style={{ color: "#fd7e14", fontWeight: "700", fontSize: 15 }}>Reset Memory</Text>
               </View>
             </Pressable>
 
@@ -740,7 +841,7 @@ function WordFormView({
             >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Ionicons name="trash-outline" size={18} color="#dc3545" />
-                <Text style={{ color: "#dc3545", fontWeight: "700", fontSize: 15 }}>単語を削除</Text>
+                <Text style={{ color: "#dc3545", fontWeight: "700", fontSize: 15 }}>Delete Word</Text>
               </View>
             </Pressable>
           </View>
@@ -750,13 +851,13 @@ function WordFormView({
       {/* Confirm Dialog */}
       <ConfirmModal
         visible={confirmAction !== null}
-        title={confirmAction === "delete" ? "単語を削除しますか？" : "記憶をリセットしますか？"}
+        title={confirmAction === "delete" ? "Delete this word?" : "Reset memory?"}
         message={
           confirmAction === "delete"
-            ? "この操作は元に戻せません。"
-            : "この単語の学習進捗がリセットされます。"
+            ? "This action cannot be undone."
+            : "Learning progress for this word will be reset."
         }
-        confirmLabel={confirmAction === "delete" ? "削除する" : "リセットする"}
+        confirmLabel={confirmAction === "delete" ? "Delete" : "Reset"}
         confirmColor={confirmAction === "delete" ? "#dc3545" : "#fd7e14"}
         onConfirm={handleConfirm}
         onCancel={() => setConfirmAction(null)}
@@ -803,7 +904,7 @@ function ConfirmModal({
                 alignItems: "center",
               })}
             >
-              <Text style={{ fontWeight: "600", color: "#495057" }}>キャンセル</Text>
+              <Text style={{ fontWeight: "600", color: "#495057" }}>Cancel</Text>
             </Pressable>
             <Pressable
               onPress={onConfirm}
@@ -821,26 +922,6 @@ function ConfirmModal({
         </View>
       </View>
     </Modal>
-  );
-}
-
-function PosChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        paddingVertical: 5,
-        paddingHorizontal: 13,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: active ? "#0d6efd" : "#dee2e6",
-        backgroundColor: active ? "#e7f1ff" : "#fff",
-      }}
-    >
-      <Text style={{ fontSize: 13, fontWeight: active ? "700" : "400", color: active ? "#0d6efd" : "#495057" }}>
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 

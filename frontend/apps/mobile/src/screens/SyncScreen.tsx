@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import type { MobileSyncService } from "../app/mobileServices";
 
 type SyncPhase = "idle" | "syncing" | "success" | "conflict" | "error";
@@ -19,7 +20,7 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
       setIsDirty(status.dirty);
       setServerRev(status.serverRev);
     } catch {
-      // Status fetch failure is non-critical
+      // non-critical
     }
   }, [syncService]);
 
@@ -48,10 +49,10 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
         return;
       }
 
-      setErrorMsg(result.message ?? "不明なエラー");
+      setErrorMsg(result.message ?? "Unknown error");
       setPhase("error");
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "同期に失敗しました");
+      setErrorMsg(e instanceof Error ? e.message : "Sync failed");
       setPhase("error");
     }
   };
@@ -67,13 +68,12 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
       setTimeout(() => setPhase("idle"), 3000);
     } catch {
       setPhase("error");
-      setErrorMsg("競合の解決に失敗しました");
+      setErrorMsg("Failed to resolve conflict");
     }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
-      {/* Header */}
       <View
         style={{
           backgroundColor: "#fff",
@@ -83,7 +83,7 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
           borderBottomColor: "#e9ecef",
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>同期</Text>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Sync</Text>
       </View>
 
       <ScrollView
@@ -118,30 +118,34 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
                 justifyContent: "center",
               }}
             >
-              <Text style={{ fontSize: 22 }}>{isDirty ? "⚠️" : "✅"}</Text>
+              <Ionicons
+                name={isDirty ? "warning-outline" : "checkmark-circle-outline"}
+                size={24}
+                color={isDirty ? "#856404" : "#0c5460"}
+              />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: "700", color: "#212529" }}>
-                {isDirty ? "未同期の変更あり" : "同期済み"}
+                {isDirty ? "Unsynced Changes" : "Up to Date"}
               </Text>
               <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 2 }}>
-                {isDirty ? "ローカルに変更が保存されています" : "最新の状態です"}
+                {isDirty ? "Changes saved locally" : "Everything is in sync"}
               </Text>
             </View>
           </View>
 
           <View style={{ flexDirection: "row", gap: 12 }}>
-            <StatItem label="サーバーリビジョン" value={String(serverRev)} icon="🔖" />
+            <StatItem label="Server Rev" value={String(serverRev)} icon="bookmark-outline" />
             {lastSyncedAt && (
               <StatItem
-                label="最終同期"
-                value={new Date(lastSyncedAt).toLocaleString("ja-JP", {
+                label="Last Synced"
+                value={new Date(lastSyncedAt).toLocaleString("en-US", {
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-                icon="🕐"
+                icon="time-outline"
               />
             )}
           </View>
@@ -159,90 +163,67 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
             }}
           >
             <View style={{ backgroundColor: "#fff3cd", paddingHorizontal: 16, paddingVertical: 12 }}>
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#856404" }}>⚔️ 競合が検出されました</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="git-compare-outline" size={18} color="#856404" />
+                <Text style={{ fontSize: 16, fontWeight: "700", color: "#856404" }}>Conflict Detected</Text>
+              </View>
               <Text style={{ fontSize: 13, color: "#856404", marginTop: 4 }}>
-                ローカルとサーバーのデータが競合しています。どちらを使用しますか？
+                Local and server data conflict. Which version to use?
               </Text>
             </View>
 
             <View style={{ padding: 16, gap: 10 }}>
-              {/* Server option */}
-              <Pressable
-                onPress={() => setSelectedResolution("fetch-server")}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: 14,
-                  borderRadius: 12,
-                  borderWidth: 2,
-                  borderColor: selectedResolution === "fetch-server" ? "#0d6efd" : "#dee2e6",
-                  backgroundColor: selectedResolution === "fetch-server" ? "#e7f1ff" : "#f8f9fa",
-                }}
-              >
-                <View
+              {(["fetch-server", "force-local"] as ConflictResolution[]).map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => setSelectedResolution(option)}
                   style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    borderWidth: 2,
-                    borderColor: selectedResolution === "fetch-server" ? "#0d6efd" : "#adb5bd",
-                    backgroundColor: selectedResolution === "fetch-server" ? "#0d6efd" : "#fff",
+                    flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "center",
+                    gap: 12,
+                    padding: 14,
+                    borderRadius: 12,
+                    borderWidth: 2,
+                    borderColor: selectedResolution === option ? "#0d6efd" : "#dee2e6",
+                    backgroundColor: selectedResolution === option ? "#e7f1ff" : "#f8f9fa",
                   }}
                 >
-                  {selectedResolution === "fetch-server" && (
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#fff" }} />
-                  )}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#212529" }}>☁️ サーバーのデータを使用</Text>
-                  <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 2 }}>
-                    ローカルの変更を破棄し、サーバーのデータに合わせます
-                  </Text>
-                </View>
-              </Pressable>
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      borderWidth: 2,
+                      borderColor: selectedResolution === option ? "#0d6efd" : "#adb5bd",
+                      backgroundColor: selectedResolution === option ? "#0d6efd" : "#fff",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {selectedResolution === option && (
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#fff" }} />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Ionicons
+                        name={option === "fetch-server" ? "cloud-outline" : "phone-portrait-outline"}
+                        size={15}
+                        color="#212529"
+                      />
+                      <Text style={{ fontSize: 15, fontWeight: "700", color: "#212529" }}>
+                        {option === "fetch-server" ? "Use server data" : "Keep local data"}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 2 }}>
+                      {option === "fetch-server"
+                        ? "Discard local changes and sync with server"
+                        : "Overwrite server with local changes"}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
 
-              {/* Local option */}
-              <Pressable
-                onPress={() => setSelectedResolution("force-local")}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: 14,
-                  borderRadius: 12,
-                  borderWidth: 2,
-                  borderColor: selectedResolution === "force-local" ? "#0d6efd" : "#dee2e6",
-                  backgroundColor: selectedResolution === "force-local" ? "#e7f1ff" : "#f8f9fa",
-                }}
-              >
-                <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    borderWidth: 2,
-                    borderColor: selectedResolution === "force-local" ? "#0d6efd" : "#adb5bd",
-                    backgroundColor: selectedResolution === "force-local" ? "#0d6efd" : "#fff",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {selectedResolution === "force-local" && (
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#fff" }} />
-                  )}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#212529" }}>📱 ローカルのデータを維持</Text>
-                  <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 2 }}>
-                    ローカルの変更でサーバーを上書きします
-                  </Text>
-                </View>
-              </Pressable>
-
-              {/* Conflict action buttons */}
               <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
                 <Pressable
                   onPress={() => setPhase("idle")}
@@ -256,7 +237,7 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
                     alignItems: "center",
                   })}
                 >
-                  <Text style={{ fontWeight: "600", color: "#6c757d" }}>キャンセル</Text>
+                  <Text style={{ fontWeight: "600", color: "#6c757d" }}>Cancel</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => void resolveConflict()}
@@ -268,7 +249,7 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
                     alignItems: "center",
                   })}
                 >
-                  <Text style={{ fontWeight: "700", color: "#fff" }}>競合を解決する</Text>
+                  <Text style={{ fontWeight: "700", color: "#fff" }}>Resolve</Text>
                 </Pressable>
               </View>
             </View>
@@ -286,7 +267,10 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
               borderColor: "#f5c2c7",
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#842029" }}>❌ 同期エラー</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="close-circle-outline" size={18} color="#842029" />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: "#842029" }}>Sync Error</Text>
+            </View>
             <Text style={{ fontSize: 13, color: "#842029", marginTop: 4 }}>{errorMsg}</Text>
           </View>
         )}
@@ -301,11 +285,11 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
               borderWidth: 1,
               borderColor: "#a3cfbb",
               alignItems: "center",
-              gap: 4,
+              gap: 6,
             }}
           >
-            <Text style={{ fontSize: 22 }}>🎉</Text>
-            <Text style={{ fontSize: 15, fontWeight: "700", color: "#0a3622" }}>同期が完了しました</Text>
+            <Ionicons name="checkmark-circle-outline" size={28} color="#0a3622" />
+            <Text style={{ fontSize: 15, fontWeight: "700", color: "#0a3622" }}>Sync Complete</Text>
           </View>
         )}
 
@@ -329,26 +313,34 @@ export function SyncScreen({ syncService }: { syncService: MobileSyncService }) 
               elevation: 4,
             })}
           >
-            <Text style={{ fontSize: 20 }}>{phase === "syncing" ? "⏳" : "☁️"}</Text>
+            <Ionicons
+              name={phase === "syncing" ? "hourglass-outline" : "cloud-upload-outline"}
+              size={22}
+              color="#fff"
+            />
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>
-              {phase === "syncing" ? "同期中..." : "今すぐ同期"}
+              {phase === "syncing" ? "Syncing..." : "Sync Now"}
             </Text>
           </Pressable>
         )}
 
         {/* Refresh Status */}
-        <Pressable onPress={() => void refresh()} style={{ alignItems: "center", paddingVertical: 8 }}>
-          <Text style={{ fontSize: 13, color: "#6c757d" }}>🔄 ステータスを更新</Text>
+        <Pressable
+          onPress={() => void refresh()}
+          style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8 }}
+        >
+          <Ionicons name="refresh-outline" size={15} color="#6c757d" />
+          <Text style={{ fontSize: 13, color: "#6c757d" }}>Refresh status</Text>
         </Pressable>
       </ScrollView>
     </View>
   );
 }
 
-function StatItem({ label, value, icon }: { label: string; value: string; icon: string }) {
+function StatItem({ label, value, icon }: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap }) {
   return (
     <View style={{ flex: 1, backgroundColor: "#f8f9fa", borderRadius: 10, padding: 12, gap: 4 }}>
-      <Text style={{ fontSize: 16 }}>{icon}</Text>
+      <Ionicons name={icon} size={18} color="#6c757d" />
       <Text style={{ fontSize: 12, color: "#6c757d" }}>{label}</Text>
       <Text style={{ fontSize: 14, fontWeight: "700", color: "#212529" }}>{value}</Text>
     </View>
