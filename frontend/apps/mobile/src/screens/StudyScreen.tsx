@@ -378,8 +378,8 @@ export function StudyScreen({
             </View>
           )}
 
-          {/* Practice in Quiz button */}
-          {revealed && onNavigateToQuiz && card && (
+          {/* Practice in Quiz button: only show if the word has examples */}
+          {revealed && onNavigateToQuiz && card && card.word.examples.length > 0 && (
             <Pressable
               onPress={() => onNavigateToQuiz(card.word.id)}
               style={({ pressed }) => ({

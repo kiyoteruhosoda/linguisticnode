@@ -33,7 +33,7 @@ function AppContent() {
   const [compositionRoot, setCompositionRoot] = useState<MobileCompositionRoot | null>(null);
   const [quizPreferredWordId, setQuizPreferredWordId] = useState<string | null>(null);
   const [studyPreferredWordId, setStudyPreferredWordId] = useState<string | null>(null);
-  const routeHistoryRef = useRef<MobileRoute[]>([]);
+  const routeHistoryRef = useRef<Array<{ route: MobileRoute; wordId: string | null }>>([]);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -42,21 +42,31 @@ function AppContent() {
     });
   }, []);
 
-  // Android hardware back button: go back to previous tab instead of closing app
+  // Android hardware back button:
+  // 1. If cross-feature history exists → go back to previous feature (restoring same word)
+  // 2. Otherwise, if not on words tab → go to words list first
+  // 3. On words list with no history → allow app close
   useEffect(() => {
     const onBackPress = () => {
       const history = routeHistoryRef.current;
       if (history.length > 0) {
-        const prev = history[history.length - 1];
+        const entry = history[history.length - 1];
         routeHistoryRef.current = history.slice(0, -1);
-        setRoute(prev);
-        return true; // prevent default (app close)
+        // Restore the word that was being worked on in the destination screen
+        if (entry.route === "study") setStudyPreferredWordId(entry.wordId);
+        else if (entry.route === "quiz") setQuizPreferredWordId(entry.wordId);
+        setRoute(entry.route);
+        return true;
       }
-      return false; // allow default (app close)
+      if (route !== "words") {
+        setRoute("words");
+        return true;
+      }
+      return false; // on words list with no history → allow app close
     };
     const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
     return () => subscription.remove();
-  }, []);
+  }, [route]);
 
   // Tab bar press: clear navigation history and preferred word state
   const navigateToTab = useCallback((tab: MobileRoute) => {
@@ -67,15 +77,17 @@ function AppContent() {
   }, []);
 
   // Cross-feature navigation: Study → Quiz for a specific word
+  // Store {route: "study", wordId} so pressing back restores Study with same word
   const navigateToQuiz = useCallback((wordId: string) => {
-    routeHistoryRef.current = [...routeHistoryRef.current, route];
+    routeHistoryRef.current = [...routeHistoryRef.current, { route, wordId }];
     setQuizPreferredWordId(wordId);
     setRoute("quiz");
   }, [route]);
 
   // Cross-feature navigation: Quiz → Study for a specific word
+  // Store {route: "quiz", wordId} so pressing back restores Quiz with same word
   const navigateToStudy = useCallback((wordId: string) => {
-    routeHistoryRef.current = [...routeHistoryRef.current, route];
+    routeHistoryRef.current = [...routeHistoryRef.current, { route, wordId }];
     setStudyPreferredWordId(wordId);
     setRoute("study");
   }, [route]);

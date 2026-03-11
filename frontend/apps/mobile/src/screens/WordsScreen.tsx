@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  BackHandler,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -59,6 +60,18 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
   const [showTagPanel, setShowTagPanel] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [appliedTags, setAppliedTags] = useState<string[]>([]);
+
+  // Android back button: when on edit/create sub-route, go back to list
+  // (App.tsx handles the root-level back; this runs first due to LIFO order)
+  useEffect(() => {
+    if (subRoute === "list") return;
+    const onBackPress = () => {
+      setSubRoute("list");
+      return true;
+    };
+    const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => subscription.remove();
+  }, [subRoute]);
 
   const load = useCallback(async () => {
     setBusy(true);
