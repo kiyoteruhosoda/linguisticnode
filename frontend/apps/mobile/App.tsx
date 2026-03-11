@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
-import { RnwPageHeader, RnwSurfaceCard } from "../../packages/ui/src";
+import { Pressable, SafeAreaView, StatusBar, Text, View } from "react-native";
 import { createMobileCompositionRoot, type MobileCompositionRoot } from "./src/app/mobileCompositionRoot";
 import { WordsScreen } from "./src/screens/WordsScreen";
 import { StudyScreen } from "./src/screens/StudyScreen";
 import { SyncScreen } from "./src/screens/SyncScreen";
 
 type MobileRoute = "words" | "study" | "sync";
+
+const TABS: { route: MobileRoute; label: string; icon: string }[] = [
+  { route: "words", label: "単語帳", icon: "📚" },
+  { route: "study", label: "学習", icon: "🧠" },
+  { route: "sync", label: "同期", icon: "☁️" },
+];
 
 export default function App() {
   const [route, setRoute] = useState<MobileRoute>("words");
@@ -20,7 +25,12 @@ export default function App() {
 
   const routeContent = useMemo(() => {
     if (!compositionRoot) {
-      return <Text>Initializing mobile services...</Text>;
+      return (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+          <Text style={{ fontSize: 32 }}>📚</Text>
+          <Text style={{ fontSize: 16, color: "#6c757d" }}>起動中...</Text>
+        </View>
+      );
     }
 
     if (route === "study") {
@@ -35,37 +45,83 @@ export default function App() {
   }, [compositionRoot, route]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f9fa", padding: 16 }}>
-      <ScrollView contentContainerStyle={{ gap: 12, paddingBottom: 24 }}>
-        <RnwSurfaceCard>
-          <RnwPageHeader title="linguisticnode Mobile" />
-          <Text>Phase D prototype: words / study / sync use-cases on Expo.</Text>
-          <View style={{ display: "flex", flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-            <TabButton label="Words" active={route === "words"} onPress={() => setRoute("words")} />
-            <TabButton label="Study" active={route === "study"} onPress={() => setRoute("study")} />
-            <TabButton label="Sync" active={route === "sync"} onPress={() => setRoute("sync")} />
-          </View>
-          {routeContent}
-        </RnwSurfaceCard>
-      </ScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+      {/* Main Content Area */}
+      <View style={{ flex: 1 }}>
+        {routeContent}
+      </View>
+
+      {/* Bottom Tab Bar */}
+      <View
+        style={{
+          flexDirection: "row",
+          borderTopWidth: 1,
+          borderTopColor: "#e9ecef",
+          backgroundColor: "#fff",
+          paddingBottom: 4,
+        }}
+      >
+        {TABS.map((tab) => (
+          <BottomTab
+            key={tab.route}
+            label={tab.label}
+            icon={tab.icon}
+            active={route === tab.route}
+            onPress={() => setRoute(tab.route)}
+          />
+        ))}
+      </View>
     </SafeAreaView>
   );
 }
 
-function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function BottomTab({
+  label,
+  icon,
+  active,
+  onPress,
+}: {
+  label: string;
+  icon: string;
+  active: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
       style={{
-        borderWidth: 1,
-        borderColor: active ? "#0d6efd" : "#adb5bd",
-        backgroundColor: active ? "#e7f1ff" : "#fff",
-        borderRadius: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 10,
+        gap: 4,
       }}
     >
-      <Text style={{ fontWeight: "600" }}>{label}</Text>
+      <Text style={{ fontSize: 22 }}>{icon}</Text>
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: active ? "700" : "400",
+          color: active ? "#0d6efd" : "#6c757d",
+        }}
+      >
+        {label}
+      </Text>
+      {active && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: "25%",
+            right: "25%",
+            height: 2,
+            backgroundColor: "#0d6efd",
+            borderRadius: 1,
+          }}
+        />
+      )}
     </Pressable>
   );
 }
