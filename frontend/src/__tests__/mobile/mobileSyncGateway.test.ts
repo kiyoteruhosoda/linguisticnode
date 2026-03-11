@@ -48,6 +48,7 @@ function createRepositoryMock(): MobileLearningRepositoryPort {
       serverRev: state.serverRev,
     })),
     exportVocabFile: vi.fn(() => createMockFile()),
+    importVocabFile: vi.fn(),
     applyServerFile: vi.fn((_file: VocabFile, serverRev: number, syncedAt: string) => {
       state.serverRev = serverRev;
       state.lastSyncAt = syncedAt;
