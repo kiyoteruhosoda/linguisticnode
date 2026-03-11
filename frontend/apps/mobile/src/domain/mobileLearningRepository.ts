@@ -78,6 +78,12 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
 
   getWord(wordId: string): WordEntry | null {
     return this.words.find((word) => word.id === wordId) ?? null;
+
+  getCard(wordId: string): StudyCard | null {
+    const word = this.getWord(wordId);
+    if (!word) return null;
+    return { word, memory: this.memoryMap[wordId] ?? this.createMemory(wordId) };
+  }
   }
 
   createWord(draft: WordDraft): WordEntry {
@@ -346,6 +352,10 @@ export class PersistedMobileLearningRepository implements MobileLearningReposito
 
   getWord(wordId: string): WordEntry | null {
     return this.repository.getWord(wordId);
+  }
+
+  getCard(wordId: string): StudyCard | null {
+    return this.repository.getCard(wordId);
   }
 
   createWord(draft: WordDraft): WordEntry {

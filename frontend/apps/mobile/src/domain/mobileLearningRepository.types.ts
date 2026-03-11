@@ -8,6 +8,7 @@ import type { VocabFile } from "../../../../src/db/types";
 export interface MobileLearningRepositoryPort {
   listWords(query: WordListQuery): WordListResult;
   getWord(wordId: string): WordEntry | null;
+  getCard(wordId: string): StudyCard | null;
   createWord(draft: WordDraft): WordEntry;
   updateWord(wordId: string, draft: WordDraft): WordEntry;
   deleteWord(wordId: string): void;

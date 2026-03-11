@@ -6,7 +6,11 @@ export function createMobileStudyGateway(repository: MobileLearningRepositoryPor
     async getTags() {
       return repository.listTags();
     },
-    async next(tags) {
+    async next(tags, preferredWordId) {
+      if (preferredWordId) {
+        const card = repository.getCard(preferredWordId);
+        if (card) return card;
+      }
       return repository.nextCard(tags);
     },
     async grade(wordId, rating) {
