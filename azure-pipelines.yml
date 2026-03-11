@@ -201,6 +201,8 @@ stages:
             eq(variables['Build.SourceBranchName'], 'preview'),
             eq(variables['Build.Reason'], 'IndividualCI')
           )
+        variables:
+          - group: keystore
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -269,6 +271,8 @@ stages:
             eq(variables['Build.SourceBranchName'], 'production'),
             eq(variables['Build.Reason'], 'IndividualCI')
           )
+        variables:
+          - group: keystore
         pool:
           vmImage: 'ubuntu-latest'
         steps:
