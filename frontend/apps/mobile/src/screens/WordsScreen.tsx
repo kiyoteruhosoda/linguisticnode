@@ -73,7 +73,7 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
 
   useEffect(() => {
     void load();
-    service.getTags().then(setAllTags).catch(() => {});
+    service.getAllTags().then(setAllTags).catch(() => {});
   }, [load, service]);
 
   const applyTagFilter = () => {
