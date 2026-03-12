@@ -324,72 +324,50 @@ export function ExamplesScreen({
                 {blankedSentence || example.en}
               </Text>
 
-              {/* Word info (always available, toggleable) */}
-              <Pressable
-                onPress={() => setShowWordInfo((v) => !v)}
-                style={({ pressed }) => ({
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  paddingVertical: 9,
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: showWordInfo ? "#0d6efd" : "#dee2e6",
-                  backgroundColor: showWordInfo ? "#e7f1ff" : pressed ? "#f1f3f5" : "#fff",
-                })}
-              >
-                <Ionicons
-                  name={showWordInfo ? "information-circle" : "information-circle-outline"}
-                  size={17}
-                  color={showWordInfo ? "#0d6efd" : "#495057"}
-                />
-                <Text style={{ fontSize: 14, fontWeight: "600", color: showWordInfo ? "#0d6efd" : "#495057" }}>
-                  {showWordInfo ? "Hide word info" : "Show word info"}
-                </Text>
-              </Pressable>
+              {/* Pre-answer: translation toggle (shows only example.ja) */}
+              {!showAnswer && (
+                <>
+                  <Pressable
+                    onPress={() => setShowWordInfo((v) => !v)}
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      paddingVertical: 9,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: showWordInfo ? "#0d6efd" : "#dee2e6",
+                      backgroundColor: showWordInfo ? "#e7f1ff" : pressed ? "#f1f3f5" : "#fff",
+                    })}
+                  >
+                    <Ionicons
+                      name={showWordInfo ? "eye-off-outline" : "eye-outline"}
+                      size={17}
+                      color={showWordInfo ? "#0d6efd" : "#495057"}
+                    />
+                    <Text style={{ fontSize: 14, fontWeight: "600", color: showWordInfo ? "#0d6efd" : "#495057" }}>
+                      {showWordInfo ? "Hide translation" : "Show translation"}
+                    </Text>
+                  </Pressable>
 
-              {showWordInfo && (
-                <View
-                  style={{
-                    backgroundColor: "#f8f9fa",
-                    borderRadius: 10,
-                    padding: 14,
-                    borderWidth: 1,
-                    borderColor: "#e9ecef",
-                    gap: 4,
-                  }}
-                >
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: "#212529" }}>{example.word.headword}</Text>
-                  <Text style={{ fontSize: 14, color: "#495057" }}>{example.word.meaningJa}</Text>
-                  {example.ja ? (
-                    <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 4, fontStyle: "italic" }}>{example.ja}</Text>
+                  {showWordInfo && example.ja ? (
+                    <View
+                      style={{
+                        backgroundColor: "#f8f9fa",
+                        borderRadius: 10,
+                        padding: 12,
+                        borderWidth: 1,
+                        borderColor: "#e9ecef",
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, color: "#6c757d", fontStyle: "italic" }}>{example.ja}</Text>
+                    </View>
                   ) : null}
-                </View>
+                </>
               )}
 
-              {/* Open in Study (always available) */}
-              {onNavigateToStudy && (
-                <Pressable
-                  onPress={() => onNavigateToStudy(example.word.id)}
-                  style={({ pressed }) => ({
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    paddingVertical: 9,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: "#6c757d",
-                    backgroundColor: pressed ? "#f1f3f5" : "#fff",
-                  })}
-                >
-                  <Ionicons name="school-outline" size={16} color="#6c757d" />
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#6c757d" }}>Open in Study</Text>
-                </Pressable>
-              )}
-
-              {/* Input area (before answer) */}
+              {/* Pre-answer: input + Check + Open in Study */}
               {!showAnswer ? (
                 <View style={{ gap: 10 }}>
                   <TextInput
@@ -423,56 +401,92 @@ export function ExamplesScreen({
                   >
                     <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Check</Text>
                   </Pressable>
+                  {onNavigateToStudy && (
+                    <Pressable
+                      onPress={() => onNavigateToStudy(example.word.id)}
+                      style={({ pressed }) => ({
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        paddingVertical: 9,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: "#6c757d",
+                        backgroundColor: pressed ? "#f1f3f5" : "#fff",
+                      })}
+                    >
+                      <Ionicons name="school-outline" size={16} color="#6c757d" />
+                      <Text style={{ fontSize: 14, fontWeight: "600", color: "#6c757d" }}>Open in Study</Text>
+                    </Pressable>
+                  )}
                 </View>
               ) : (
+                /* Post-answer */
                 <View style={{ gap: 10 }}>
-                  {/* Feedback */}
+                  {/* Feedback header */}
                   <View
                     style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                      paddingVertical: 10,
+                      paddingHorizontal: 14,
                       borderRadius: 10,
-                      padding: 14,
                       backgroundColor: feedback === "correct" ? "#d1e7dd" : "#f8d7da",
                       borderWidth: 1,
                       borderColor: feedback === "correct" ? "#a3cfbb" : "#f5c2c7",
+                    }}
+                  >
+                    <Ionicons
+                      name={feedback === "correct" ? "checkmark-circle-outline" : "close-circle-outline"}
+                      size={20}
+                      color={feedback === "correct" ? "#0a3622" : "#842029"}
+                    />
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: feedback === "correct" ? "#0a3622" : "#842029" }}>
+                      {feedback === "correct" ? "Correct!" : "Incorrect"}
+                    </Text>
+                  </View>
+
+                  {/* Word info (always shown after answering) */}
+                  <View
+                    style={{
+                      backgroundColor: "#f8f9fa",
+                      borderRadius: 10,
+                      padding: 14,
+                      borderWidth: 1,
+                      borderColor: "#e9ecef",
                       gap: 6,
                     }}
                   >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Ionicons
-                        name={feedback === "correct" ? "checkmark-circle-outline" : "close-circle-outline"}
-                        size={20}
-                        color={feedback === "correct" ? "#0a3622" : "#842029"}
-                      />
-                      <Text style={{ fontSize: 15, fontWeight: "700", color: feedback === "correct" ? "#0a3622" : "#842029" }}>
-                        {feedback === "correct" ? "Correct!" : "Incorrect"}
-                      </Text>
-                    </View>
-                    {feedback === "incorrect" && (
-                      <View style={{ gap: 4 }}>
-                        {submittedInput ? (
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <Text style={{ fontSize: 13, color: "#842029" }}>Your answer: </Text>
-                            <Text style={{ fontSize: 14, fontWeight: "600", color: "#842029", fontStyle: "italic" }}>
-                              {submittedInput}
-                            </Text>
-                          </View>
-                        ) : null}
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                          <Text style={{ fontSize: 13, color: "#842029" }}>Answer: </Text>
-                          <Text style={{ fontSize: 15, fontWeight: "700", color: "#842029" }}>
-                            {actualWord || example.word.headword}
-                          </Text>
-                          {canSpeak && (
-                            <Pressable
-                              onPress={() => mobileSpeechService.speakEnglish(actualWord || example.word.headword)}
-                              style={{ padding: 2 }}
-                            >
-                              <Ionicons name="volume-high-outline" size={16} color="#842029" />
-                            </Pressable>
-                          )}
-                        </View>
+                    {feedback === "incorrect" && submittedInput ? (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <Text style={{ fontSize: 13, color: "#842029" }}>Your answer:</Text>
+                        <Text style={{ fontSize: 14, fontWeight: "600", color: "#842029", fontStyle: "italic" }}>
+                          {submittedInput}
+                        </Text>
                       </View>
-                    )}
+                    ) : null}
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <Text style={{ fontSize: 17, fontWeight: "700", color: "#212529" }}>
+                        {actualWord || example.word.headword}
+                      </Text>
+                      {example.word.pronunciation ? (
+                        <Text style={{ fontSize: 14, color: "#6c757d" }}>({example.word.pronunciation})</Text>
+                      ) : null}
+                      {canSpeak && (
+                        <Pressable
+                          onPress={() => mobileSpeechService.speakEnglish(actualWord || example.word.headword)}
+                          style={{ padding: 2 }}
+                        >
+                          <Ionicons name="volume-high-outline" size={17} color="#495057" />
+                        </Pressable>
+                      )}
+                    </View>
+                    {example.ja ? (
+                      <Text style={{ fontSize: 13, color: "#6c757d", fontStyle: "italic" }}>{example.ja}</Text>
+                    ) : null}
+                    <Text style={{ fontSize: 14, color: "#495057" }}>{example.word.meaningJa}</Text>
                   </View>
 
                   {/* Retry button (incorrect only) */}
@@ -512,6 +526,27 @@ export function ExamplesScreen({
                     <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Next</Text>
                     <Ionicons name="arrow-forward" size={18} color="#fff" />
                   </Pressable>
+
+                  {/* Open in Study */}
+                  {onNavigateToStudy && (
+                    <Pressable
+                      onPress={() => onNavigateToStudy(example.word.id)}
+                      style={({ pressed }) => ({
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        paddingVertical: 9,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: "#6c757d",
+                        backgroundColor: pressed ? "#f1f3f5" : "#fff",
+                      })}
+                    >
+                      <Ionicons name="school-outline" size={16} color="#6c757d" />
+                      <Text style={{ fontSize: 14, fontWeight: "600", color: "#6c757d" }}>Open in Study</Text>
+                    </Pressable>
+                  )}
                 </View>
               )}
             </View>

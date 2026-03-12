@@ -104,6 +104,7 @@ export interface ExampleTestItem {
   word: {
     id: string;
     headword: string;
+    pronunciation?: string | null;
     pos: Pos;
     meaningJa: string;
     tags: string[];

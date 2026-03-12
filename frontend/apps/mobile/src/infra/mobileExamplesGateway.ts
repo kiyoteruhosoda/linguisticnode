@@ -19,6 +19,7 @@ export function createMobileExamplesGateway(repository: MobileLearningRepository
           word: {
             id: word.id,
             headword: word.headword,
+            pronunciation: word.pronunciation,
             pos: word.pos,
             meaningJa: word.meaningJa,
             tags: word.tags,

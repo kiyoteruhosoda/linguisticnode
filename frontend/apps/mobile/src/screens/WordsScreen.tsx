@@ -61,8 +61,22 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [appliedTags, setAppliedTags] = useState<string[]>([]);
 
-  // Android back button: when on edit/create sub-route, go back to list
-  // (App.tsx handles the root-level back; this runs first due to LIFO order)
+  // Bulk selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Android back button: selection mode → exit selection; edit/create → go back to list
+  useEffect(() => {
+    if (!selectionMode) return;
+    const onBackPress = () => {
+      setSelectionMode(false);
+      setSelectedIds([]);
+      return true;
+    };
+    const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => subscription.remove();
+  }, [selectionMode]);
+
   useEffect(() => {
     if (subRoute === "list") return;
     const onBackPress = () => {
@@ -191,6 +205,66 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
     }
   };
 
+  // Bulk handlers
+  const handleBulkDelete = async () => {
+    setBusy(true);
+    try {
+      for (const id of selectedIds) {
+        await service.deleteWord(id);
+      }
+      await load();
+      setSelectionMode(false);
+      setSelectedIds([]);
+    } catch {
+      setErrorMsg("Failed to delete some words");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleBulkResetMemory = async () => {
+    setBusy(true);
+    try {
+      for (const id of selectedIds) {
+        await service.resetWordMemory(id);
+      }
+      await load();
+      setSelectionMode(false);
+      setSelectedIds([]);
+    } catch {
+      setErrorMsg("Failed to reset some words");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleBulkChangeTags = async (newTags: string[], mode: "add" | "replace") => {
+    setBusy(true);
+    try {
+      for (const id of selectedIds) {
+        const word = words.find((w) => w.id === id);
+        if (!word) continue;
+        const tags = mode === "replace" ? newTags : [...new Set([...word.tags, ...newTags])];
+        await service.updateWord(id, {
+          headword: word.headword,
+          pronunciation: word.pronunciation ?? "",
+          pos: word.pos,
+          meaningJa: word.meaningJa,
+          examples: word.examples,
+          tags,
+          memo: word.memo ?? "",
+        });
+      }
+      await load();
+      setSelectionMode(false);
+      setSelectedIds([]);
+    } catch {
+      setErrorMsg("Failed to update tags for some words");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (subRoute === "create" || subRoute === "edit") {
     return (
       <WordFormView
@@ -218,6 +292,8 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
       selectedTags={selectedTags}
       appliedTags={appliedTags}
       busy={busy}
+      selectionMode={selectionMode}
+      selectedIds={selectedIds}
       onQueryChange={setQuery}
       onToggleSearch={() => {
         setShowSearch((v) => !v);
@@ -232,6 +308,23 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
       onClearTags={clearTagFilter}
       onSelectWord={openEdit}
       onAdd={openCreate}
+      onLongPressWord={(wordId) => {
+        setSelectionMode(true);
+        setSelectedIds([wordId]);
+      }}
+      onToggleSelection={(wordId) => {
+        setSelectedIds((prev) =>
+          prev.includes(wordId) ? prev.filter((id) => id !== wordId) : [...prev, wordId],
+        );
+      }}
+      onCancelSelection={() => {
+        setSelectionMode(false);
+        setSelectedIds([]);
+      }}
+      onSelectAll={() => setSelectedIds(words.map((w) => w.id))}
+      onBulkDelete={() => void handleBulkDelete()}
+      onBulkResetMemory={() => void handleBulkResetMemory()}
+      onBulkChangeTags={(tags, mode) => void handleBulkChangeTags(tags, mode)}
     />
   );
 }
@@ -248,6 +341,8 @@ function WordListView({
   selectedTags,
   appliedTags,
   busy,
+  selectionMode,
+  selectedIds,
   onQueryChange,
   onToggleSearch,
   onToggleTagPanel,
@@ -256,6 +351,13 @@ function WordListView({
   onClearTags,
   onSelectWord,
   onAdd,
+  onLongPressWord,
+  onToggleSelection,
+  onCancelSelection,
+  onSelectAll,
+  onBulkDelete,
+  onBulkResetMemory,
+  onBulkChangeTags,
 }: {
   words: WordItem[];
   memoryMap: Record<string, MemoryState>;
@@ -266,6 +368,8 @@ function WordListView({
   selectedTags: string[];
   appliedTags: string[];
   busy: boolean;
+  selectionMode: boolean;
+  selectedIds: string[];
   onQueryChange: (q: string) => void;
   onToggleSearch: () => void;
   onToggleTagPanel: () => void;
@@ -274,7 +378,33 @@ function WordListView({
   onClearTags: () => void;
   onSelectWord: (w: WordItem) => void;
   onAdd: () => void;
+  onLongPressWord: (wordId: string) => void;
+  onToggleSelection: (wordId: string) => void;
+  onCancelSelection: () => void;
+  onSelectAll: () => void;
+  onBulkDelete: () => void;
+  onBulkResetMemory: () => void;
+  onBulkChangeTags: (tags: string[], mode: "add" | "replace") => void;
 }) {
+  const [bulkConfirm, setBulkConfirm] = useState<"delete" | "reset" | null>(null);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [tagMode, setTagMode] = useState<"add" | "replace">("add");
+
+  const handleBulkConfirm = () => {
+    if (bulkConfirm === "delete") onBulkDelete();
+    if (bulkConfirm === "reset") onBulkResetMemory();
+    setBulkConfirm(null);
+  };
+
+  const handleApplyTags = () => {
+    const tags = tagInput.split(",").map((t) => t.trim()).filter(Boolean);
+    onBulkChangeTags(tags, tagMode);
+    setShowTagModal(false);
+    setTagInput("");
+    setTagMode("add");
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
       {/* Header */}
@@ -288,43 +418,77 @@ function WordListView({
           borderBottomColor: "#e9ecef",
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Vocabulary</Text>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {allTags.length > 0 && (
+        {selectionMode ? (
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: "#212529" }}>
+              {selectedIds.length} selected
+            </Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
               <Pressable
-                onPress={onToggleTagPanel}
+                onPress={onSelectAll}
+                style={({ pressed }) => ({
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: pressed ? "#e7f1ff" : "#f1f3f5",
+                })}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "600", color: "#0d6efd" }}>All</Text>
+              </Pressable>
+              <Pressable
+                onPress={onCancelSelection}
+                style={({ pressed }) => ({
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: pressed ? "#f1f3f5" : "#fff",
+                  borderWidth: 1,
+                  borderColor: "#dee2e6",
+                })}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "600", color: "#495057" }}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Words</Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {allTags.length > 0 && (
+                <Pressable
+                  onPress={onToggleTagPanel}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: appliedTags.length > 0 ? "#e7f1ff" : "#f1f3f5",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: appliedTags.length > 0 ? 1 : 0,
+                    borderColor: "#0d6efd",
+                  }}
+                >
+                  <Ionicons name="pricetag-outline" size={17} color={appliedTags.length > 0 ? "#0d6efd" : "#495057"} />
+                </Pressable>
+              )}
+              <Pressable
+                onPress={onToggleSearch}
                 style={{
                   width: 36,
                   height: 36,
                   borderRadius: 18,
-                  backgroundColor: appliedTags.length > 0 ? "#e7f1ff" : "#f1f3f5",
+                  backgroundColor: showSearch ? "#e7f1ff" : "#f1f3f5",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderWidth: appliedTags.length > 0 ? 1 : 0,
-                  borderColor: "#0d6efd",
                 }}
               >
-                <Ionicons name="pricetag-outline" size={17} color={appliedTags.length > 0 ? "#0d6efd" : "#495057"} />
+                <Ionicons name={showSearch ? "close" : "search"} size={18} color={showSearch ? "#0d6efd" : "#495057"} />
               </Pressable>
-            )}
-            <Pressable
-              onPress={onToggleSearch}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: showSearch ? "#e7f1ff" : "#f1f3f5",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Ionicons name={showSearch ? "close" : "search"} size={18} color={showSearch ? "#0d6efd" : "#495057"} />
-            </Pressable>
+            </View>
           </View>
-        </View>
+        )}
 
-        {showSearch && (
+        {!selectionMode && showSearch && (
           <TextInput
             value={query}
             onChangeText={onQueryChange}
@@ -347,7 +511,7 @@ function WordListView({
       </View>
 
       {/* Tag Filter Panel */}
-      {showTagPanel && allTags.length > 0 && (
+      {!selectionMode && showTagPanel && allTags.length > 0 && (
         <View
           style={{
             backgroundColor: "#fff",
@@ -425,19 +589,28 @@ function WordListView({
         <FlatList
           data={words}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, paddingBottom: 96, gap: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, paddingBottom: selectionMode ? 80 : 96, gap: 8 }}
           renderItem={({ item }) => {
             const memory = memoryMap[item.id];
             const memInfo = memory ? getMemoryInfo(memory.memoryLevel) : null;
+            const isSelected = selectedIds.includes(item.id);
             return (
               <Pressable
-                onPress={() => onSelectWord(item)}
+                onPress={() => {
+                  if (selectionMode) {
+                    onToggleSelection(item.id);
+                  } else {
+                    onSelectWord(item);
+                  }
+                }}
+                onLongPress={() => onLongPressWord(item.id)}
+                delayLongPress={400}
                 style={({ pressed }) => ({
-                  backgroundColor: pressed ? "#e7f1ff" : "#fff",
+                  backgroundColor: isSelected ? "#e7f1ff" : pressed ? "#e7f1ff" : "#fff",
                   borderRadius: 12,
                   padding: 14,
-                  borderWidth: 1,
-                  borderColor: "#e9ecef",
+                  borderWidth: isSelected ? 2 : 1,
+                  borderColor: isSelected ? "#0d6efd" : "#e9ecef",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.06,
@@ -446,6 +619,24 @@ function WordListView({
                 })}
               >
                 <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                  {selectionMode && (
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        borderWidth: 2,
+                        borderColor: isSelected ? "#0d6efd" : "#adb5bd",
+                        backgroundColor: isSelected ? "#0d6efd" : "#fff",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 10,
+                        marginTop: 1,
+                      }}
+                    >
+                      {isSelected && <Ionicons name="checkmark" size={13} color="#fff" />}
+                    </View>
+                  )}
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 17, fontWeight: "700", color: "#212529" }}>{item.headword}</Text>
                     <Text style={{ fontSize: 15, color: "#495057", marginTop: 4 }}>{item.meaningJa}</Text>
@@ -479,28 +670,238 @@ function WordListView({
         />
       )}
 
-      {/* FAB */}
-      <Pressable
-        onPress={onAdd}
-        style={({ pressed }) => ({
-          position: "absolute",
-          bottom: 24,
-          right: 20,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          backgroundColor: pressed ? "#0b5ed7" : "#0d6efd",
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#0d6efd",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.35,
-          shadowRadius: 8,
-          elevation: 6,
-        })}
-      >
-        <Ionicons name="add" size={32} color="#fff" />
-      </Pressable>
+      {/* FAB (normal mode only) */}
+      {!selectionMode && (
+        <Pressable
+          onPress={onAdd}
+          style={({ pressed }) => ({
+            position: "absolute",
+            bottom: 24,
+            right: 20,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            backgroundColor: pressed ? "#0b5ed7" : "#0d6efd",
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#0d6efd",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 6,
+          })}
+        >
+          <Ionicons name="add" size={32} color="#fff" />
+        </Pressable>
+      )}
+
+      {/* Bulk Action Bar (selection mode only) */}
+      {selectionMode && (
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            flexDirection: "row",
+            backgroundColor: "#fff",
+            borderTopWidth: 1,
+            borderTopColor: "#e9ecef",
+            paddingVertical: 10,
+            paddingHorizontal: 12,
+            gap: 8,
+          }}
+        >
+          <Pressable
+            onPress={() => {
+              setTagInput("");
+              setTagMode("add");
+              setShowTagModal(true);
+            }}
+            disabled={selectedIds.length === 0 || busy}
+            style={({ pressed }) => ({
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: selectedIds.length === 0 ? "#dee2e6" : "#0d6efd",
+              backgroundColor: pressed && selectedIds.length > 0 ? "#e7f1ff" : "#fff",
+              alignItems: "center",
+              gap: 4,
+            })}
+          >
+            <Ionicons name="pricetag-outline" size={18} color={selectedIds.length === 0 ? "#adb5bd" : "#0d6efd"} />
+            <Text style={{ fontSize: 11, fontWeight: "600", color: selectedIds.length === 0 ? "#adb5bd" : "#0d6efd" }}>Tags</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setBulkConfirm("reset")}
+            disabled={selectedIds.length === 0 || busy}
+            style={({ pressed }) => ({
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: selectedIds.length === 0 ? "#dee2e6" : "#fd7e14",
+              backgroundColor: pressed && selectedIds.length > 0 ? "#fff4e6" : "#fff",
+              alignItems: "center",
+              gap: 4,
+            })}
+          >
+            <Ionicons name="refresh-outline" size={18} color={selectedIds.length === 0 ? "#adb5bd" : "#fd7e14"} />
+            <Text style={{ fontSize: 11, fontWeight: "600", color: selectedIds.length === 0 ? "#adb5bd" : "#fd7e14" }}>Reset</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setBulkConfirm("delete")}
+            disabled={selectedIds.length === 0 || busy}
+            style={({ pressed }) => ({
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: selectedIds.length === 0 ? "#dee2e6" : "#dc3545",
+              backgroundColor: pressed && selectedIds.length > 0 ? "#fff5f5" : "#fff",
+              alignItems: "center",
+              gap: 4,
+            })}
+          >
+            <Ionicons name="trash-outline" size={18} color={selectedIds.length === 0 ? "#adb5bd" : "#dc3545"} />
+            <Text style={{ fontSize: 11, fontWeight: "600", color: selectedIds.length === 0 ? "#adb5bd" : "#dc3545" }}>Delete</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Bulk confirm dialog */}
+      <ConfirmModal
+        visible={bulkConfirm !== null}
+        title={bulkConfirm === "delete" ? `Delete ${selectedIds.length} word${selectedIds.length !== 1 ? "s" : ""}?` : `Reset memory for ${selectedIds.length} word${selectedIds.length !== 1 ? "s" : ""}?`}
+        message={
+          bulkConfirm === "delete"
+            ? "This action cannot be undone."
+            : "Learning progress for the selected words will be reset."
+        }
+        confirmLabel={bulkConfirm === "delete" ? "Delete" : "Reset"}
+        confirmColor={bulkConfirm === "delete" ? "#dc3545" : "#fd7e14"}
+        onConfirm={handleBulkConfirm}
+        onCancel={() => setBulkConfirm(null)}
+      />
+
+      {/* Tag modal */}
+      <Modal visible={showTagModal} transparent animationType="slide" onRequestClose={() => setShowTagModal(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }}>
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 24,
+              gap: 16,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={{ fontSize: 18, fontWeight: "700", color: "#212529" }}>
+                Change Tags ({selectedIds.length} words)
+              </Text>
+              <Pressable onPress={() => setShowTagModal(false)} hitSlop={8}>
+                <Ionicons name="close" size={24} color="#6c757d" />
+              </Pressable>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6c757d" }}>Mode</Text>
+              {(["add", "replace"] as const).map((m) => (
+                <Pressable
+                  key={m}
+                  onPress={() => setTagMode(m)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 10,
+                    borderWidth: 2,
+                    borderColor: tagMode === m ? "#0d6efd" : "#dee2e6",
+                    backgroundColor: tagMode === m ? "#e7f1ff" : "#f8f9fa",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      borderWidth: 2,
+                      borderColor: tagMode === m ? "#0d6efd" : "#adb5bd",
+                      backgroundColor: tagMode === m ? "#0d6efd" : "#fff",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {tagMode === m && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#fff" }} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: "#212529" }}>
+                      {m === "add" ? "Add tags" : "Replace tags"}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#6c757d", marginTop: 2 }}>
+                      {m === "add" ? "Add to existing tags" : "Replace all existing tags"}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6c757d", marginBottom: 6 }}>
+                Tags (comma-separated)
+              </Text>
+              <TextInput
+                value={tagInput}
+                onChangeText={setTagInput}
+                placeholder="e.g. TOEFL, important"
+                placeholderTextColor="#adb5bd"
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#dee2e6",
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  fontSize: 15,
+                  color: "#212529",
+                  backgroundColor: "#f8f9fa",
+                }}
+              />
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Pressable
+                onPress={() => setShowTagModal(false)}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  paddingVertical: 13,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: "#dee2e6",
+                  backgroundColor: pressed ? "#f1f3f5" : "#fff",
+                  alignItems: "center",
+                })}
+              >
+                <Text style={{ fontWeight: "600", color: "#495057" }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleApplyTags}
+                style={({ pressed }) => ({
+                  flex: 2,
+                  paddingVertical: 13,
+                  borderRadius: 10,
+                  backgroundColor: pressed ? "#0b5ed7" : "#0d6efd",
+                  alignItems: "center",
+                })}
+              >
+                <Text style={{ fontWeight: "700", color: "#fff" }}>Apply</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

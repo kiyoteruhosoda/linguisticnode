@@ -84,7 +84,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           borderBottomColor: "#e9ecef",
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Data</Text>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: "#212529" }}>Settings</Text>
       </View>
 
       <ScrollView
@@ -133,6 +133,39 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           </View>
           {!exporting && <Ionicons name="chevron-forward" size={18} color="#adb5bd" />}
         </Pressable>
+
+        {/* App Version */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+            backgroundColor: "#fff",
+            borderRadius: 14,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: "#e9ecef",
+          }}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#f3f0ff",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="information-circle-outline" size={22} color="#5f3dc4" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: "#212529" }}>App Version</Text>
+            <Text style={{ fontSize: 13, color: "#6c757d", marginTop: 2 }}>
+              {process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0"}
+            </Text>
+          </View>
+        </View>
 
         {/* Import */}
         <Pressable
