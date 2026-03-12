@@ -180,6 +180,7 @@ stages:
               EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
               EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
               EXPO_PUBLIC_ANDROID_APPLICATION_ID: com.linguisticnode.app
+              EXPO_PUBLIC_GIT_COMMIT: $(Build.SourceVersion)
 
           - script: |
               ./gradlew assembleDebug
@@ -233,6 +234,7 @@ stages:
               EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
               EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
               EXPO_PUBLIC_ANDROID_APPLICATION_ID: com.linguisticnode.app
+              EXPO_PUBLIC_GIT_COMMIT: $(Build.SourceVersion)
 
           - task: DownloadSecureFile@1
             name: androidKeystore
@@ -303,6 +305,7 @@ stages:
               EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
               EXPO_PUBLIC_ANDROID_VERSION_CODE: $(Build.BuildId)
               EXPO_PUBLIC_ANDROID_APPLICATION_ID: com.linguisticnode.app
+              EXPO_PUBLIC_GIT_COMMIT: $(Build.SourceVersion)
 
           # キーストアファイルを Secure Files からダウンロード
           # 事前に Pipelines → Library → Secure files へ keystore を登録してください
