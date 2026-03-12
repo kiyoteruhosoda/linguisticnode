@@ -186,6 +186,9 @@ stages:
               ./gradlew assembleDebug
             workingDirectory: frontend/apps/mobile/android
             displayName: 'Gradle assembleDebug (APK)'
+            env:
+              EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
+              EXPO_PUBLIC_GIT_COMMIT: $(Build.SourceVersion)
 
           - task: PublishPipelineArtifact@1
             inputs:
@@ -256,6 +259,8 @@ stages:
               KEY_PASSWORD: $(KEY_PASSWORD)
               NODE_ENV: production
               NODE_PATH: $(Build.SourcesDirectory)/frontend/node_modules
+              EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
+              EXPO_PUBLIC_GIT_COMMIT: $(Build.SourceVersion)
 
           - task: PublishPipelineArtifact@1
             inputs:
@@ -329,6 +334,8 @@ stages:
               KEY_PASSWORD: $(KEY_PASSWORD)
               NODE_ENV: production
               NODE_PATH: $(Build.SourcesDirectory)/frontend/node_modules
+              EXPO_PUBLIC_APP_VERSION: $(Build.BuildNumber)
+              EXPO_PUBLIC_GIT_COMMIT: $(Build.SourceVersion)
 
           - task: PublishPipelineArtifact@1
             inputs:

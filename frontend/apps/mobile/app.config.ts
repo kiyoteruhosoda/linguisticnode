@@ -15,6 +15,16 @@ const config: ExpoConfig = {
   platforms: ['ios', 'android', 'web'],
   newArchEnabled: true,
 
+  icon: './assets/icon.png',
+  splash: {
+    image: './assets/splash.png',
+    resizeMode: 'contain',
+    backgroundColor: '#0d6efd',
+  },
+  web: {
+    favicon: './assets/favicon.png',
+  },
+
   ios: {
     bundleIdentifier: process.env.EXPO_PUBLIC_IOS_BUNDLE_ID ?? 'com.linguisticnode.app',
     infoPlist: {
@@ -27,6 +37,10 @@ const config: ExpoConfig = {
     package: process.env.EXPO_PUBLIC_ANDROID_APPLICATION_ID ?? 'com.linguisticnode.app',
     versionCode: Number.isNaN(versionCode) ? 1 : versionCode,
     permissions: [],
+    adaptiveIcon: {
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#0d6efd',
+    },
   },
 
   plugins: [
