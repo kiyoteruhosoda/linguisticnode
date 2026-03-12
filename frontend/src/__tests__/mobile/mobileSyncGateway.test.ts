@@ -23,6 +23,7 @@ function createRepositoryMock(): MobileLearningRepositoryPort {
   return {
     listWords: vi.fn(),
     getWord: vi.fn(),
+    getCard: vi.fn(),
     createWord: vi.fn(),
     updateWord: vi.fn(),
     deleteWord: vi.fn(),
