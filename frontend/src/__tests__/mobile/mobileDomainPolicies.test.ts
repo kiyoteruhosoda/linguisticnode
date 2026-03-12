@@ -20,7 +20,7 @@ function makeItem(id: string, wordId: string): ExampleTestItem {
       id: wordId,
       headword: `word-${wordId}`,
       pronunciation: null,
-      pos: "n",
+      pos: "noun",
       meaningJa: `意味-${wordId}`,
       tags: [],
     },
@@ -98,7 +98,7 @@ describe("normalizeVocabFileForImport", () => {
       words: [
         {
           headword: "test",
-          pos: "n",
+          pos: "noun",
           meaningJa: "テスト",
           examples: [{ en: "example sentence", ja: null }],
         },
@@ -120,7 +120,7 @@ describe("normalizeVocabFileForImport", () => {
         {
           id: "existing-word-id",
           headword: "test",
-          pos: "n",
+          pos: "noun",
           meaningJa: "テスト",
           examples: [{ id: "existing-ex-id", en: "example", ja: null }],
         },
@@ -139,8 +139,8 @@ describe("normalizeVocabFileForImport", () => {
       {
         schemaVersion: 1,
         words: [
-          { headword: "a", pos: "n", meaningJa: "a", examples: [{ en: "ex", ja: null }] },
-          { headword: "b", pos: "n", meaningJa: "b", examples: [] },
+          { headword: "a", pos: "noun", meaningJa: "a", examples: [{ en: "ex", ja: null }] },
+          { headword: "b", pos: "noun", meaningJa: "b", examples: [] },
         ],
       },
       { generateId },
@@ -157,7 +157,7 @@ describe("normalizeVocabFileForImport", () => {
     const result = normalizeVocabFileForImport(
       {
         schemaVersion: 1,
-        words: [{ headword: "test", pos: "n", meaningJa: "テスト", examples: [] }],
+        words: [{ headword: "test", pos: "noun", meaningJa: "テスト", examples: [] }],
       },
       { now: fixedNow },
     );
@@ -220,7 +220,7 @@ describe("MobileLearningRepository clock injection", () => {
     const word = repo.createWord({
       headword: "clock-test",
       pronunciation: null,
-      pos: "n",
+      pos: "noun",
       meaningJa: "時計テスト",
       examples: [],
       tags: [],
@@ -237,7 +237,7 @@ describe("MobileLearningRepository clock injection", () => {
     const word = repo.createWord({
       headword: "grade-test",
       pronunciation: null,
-      pos: "n",
+      pos: "noun",
       meaningJa: "採点テスト",
       examples: [],
       tags: [],
@@ -259,7 +259,7 @@ describe("MobileLearningRepository clock injection", () => {
     const draft = {
       headword: "timing",
       pronunciation: null,
-      pos: "n" as const,
+      pos: "noun" as const,
       meaningJa: "タイミング",
       examples: [],
       tags: [],

@@ -15,7 +15,7 @@ function makeWord(id: string, extras: Partial<WordEntry> = {}): WordEntry {
     id,
     headword: `word-${id}`,
     pronunciation: null,
-    pos: "n",
+    pos: "noun",
     meaningJa: `意味-${id}`,
     examples: [],
     tags: [],
@@ -23,23 +23,6 @@ function makeWord(id: string, extras: Partial<WordEntry> = {}): WordEntry {
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     ...extras,
-  };
-}
-
-function makeCard(wordId: string): StudyCard {
-  return {
-    wordId,
-    headword: `word-${wordId}`,
-    pronunciation: null,
-    pos: "n",
-    meaningJa: `意味-${wordId}`,
-    examples: [],
-    tags: [],
-    memo: null,
-    memoryLevel: 0,
-    ease: 2.5,
-    intervalDays: 1,
-    dueAt: "2026-01-01T00:00:00.000Z",
   };
 }
 
@@ -54,6 +37,13 @@ function makeMemoryState(wordId: string): MemoryState {
     lastReviewedAt: null,
     lapseCount: 0,
     reviewCount: 0,
+  };
+}
+
+function makeCard(wordId: string): StudyCard {
+  return {
+    word: makeWord(wordId),
+    memory: makeMemoryState(wordId),
   };
 }
 
@@ -293,7 +283,7 @@ describe("createMobileIoGateway", () => {
         words: [
           {
             headword: "test",
-            pos: "n",
+            pos: "noun",
             meaningJa: "テスト",
             examples: [],
           },
@@ -333,7 +323,7 @@ describe("createMobileIoGateway", () => {
           {
             id: "existing-id-123",
             headword: "preserve",
-            pos: "v",
+            pos: "verb",
             meaningJa: "保持",
             examples: [{ id: "ex-id-456", en: "example", ja: null }],
           },
@@ -363,7 +353,7 @@ describe("createMobileIoGateway", () => {
     gateway.importData(
       {
         schemaVersion: 1,
-        words: [{ id: "w1", headword: "test", pos: "n", meaningJa: "テスト", examples: [] }],
+        words: [{ id: "w1", headword: "test", pos: "noun", meaningJa: "テスト", examples: [] }],
         memory: [{ wordId: "w1" }],
       },
       "merge",

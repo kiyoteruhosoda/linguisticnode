@@ -84,10 +84,10 @@ export function StudyScreen({
   ];
 
   function getMemoryInfo(level: number) {
-    if (level === 0) return colors.memNew;
-    if (level <= 3) return colors.memLearning;
-    if (level <= 6) return colors.memReview;
-    return colors.memMastered;
+    if (level === 0) return { ...colors.memNew, label: "New" };
+    if (level <= 3) return { ...colors.memLearning, label: "Learning" };
+    if (level <= 6) return { ...colors.memReview, label: "Review" };
+    return { ...colors.memMastered, label: "Mastered" };
   }
 
   if (loading) {

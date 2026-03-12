@@ -33,7 +33,7 @@ function makeRepo() {
 const DRAFT = {
   headword: "serendipity",
   pronunciation: "ˌsɛrənˈdɪpɪti",
-  pos: "n" as const,
+  pos: "noun" as const,
   meaningJa: "思いがけない幸運",
   examples: [],
   tags: ["daily"],
@@ -117,9 +117,9 @@ describe("MobileLearningRepository listWords", () => {
 
   it("filters by pos", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, pos: "v" });
-    const result = repo.listWords({ pos: "v" });
-    expect(result.words.every((w) => w.pos === "v")).toBe(true);
+    repo.createWord({ ...DRAFT, pos: "verb" });
+    const result = repo.listWords({ pos: "verb" });
+    expect(result.words.every((w) => w.pos === "verb")).toBe(true);
     expect(result.total).toBeGreaterThanOrEqual(1);
   });
 
@@ -380,7 +380,7 @@ describe("MobileLearningRepository importVocabFile", () => {
             id: "brand-new-id",
             headword: "new-word",
             pronunciation: null,
-            pos: "n",
+            pos: "noun",
             meaningJa: "新しい",
             examples: [],
             tags: [],
@@ -442,7 +442,7 @@ describe("MobileLearningRepository importVocabFile", () => {
             id: "only-word",
             headword: "overwrite",
             pronunciation: null,
-            pos: "n",
+            pos: "noun",
             meaningJa: "上書き",
             examples: [],
             tags: [],
@@ -478,7 +478,7 @@ describe("MobileLearningRepository applyServerFile", () => {
             id: "server-word",
             headword: "server",
             pronunciation: null,
-            pos: "n",
+            pos: "noun",
             meaningJa: "サーバー",
             examples: [],
             tags: [],
