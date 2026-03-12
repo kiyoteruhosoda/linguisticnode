@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createMobileExamplesGateway } from "../../../apps/mobile/src/infra/mobileExamplesGateway";
 import { createMobileIoGateway } from "../../../apps/mobile/src/infra/mobileIoGateway";
 import { createMobileStudyGateway } from "../../../apps/mobile/src/infra/mobileStudyGateway";
+import { createMobileWordGateway } from "../../../apps/mobile/src/infra/mobileWordGateway";
 import type { MobileLearningRepositoryPort } from "../../../apps/mobile/src/domain/mobileLearningRepository.types";
 import type { WordEntry, MemoryState } from "../../api/types";
 import type { StudyCard } from "../../core/study/studyGateway";
@@ -373,5 +374,55 @@ describe("createMobileIoGateway", () => {
     expect(calledFile.memory[0].memoryLevel).toBe(0);
     expect(calledFile.memory[0].ease).toBe(2.5);
     expect(calledFile.memory[0].intervalDays).toBe(0);
+  });
+});
+
+// ── mobileWordGateway ─────────────────────────────────────────────────────────
+
+describe("createMobileWordGateway", () => {
+  it("exportWords returns AppData structure with all words and memory", async () => {
+    const words = [makeWord("w1"), makeWord("w2")];
+    const mem = makeMemoryState("w1");
+    const repo = createRepoMock({
+      listWords: vi.fn(() => ({
+        words,
+        memoryMap: { "w1": mem },
+        total: words.length,
+      })),
+    });
+    const gateway = createMobileWordGateway(repo);
+
+    const result = await gateway.exportWords();
+
+    expect(result.schemaVersion).toBe(1);
+    expect(result.words).toBe(words);
+    expect(result.memory).toEqual([mem]);
+    expect(typeof result.exportedAt).toBe("string");
+  });
+
+  it("getTags returns sorted unique tags across all words", async () => {
+    const repo = createRepoMock({
+      listWords: vi.fn(() => ({
+        words: [
+          makeWord("w1", { tags: ["zzz", "aaa"] }),
+          makeWord("w2", { tags: ["aaa", "mmm"] }),
+        ],
+        memoryMap: {},
+        total: 2,
+      })),
+    });
+    const gateway = createMobileWordGateway(repo);
+
+    const tags = await gateway.getTags();
+
+    expect(tags).toEqual(["aaa", "mmm", "zzz"]);
+  });
+
+  it("getTags returns empty array when no words have tags", async () => {
+    const repo = createRepoMock({
+      listWords: vi.fn(() => ({ words: [makeWord("w1")], memoryMap: {}, total: 1 })),
+    });
+    const gateway = createMobileWordGateway(repo);
+    expect(await gateway.getTags()).toEqual([]);
   });
 });

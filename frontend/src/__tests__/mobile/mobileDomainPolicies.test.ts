@@ -5,6 +5,7 @@ import {
 } from "../../../apps/mobile/src/domain/exampleNavigationPolicy";
 import { normalizeVocabFileForImport } from "../../../apps/mobile/src/domain/vocabFileNormalizer";
 import { MobileLearningRepository } from "../../../apps/mobile/src/domain/mobileLearningRepository";
+import { generateUUID } from "../../../apps/mobile/src/domain/mobileUuid";
 import type { ExampleTestItem } from "../../api/types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -25,6 +26,21 @@ function makeItem(id: string, wordId: string): ExampleTestItem {
     },
   };
 }
+
+// ── generateUUID ─────────────────────────────────────────────────────────────
+
+describe("generateUUID", () => {
+  const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it("generates a valid UUID v4 string", () => {
+    expect(generateUUID()).toMatch(UUID_V4_PATTERN);
+  });
+
+  it("generates unique values on each call", () => {
+    const ids = new Set(Array.from({ length: 100 }, () => generateUUID()));
+    expect(ids.size).toBe(100);
+  });
+});
 
 // ── exampleNavigationPolicy ───────────────────────────────────────────────────
 
@@ -64,6 +80,12 @@ describe("selectNextExample", () => {
     expect(selectNextExample(items, null, () => 0.9)?.id).toBe("ex3");
     // random() returning 0.1 → floor(0.1 * 3) = 0 → items[0]
     expect(selectNextExample(items, null, () => 0.1)?.id).toBe("ex1");
+  });
+
+  it("treats unknown lastExampleId as index -1 and advances to items[0]", () => {
+    // currentIdx = -1, nextIdx = 0 → items[0]
+    const items = [makeItem("ex1", "w1"), makeItem("ex2", "w1")];
+    expect(selectNextExample(items, "no-such-id")?.id).toBe("ex1");
   });
 });
 
