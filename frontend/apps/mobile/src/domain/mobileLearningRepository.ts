@@ -5,17 +5,10 @@ import type { SyncResult, SyncStatus, SyncSuccess } from "../../../../src/core/s
 import type { ConflictResolution, VocabFile } from "../../../../src/db/types";
 import type { StorageAdapter } from "../../../../src/core/storage";
 import type { MobileLearningRepositoryPort } from "./mobileLearningRepository.types";
+import { generateUUID } from "./mobileUuid";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MOBILE_REPOSITORY_STORAGE_KEY = "mobile.learning-repository.v1";
-
-function nowIso(): string {
-  return new Date().toISOString();
-}
-
-function uid(): string {
-  return `mobile-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 function nextIntervalByRating(rating: Rating, current: number): number {
   switch (rating) {
@@ -39,13 +32,19 @@ interface MobileLearningRepositorySnapshot {
 }
 
 export class MobileLearningRepository implements MobileLearningRepositoryPort {
+  private readonly clock: () => number;
   private words: WordEntry[] = [];
   private memoryMap: Record<string, MemoryState> = {};
   private serverRev = 1;
   private lastSyncAt: string | null = null;
   private dirty = false;
 
-  constructor() {
+  /**
+   * @param clock 現在時刻を返す関数（ms）。テストで固定時刻を注入できる。
+   *              省略時は Date.now を使用する。
+   */
+  constructor(clock: () => number = Date.now) {
+    this.clock = clock;
     this.seed();
   }
 
@@ -87,10 +86,10 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
   }
 
   createWord(draft: WordDraft): WordEntry {
-    const timestamp = nowIso();
+    const timestamp = new Date(this.clock()).toISOString();
     const word: WordEntry = {
       ...draft,
-      id: uid(),
+      id: generateUUID(),
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -113,7 +112,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       ...draft,
       id: current.id,
       createdAt: current.createdAt,
-      updatedAt: nowIso(),
+      updatedAt: new Date(this.clock()).toISOString(),
     };
 
     this.words[idx] = updated;
@@ -162,7 +161,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
   gradeCard(wordId: string, rating: Rating): MemoryState {
     const current = this.memoryMap[wordId] ?? this.createMemory(wordId);
     const intervalDays = nextIntervalByRating(rating, current.intervalDays);
-    const now = Date.now();
+    const now = this.clock();
 
     const next: MemoryState = {
       ...current,
@@ -195,7 +194,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       schemaVersion: 1,
       words: this.words,
       memory: Object.values(this.memoryMap),
-      updatedAt: nowIso(),
+      updatedAt: new Date(this.clock()).toISOString(),
     };
   }
 
@@ -247,7 +246,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
 
   sync(): SyncResult {
     this.serverRev += 1;
-    this.lastSyncAt = nowIso();
+    this.lastSyncAt = new Date(this.clock()).toISOString();
     this.dirty = false;
 
     return {
@@ -260,7 +259,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
   resolveConflict(strategy: ConflictResolution): SyncSuccess {
     void strategy;
     this.serverRev += 1;
-    this.lastSyncAt = nowIso();
+    this.lastSyncAt = new Date(this.clock()).toISOString();
     this.dirty = false;
     return {
       status: "success",
@@ -297,7 +296,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       memoryLevel: 0,
       ease: 2.5,
       intervalDays: 1,
-      dueAt: nowIso(),
+      dueAt: new Date(this.clock()).toISOString(),
       lastRating: null,
       lastReviewedAt: null,
       lapseCount: 0,
@@ -311,7 +310,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       pronunciation: "juːˈbɪkwɪtəs",
       pos: "adj",
       meaningJa: "いたるところに存在する",
-      examples: [{ id: uid(), en: "Smartphones are ubiquitous.", ja: "スマートフォンはどこにでもある。", source: null }],
+      examples: [{ id: generateUUID(), en: "Smartphones are ubiquitous.", ja: "スマートフォンはどこにでもある。", source: null }],
       tags: ["daily", "advanced"],
       memo: "Useful for essays",
     });
@@ -320,7 +319,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       pronunciation: "məˈtɪkjʊləs",
       pos: "adj",
       meaningJa: "細部まで注意深い",
-      examples: [{ id: uid(), en: "She is meticulous about notes.", ja: "彼女はノートを几帳面に取る。", source: null }],
+      examples: [{ id: generateUUID(), en: "She is meticulous about notes.", ja: "彼女はノートを几帳面に取る。", source: null }],
       tags: ["writing"],
       memo: null,
     });
@@ -339,8 +338,11 @@ export class PersistedMobileLearningRepository implements MobileLearningReposito
     this.storage = storage;
   }
 
-  static async create(storage: StorageAdapter): Promise<PersistedMobileLearningRepository> {
-    const repository = new MobileLearningRepository();
+  static async create(
+    storage: StorageAdapter,
+    clock?: () => number,
+  ): Promise<PersistedMobileLearningRepository> {
+    const repository = new MobileLearningRepository(clock);
     const instance = new PersistedMobileLearningRepository(repository, storage);
     await instance.hydrate();
     return instance;
