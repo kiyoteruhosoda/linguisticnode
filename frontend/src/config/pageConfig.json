@@ -1,0 +1,63 @@
+{
+  "pages": {
+    "words": {
+      "title": "Words",
+      "iconClass": "fa-solid fa-book",
+      "testID": "rnw-words-header"
+    },
+    "study": {
+      "title": "Study",
+      "iconClass": "fa-solid fa-graduation-cap",
+      "testID": "rnw-study-header"
+    },
+    "examples": {
+      "title": "Examples",
+      "iconClass": "fa-solid fa-pen-to-square",
+      "testID": "rnw-examples-header"
+    }
+  },
+  "navigation": {
+    "words": [
+      {
+        "target": "study",
+        "label": "Study",
+        "iconClass": "fa-solid fa-graduation-cap",
+        "testID": "rnw-study-button"
+      },
+      {
+        "target": "examples",
+        "label": "Examples",
+        "iconClass": "fa-solid fa-pen-to-square",
+        "testID": "rnw-examples-button"
+      }
+    ],
+    "study": [
+      {
+        "target": "words",
+        "label": "Words",
+        "iconClass": "fa-solid fa-book",
+        "testID": "rnw-study-words"
+      },
+      {
+        "target": "examples",
+        "label": "Examples",
+        "iconClass": "fa-solid fa-pen-to-square",
+        "testID": "rnw-study-examples"
+      }
+    ],
+    "examples": [
+      {
+        "target": "words",
+        "label": "Words",
+        "iconClass": "fa-solid fa-book",
+        "testID": "rnw-examples-words"
+      },
+      {
+        "target": "study",
+        "label": "Study",
+        "iconClass": "fa-solid fa-graduation-cap",
+        "testID": "rnw-examples-study"
+      }
+    ]
+  }
+}

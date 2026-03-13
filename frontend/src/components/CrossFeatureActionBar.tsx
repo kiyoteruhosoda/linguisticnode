@@ -2,15 +2,9 @@ import type { ReactNode } from "react";
 import { RnwButton } from "../rnw/components/RnwButton";
 import { RnwTagFilterButton } from "../rnw/components/RnwTagFilterButton";
 import { RnwActionBar } from "@linguisticnode/ui";
+import pageConfig from "../config/pageConfig.json";
 
 export type FeatureRoute = "words" | "study" | "examples";
-
-type NavigationAction = {
-  target: FeatureRoute;
-  label: string;
-  iconClass: string;
-  testID: string;
-};
 
 type TagFilterState = {
   allTagCount: number;
@@ -28,51 +22,6 @@ type CrossFeatureActionBarProps = {
   testID: string;
 };
 
-const navigationCatalog: Record<FeatureRoute, NavigationAction[]> = {
-  words: [
-    {
-      target: "study",
-      label: "Study",
-      iconClass: "fa-solid fa-graduation-cap",
-      testID: "rnw-study-button",
-    },
-    {
-      target: "examples",
-      label: "Examples",
-      iconClass: "fa-solid fa-pen-to-square",
-      testID: "rnw-examples-button",
-    },
-  ],
-  study: [
-    {
-      target: "words",
-      label: "Words",
-      iconClass: "fa-solid fa-book",
-      testID: "rnw-study-words",
-    },
-    {
-      target: "examples",
-      label: "Examples",
-      iconClass: "fa-solid fa-pen-to-square",
-      testID: "rnw-study-examples",
-    },
-  ],
-  examples: [
-    {
-      target: "words",
-      label: "Words",
-      iconClass: "fa-solid fa-book",
-      testID: "rnw-examples-words",
-    },
-    {
-      target: "study",
-      label: "Study",
-      iconClass: "fa-solid fa-graduation-cap",
-      testID: "rnw-examples-study",
-    },
-  ],
-};
-
 export function CrossFeatureActionBar({
   current,
   onNavigate,
@@ -81,7 +30,7 @@ export function CrossFeatureActionBar({
   extraLeading,
   testID,
 }: CrossFeatureActionBarProps) {
-  const actions = navigationCatalog[current];
+  const actions = pageConfig.navigation[current];
 
   return (
     <RnwActionBar
@@ -91,7 +40,7 @@ export function CrossFeatureActionBar({
             <RnwButton
               key={action.target}
               label={action.label}
-              onPress={() => onNavigate(action.target)}
+              onPress={() => onNavigate(action.target as FeatureRoute)}
               icon={<i className={action.iconClass} aria-hidden="true" />}
               testID={action.testID}
               kind="outline"
