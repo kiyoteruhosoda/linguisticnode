@@ -384,7 +384,7 @@ function WordListView({
   const [tagInput, setTagInput] = useState("");
   const [tagMode, setTagMode] = useState<"add" | "replace">("add");
 
-  function getMemoryInfo(level: number) {
+  function getMemoryInfo(level: number): { color: string; bg: string; label: string } {
     if (level === 0) return { ...colors.memNew, label: "New" };
     if (level <= 3) return { ...colors.memLearning, label: "Learning" };
     if (level <= 6) return { ...colors.memReview, label: "Review" };

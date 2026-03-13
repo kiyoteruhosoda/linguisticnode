@@ -83,7 +83,7 @@ export function StudyScreen({
     { value: "easy", label: "Easy", icon: "flash-outline", color: colors.ratingEasy.color, bg: colors.ratingEasy.bg },
   ];
 
-  function getMemoryInfo(level: number) {
+  function getMemoryInfo(level: number): { color: string; bg: string; label: string } {
     if (level === 0) return { ...colors.memNew, label: "New" };
     if (level <= 3) return { ...colors.memLearning, label: "Learning" };
     if (level <= 6) return { ...colors.memReview, label: "Review" };
