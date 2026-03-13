@@ -152,7 +152,7 @@ export function ExamplesScreen({
           justifyContent: "space-between",
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text }}>Quiz</Text>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: colors.text }}>Fill</Text>
 
         {allTags.length > 0 && (
           <Pressable
