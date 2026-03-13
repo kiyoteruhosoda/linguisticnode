@@ -468,7 +468,7 @@ function WordListView({
                     borderColor: colors.primary,
                   }}
                 >
-                  <Ionicons name="pricetag-outline" size={17} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
+                  <Ionicons name="funnel-outline" size={17} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
                 </Pressable>
               )}
               <Pressable
@@ -730,7 +730,7 @@ function WordListView({
               gap: 4,
             })}
           >
-            <Ionicons name="pricetag-outline" size={18} color={selectedIds.length === 0 ? colors.textMuted : colors.primary} />
+            <Ionicons name="funnel-outline" size={18} color={selectedIds.length === 0 ? colors.textMuted : colors.primary} />
             <Text style={{ fontSize: 11, fontWeight: "600", color: selectedIds.length === 0 ? colors.textMuted : colors.primary }}>Tags</Text>
           </Pressable>
           <Pressable

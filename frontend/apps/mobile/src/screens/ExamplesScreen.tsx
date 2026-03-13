@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
 import type { ExampleTestItem } from "../../../../src/api/types";
 import { checkAnswer, createBlankedSentence } from "../../../../src/core/examples/exampleSentencePolicy";
@@ -172,7 +172,7 @@ export function ExamplesScreen({
               backgroundColor: appliedTags.length > 0 ? colors.primaryBg : pressed ? colors.surfacePressed : colors.surface,
             })}
           >
-            <Ionicons name="pricetag-outline" size={15} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
+            <Ionicons name="funnel-outline" size={15} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
             <Text style={{ fontSize: 13, fontWeight: "600", color: appliedTags.length > 0 ? colors.primary : colors.textDim }}>
               {appliedTags.length > 0 ? `Tags (${appliedTags.length})` : "Tags"}
             </Text>
@@ -238,7 +238,7 @@ export function ExamplesScreen({
       {/* Body */}
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name="pencil-outline" size={40} color={colors.textMuted} />
+          <AntDesign name="form" size={40} color={colors.textMuted} />
           <Text style={{ fontSize: 15, color: colors.textSub, marginTop: 12 }}>Loading...</Text>
         </View>
       ) : error ? (
@@ -418,8 +418,8 @@ export function ExamplesScreen({
                         backgroundColor: pressed ? colors.surfacePressed : colors.surface,
                       })}
                     >
-                      <Ionicons name="school-outline" size={16} color={colors.textSub} />
-                      <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSub }}>Open in Study</Text>
+                      <Ionicons name="layers-outline" size={16} color={colors.textSub} />
+                      <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSub }}>Open in Cards</Text>
                     </Pressable>
                   )}
                 </View>
@@ -545,8 +545,8 @@ export function ExamplesScreen({
                         backgroundColor: pressed ? colors.surfacePressed : colors.surface,
                       })}
                     >
-                      <Ionicons name="school-outline" size={16} color={colors.textSub} />
-                      <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSub }}>Open in Study</Text>
+                      <Ionicons name="layers-outline" size={16} color={colors.textSub} />
+                      <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSub }}>Open in Cards</Text>
                     </Pressable>
                   )}
                 </View>

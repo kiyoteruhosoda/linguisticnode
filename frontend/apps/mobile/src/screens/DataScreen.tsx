@@ -125,7 +125,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
               justifyContent: "center",
             }}
           >
-            <Ionicons name="share-outline" size={22} color={colors.primary} />
+            <Ionicons name="cloud-upload-outline" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: exporting ? colors.textMuted : colors.text }}>
