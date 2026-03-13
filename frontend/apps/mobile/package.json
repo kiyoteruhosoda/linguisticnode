@@ -24,7 +24,6 @@
     "react-native-tts": "^4.1.0"
   },
   "devDependencies": {
-    "@types/node": "^25.3.3",
-    "@types/react": "~18.3.12"
+    "@types/node": "^25.3.3"
   }
 }
