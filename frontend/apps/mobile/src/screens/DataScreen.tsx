@@ -7,6 +7,7 @@ import * as Sharing from "expo-sharing";
 import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
+import { LicenseScreen } from "./LicenseScreen";
 
 type ImportMode = "merge" | "overwrite";
 
@@ -14,6 +15,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const { isDark, colors, toggleTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showLicenses, setShowLicenses] = useState(false);
   const [importMode, setImportMode] = useState<ImportMode>("merge");
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -215,6 +217,41 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           />
         </View>
 
+        {/* Licenses */}
+        <Pressable
+          onPress={() => setShowLicenses(true)}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+            backgroundColor: pressed ? colors.surfacePressed : colors.surface,
+            borderRadius: 14,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: colors.border,
+          })}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: colors.memMastered.bg,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="document-text-outline" size={22} color={colors.memMastered.color} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Licenses</Text>
+            <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
+              Open source libraries used in this app
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Pressable>
+
         {/* App Version */}
         <View
           style={{
@@ -251,6 +288,8 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           </View>
         </View>
       </ScrollView>
+
+      <LicenseScreen visible={showLicenses} onClose={() => setShowLicenses(false)} />
 
       <ImportModal
         visible={showImportModal}

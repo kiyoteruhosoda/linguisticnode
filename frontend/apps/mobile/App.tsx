@@ -17,7 +17,7 @@ type MobileRoute = "words" | "study" | "quiz" | "data";
 const TABS: { route: MobileRoute; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { route: "words", label: "Words", icon: "book-outline" },
   { route: "study", label: "Study", icon: "school-outline" },
-  { route: "quiz", label: "Quiz", icon: "pencil-outline" },
+  { route: "quiz", label: "Quiz", icon: "clipboard-outline" },
   { route: "data", label: "Settings", icon: "settings-outline" },
 ];
 
