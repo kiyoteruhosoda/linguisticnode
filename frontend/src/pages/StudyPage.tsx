@@ -10,6 +10,8 @@ import { useTagFilterState } from "../hooks/useTagFilterState";
 import { RnwTagFilterPanel } from "../rnw/components/RnwTagFilterPanel";
 import { RnwInlineNotice } from "../rnw/components/RnwInlineNotice";
 import { CrossFeatureActionBar } from "../components/CrossFeatureActionBar";
+import { RnwPageHeader } from "@linguisticnode/ui";
+import pageConfig from "../config/pageConfig.json";
 
 export function StudyPage() {
   const navigate = useNavigate();
@@ -82,6 +84,11 @@ export function StudyPage() {
 
   return (
     <div className="vstack gap-3" data-testid="study-page-ready">
+      <RnwPageHeader
+        title={pageConfig.pages.study.title}
+        icon={<i className={pageConfig.pages.study.iconClass} aria-hidden="true" />}
+        testID={pageConfig.pages.study.testID}
+      />
       <CrossFeatureActionBar
         current="study"
         onNavigate={(target) => navigate(`/${target}`)}
