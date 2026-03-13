@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -125,7 +125,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
               justifyContent: "center",
             }}
           >
-            <Ionicons name="share-outline" size={22} color={colors.primary} />
+            <FontAwesome5 name="file-export" size={20} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: exporting ? colors.textMuted : colors.text }}>
@@ -167,7 +167,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
               justifyContent: "center",
             }}
           >
-            <Ionicons name="download-outline" size={22} color={colors.memMastered.color} />
+            <FontAwesome5 name="file-import" size={20} color={colors.memMastered.color} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Import</Text>

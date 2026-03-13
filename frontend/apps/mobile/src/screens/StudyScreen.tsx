@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
 import type { MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
@@ -93,7 +93,7 @@ export function StudyScreen({
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
-        <Ionicons name="school-outline" size={40} color={colors.textMuted} />
+        <MaterialCommunityIcons name="card-multiple-outline" size={40} color={colors.textMuted} />
         <Text style={{ fontSize: 15, color: colors.textSub, marginTop: 12 }}>Loading...</Text>
       </View>
     );
@@ -134,7 +134,7 @@ export function StudyScreen({
               backgroundColor: appliedTags.length > 0 ? colors.primaryBg : pressed ? colors.surfacePressed : colors.surface,
             })}
           >
-            <Ionicons name="pricetag-outline" size={15} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
+            <FontAwesome6 name="tag" size={13} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
             <Text style={{ fontSize: 13, fontWeight: "600", color: appliedTags.length > 0 ? colors.primary : colors.textDim }}>
               {appliedTags.length > 0 ? `Tags (${appliedTags.length})` : "Tags"}
             </Text>
@@ -396,8 +396,8 @@ export function StudyScreen({
                 backgroundColor: pressed ? colors.primaryBg : colors.surface,
               })}
             >
-              <Ionicons name="pencil-outline" size={18} color={colors.primary} />
-              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>Practice in Quiz</Text>
+              <AntDesign name="form" size={18} color={colors.primary} />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>Practice in Fill</Text>
             </Pressable>
           )}
 

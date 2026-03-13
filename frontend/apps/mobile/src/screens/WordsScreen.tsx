@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import type { MemoryState, Pos } from "../../../../src/api/types";
 import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
@@ -468,7 +468,7 @@ function WordListView({
                     borderColor: colors.primary,
                   }}
                 >
-                  <Ionicons name="pricetag-outline" size={17} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
+                  <FontAwesome6 name="tag" size={15} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
                 </Pressable>
               )}
               <Pressable
@@ -730,7 +730,7 @@ function WordListView({
               gap: 4,
             })}
           >
-            <Ionicons name="pricetag-outline" size={18} color={selectedIds.length === 0 ? colors.textMuted : colors.primary} />
+            <FontAwesome6 name="tag" size={15} color={selectedIds.length === 0 ? colors.textMuted : colors.primary} />
             <Text style={{ fontSize: 11, fontWeight: "600", color: selectedIds.length === 0 ? colors.textMuted : colors.primary }}>Tags</Text>
           </Pressable>
           <Pressable

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Pressable, StatusBar, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { createMobileCompositionRoot, type MobileCompositionRoot } from "./src/app/mobileCompositionRoot";
 import { ThemeProvider, useTheme } from "./src/app/ThemeContext";
 import { WordsScreen } from "./src/screens/WordsScreen";
@@ -14,11 +14,15 @@ import { ExamplesScreen } from "./src/screens/ExamplesScreen";
 
 type MobileRoute = "words" | "study" | "quiz" | "data";
 
-const TABS: { route: MobileRoute; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { route: "words", label: "Words", icon: "book-outline" },
-  { route: "study", label: "Study", icon: "school-outline" },
-  { route: "quiz", label: "Quiz", icon: "clipboard-outline" },
-  { route: "data", label: "Settings", icon: "settings-outline" },
+type TabIcon =
+  | { lib: "Ionicons"; name: keyof typeof Ionicons.glyphMap }
+  | { lib: "AntDesign"; name: keyof typeof AntDesign.glyphMap };
+
+const TABS: { route: MobileRoute; label: string; icon: TabIcon }[] = [
+  { route: "words", label: "Words", icon: { lib: "Ionicons", name: "book-outline" } },
+  { route: "study", label: "Cards", icon: { lib: "Ionicons", name: "layers-outline" } },
+  { route: "quiz", label: "Fill", icon: { lib: "AntDesign", name: "form" } },
+  { route: "data", label: "Settings", icon: { lib: "Ionicons", name: "settings-outline" } },
 ];
 
 export default function App() {
@@ -156,7 +160,7 @@ function AppContent() {
           <BottomTab
             key={tab.route}
             label={tab.label}
-            icon={tab.icon}
+            tabIcon={tab.icon}
             active={route === tab.route}
             onPress={() => navigateToTab(tab.route)}
           />
@@ -168,16 +172,17 @@ function AppContent() {
 
 function BottomTab({
   label,
-  icon,
+  tabIcon,
   active,
   onPress,
 }: {
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  tabIcon: TabIcon;
   active: boolean;
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const iconColor = active ? colors.primary : colors.textSub;
   return (
     <Pressable
       onPress={onPress}
@@ -189,12 +194,16 @@ function BottomTab({
         gap: 4,
       }}
     >
-      <Ionicons name={icon} size={24} color={active ? colors.primary : colors.textSub} />
+      {tabIcon.lib === "AntDesign" ? (
+        <AntDesign name={tabIcon.name} size={24} color={iconColor} />
+      ) : (
+        <Ionicons name={tabIcon.name} size={24} color={iconColor} />
+      )}
       <Text
         style={{
           fontSize: 10,
           fontWeight: active ? "700" : "400",
-          color: active ? colors.primary : colors.textSub,
+          color: iconColor,
         }}
       >
         {label}
