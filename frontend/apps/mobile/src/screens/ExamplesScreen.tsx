@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { AntDesign, FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
 import type { ExampleTestItem } from "../../../../src/api/types";
 import { checkAnswer, createBlankedSentence } from "../../../../src/core/examples/exampleSentencePolicy";
