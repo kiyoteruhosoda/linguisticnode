@@ -54,7 +54,7 @@ export function FlashCard({ word, memory, onRate }: Props) {
         </div>
 
         <button
-          className="btn btn-outline-secondary"
+          className="btn btn-outline-primary"
           style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
           onClick={speak}
           disabled={!canSpeak}
@@ -99,7 +99,7 @@ export function FlashCard({ word, memory, onRate }: Props) {
                       <div className="d-flex align-items-start justify-content-between gap-2 mb-1">
                         <div className="flex-grow-1">{example.en}</div>
                         <button
-                          className="btn btn-outline-secondary"
+                          className="btn btn-outline-primary"
                           style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
                           type="button"
                           onClick={(e) => speakExample(example.en, e)}

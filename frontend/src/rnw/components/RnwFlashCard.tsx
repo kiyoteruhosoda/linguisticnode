@@ -91,7 +91,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
           icon={<i className="fa-solid fa-volume-high" aria-hidden="true" />}
           testID="rnw-study-speak-word"
           kind="outline"
-          tone="secondary"
+          tone="primary"
           size="icon"
         />
       </header>
