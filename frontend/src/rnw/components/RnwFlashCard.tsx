@@ -91,14 +91,14 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
           icon={<i className="fa-solid fa-volume-high" aria-hidden="true" />}
           testID="rnw-study-speak-word"
           kind="outline"
-          tone="secondary"
+          tone="primary"
           size="icon"
         />
       </header>
 
       <div style={bodyStyle}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 36, fontWeight: 700 }}>{word.headword}</div>
+          <div style={{ fontSize: 36, fontWeight: 700, userSelect: "text" }}>{word.headword}</div>
           <div style={{ marginBottom: 4 }}>
             <RnwBadge
               tone="secondary" variant="pill">
@@ -126,7 +126,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={answerPanelStyle}>
               <div style={{ fontWeight: 600, marginBottom: 6 }}>Meaning (JA)</div>
-              <div>{word.meaningJa}</div>
+              <div style={{ userSelect: "text" }}>{word.meaningJa}</div>
             </div>
 
             {word.examples?.length ? (
@@ -136,7 +136,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
                   {word.examples.map((example) => (
                     <div key={example.id} style={{ borderLeft: "3px solid #0d6efd", paddingLeft: 10 }}>
                       <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-                        <div style={{ flex: 1 }}>{example.en}</div>
+                        <div style={{ flex: 1, userSelect: "text" }}>{example.en}</div>
                         <RnwButton
                           title="Speak"
                           onPress={() => speakExample(example.en)}
@@ -147,7 +147,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
                           size="icon"
                         />
                       </div>
-                      {example.ja ? <div style={{ color: "#6c757d", fontSize: 13 }}>{example.ja}</div> : null}
+                      {example.ja ? <div style={{ color: "#6c757d", fontSize: 13, userSelect: "text" }}>{example.ja}</div> : null}
                     </div>
                   ))}
                 </div>
