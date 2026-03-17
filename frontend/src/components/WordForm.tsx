@@ -116,6 +116,7 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
               />
               <button
                 className="btn btn-outline-secondary"
+                style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
                 type="button"
                 onClick={(e) => speakHeadword(e)}
                 disabled={!canSpeak || !headword.trim()}
@@ -174,6 +175,7 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
                           />
                           <button
                             className="btn btn-outline-secondary"
+                            style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
                             type="button"
                             onClick={(e) => speakExample(ex.en, e)}
                             disabled={!canSpeak || !ex.en.trim()}
