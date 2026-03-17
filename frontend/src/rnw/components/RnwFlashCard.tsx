@@ -92,6 +92,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
           testID="rnw-study-speak-word"
           kind="outline"
           tone="secondary"
+          size="icon"
         />
       </header>
 
@@ -143,6 +144,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
                           icon={<i className="fa-solid fa-volume-high" aria-hidden="true" />}
                           kind="outline"
                           tone="secondary"
+                          size="icon"
                         />
                       </div>
                       {example.ja ? <div style={{ color: "#6c757d", fontSize: 13 }}>{example.ja}</div> : null}
