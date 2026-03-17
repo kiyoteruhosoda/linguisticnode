@@ -66,7 +66,7 @@ export function FlashCard({ word, memory, onRate }: Props) {
 
       <div className="card-body">
         <div className="text-center">
-          <div className="display-6 fw-bold">{word.headword}</div>
+          <div className="display-6 fw-bold" style={{ userSelect: "text" }}>{word.headword}</div>
           <div className="mb-1">
             <span className="badge text-bg-secondary">{word.pos}</span>
           </div>
@@ -87,7 +87,7 @@ export function FlashCard({ word, memory, onRate }: Props) {
           <div className="vstack gap-3">
             <div className="alert alert-light border">
               <div className="fw-semibold mb-1">Meaning (JA)</div>
-              <div>{word.meaningJa}</div>
+              <div style={{ userSelect: "text" }}>{word.meaningJa}</div>
             </div>
 
             {word.examples?.length ? (
@@ -97,7 +97,7 @@ export function FlashCard({ word, memory, onRate }: Props) {
                   {word.examples.map((example, idx) => (
                     <div key={idx} className="border-start border-3 border-primary ps-3">
                       <div className="d-flex align-items-start justify-content-between gap-2 mb-1">
-                        <div className="flex-grow-1">{example.en}</div>
+                        <div className="flex-grow-1" style={{ userSelect: "text" }}>{example.en}</div>
                         <button
                           className="btn btn-outline-primary"
                           style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
@@ -110,7 +110,7 @@ export function FlashCard({ word, memory, onRate }: Props) {
                         </button>
                       </div>
                       {example.ja && (
-                        <div className="text-secondary small">{example.ja}</div>
+                        <div className="text-secondary small" style={{ userSelect: "text" }}>{example.ja}</div>
                       )}
                     </div>
                   ))}
