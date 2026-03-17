@@ -41,6 +41,16 @@ export const buttonSizes = {
     gap: 6,
     lineHeight: "20px",
   },
+  icon: {
+    height: 44,
+    paddingInline: 0,
+    fontSize: 16,
+    iconSize: 16,
+    borderRadius: 6,
+    borderWidth: 1,
+    gap: 0,
+    lineHeight: "24px",
+  },
 } as const;
 
 export type RnwButtonSize = keyof typeof buttonSizes;
