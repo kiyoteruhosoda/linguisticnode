@@ -58,26 +58,6 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  // Audio speaking state: key is "headword" or "ex-{id}"
-  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
-  const handleSpeak = useCallback(async (key: string, text: string) => {
-    if (!text.trim()) return;
-    setSpeakingKey(key);
-    try {
-      await mobileSpeechService.speakEnglish(text);
-    } finally {
-      setSpeakingKey(null);
-    }
-  }, []);
-
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [menuText, setMenuText] = useState("");
-  const showMenu = useCallback((text: string) => {
-    if (!text.trim()) return;
-    setMenuText(text);
-    setMenuVisible(true);
-  }, []);
-
   // Android back button: selection mode → exit selection; edit/create → go back to list
   useEffect(() => {
     if (!selectionMode) return;
@@ -402,6 +382,13 @@ function WordListView({
   const { colors } = useTheme();
   const [bulkConfirm, setBulkConfirm] = useState<"delete" | "reset" | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuText, setMenuText] = useState("");
+  const showMenu = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMenuText(text);
+    setMenuVisible(true);
+  }, []);
   const [tagInput, setTagInput] = useState("");
   const [tagMode, setTagMode] = useState<"add" | "replace">("add");
 
@@ -923,6 +910,7 @@ function WordListView({
           </View>
         </View>
       </Modal>
+      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }
@@ -955,6 +943,17 @@ function WordFormView({
   const { colors } = useTheme();
   const [confirmAction, setConfirmAction] = useState<"delete" | "reset" | null>(null);
   const canSpeak = mobileSpeechService.canSpeak();
+
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
 
   const labelStyle = {
     fontSize: 12,
@@ -1311,7 +1310,6 @@ function WordFormView({
         onConfirm={handleConfirm}
         onCancel={() => setConfirmAction(null)}
       />
-      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </KeyboardAvoidingView>
   );
 }
