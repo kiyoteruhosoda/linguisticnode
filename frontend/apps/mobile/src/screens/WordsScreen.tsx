@@ -646,8 +646,8 @@ function WordListView({
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(item.headword)}>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} selectable onLongPress={() => showMenu(item.meaningJa)}>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} onLongPress={() => showMenu(item.headword)}>{item.headword}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} onLongPress={() => showMenu(item.meaningJa)}>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
                     <PosBadge pos={item.pos} />
