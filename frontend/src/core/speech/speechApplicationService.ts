@@ -5,12 +5,12 @@ export function createSpeechApplicationService(gateway: SpeechGateway) {
     canSpeak(): boolean {
       return gateway.isAvailable();
     },
-    speakEnglish(text: string): void {
+    speakEnglish(text: string): Promise<void> {
       const normalized = text.trim();
       if (!normalized) {
-        return;
+        return Promise.resolve();
       }
-      gateway.speakEnglish(normalized);
+      return gateway.speakEnglish(normalized);
     },
   };
 }

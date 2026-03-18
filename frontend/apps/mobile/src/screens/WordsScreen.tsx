@@ -57,6 +57,18 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Audio speaking state: key is "headword" or "ex-{id}"
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
+
   // Android back button: selection mode → exit selection; edit/create → go back to list
   useEffect(() => {
     if (!selectionMode) return;
@@ -1037,20 +1049,20 @@ function WordFormView({
               />
               {canSpeak && (
                 <Pressable
-                  onPress={() => draft.headword.trim() && mobileSpeechService.speakEnglish(draft.headword)}
+                  onPress={() => handleSpeak("headword", draft.headword)}
                   disabled={!draft.headword.trim()}
                   style={({ pressed }) => ({
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: !draft.headword.trim() ? colors.surfacePressed : pressed ? colors.primaryBg : colors.bg,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: !draft.headword.trim() ? colors.surfacePressed : speakingKey === "headword" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
                     borderWidth: 1,
                     borderColor: !draft.headword.trim() ? colors.borderMid : colors.primary,
                     alignItems: "center",
                     justifyContent: "center",
                   })}
                 >
-                  <Ionicons name="volume-high-outline" size={18} color={!draft.headword.trim() ? colors.textMuted : colors.primary} />
+                  <Ionicons name="volume-high-outline" size={16} color={!draft.headword.trim() ? colors.textMuted : speakingKey === "headword" ? "#fff" : colors.primary} />
                 </Pressable>
               )}
             </View>
@@ -1180,20 +1192,20 @@ function WordFormView({
                       />
                       {canSpeak && (
                         <Pressable
-                          onPress={() => ex.en.trim() && mobileSpeechService.speakEnglish(ex.en)}
+                          onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
                           disabled={!ex.en.trim()}
                           style={({ pressed }) => ({
                             width: 32,
                             height: 32,
                             borderRadius: 16,
-                            backgroundColor: !ex.en.trim() ? colors.surfacePressed : pressed ? colors.primaryBg : colors.bg,
+                            backgroundColor: !ex.en.trim() ? colors.surfacePressed : speakingKey === `ex-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
                             borderWidth: 1,
                             borderColor: !ex.en.trim() ? colors.borderMid : colors.primary,
                             alignItems: "center",
                             justifyContent: "center",
                           })}
                         >
-                          <Ionicons name="volume-high-outline" size={16} color={!ex.en.trim() ? colors.textMuted : colors.primary} />
+                          <Ionicons name="volume-high-outline" size={16} color={!ex.en.trim() ? colors.textMuted : speakingKey === `ex-${ex.id}` ? "#fff" : colors.primary} />
                         </Pressable>
                       )}
                     </View>

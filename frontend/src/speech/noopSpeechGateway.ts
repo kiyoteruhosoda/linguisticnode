@@ -4,7 +4,7 @@ export const noopSpeechGateway: SpeechGateway = {
   isAvailable(): boolean {
     return false;
   },
-  speakEnglish(): void {
-    // noop
+  speakEnglish(): Promise<void> {
+    return Promise.resolve();
   },
 };

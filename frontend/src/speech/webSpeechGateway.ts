@@ -12,14 +12,15 @@ export const webSpeechGateway: SpeechGateway = {
     const browserWindow = window as BrowserWindow;
     return typeof browserWindow.SpeechSynthesisUtterance !== "undefined" && "speechSynthesis" in window;
   },
-  speakEnglish(text: string): void {
+  speakEnglish(text: string): Promise<void> {
     if (!this.isAvailable()) {
-      return;
+      return Promise.resolve();
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
+    return Promise.resolve();
   },
 };

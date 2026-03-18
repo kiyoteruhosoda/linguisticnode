@@ -46,6 +46,17 @@ export function ExamplesScreen({
 
   const canSpeak = mobileSpeechService.canSpeak();
 
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
+
   useEffect(() => {
     examplesService.getAllTags().then(setAllTags).catch(() => {});
   }, [examplesService]);
@@ -307,14 +318,16 @@ export function ExamplesScreen({
               </View>
               {canSpeak && (
                 <Pressable
-                  onPress={() => mobileSpeechService.speakEnglish(example.en)}
+                  onPress={() => handleSpeak("header", example.en)}
                   style={({ pressed }) => ({
                     width: 32, height: 32, borderRadius: 16,
-                    backgroundColor: pressed ? colors.primaryBg : colors.surfacePressed,
+                    backgroundColor: speakingKey === "header" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                    borderWidth: 1,
+                    borderColor: colors.primary,
                     alignItems: "center", justifyContent: "center",
                   })}
                 >
-                  <Ionicons name="volume-high-outline" size={17} color={colors.textDim} />
+                  <Ionicons name="volume-high-outline" size={16} color={speakingKey === "header" ? "#fff" : colors.primary} />
                 </Pressable>
               )}
             </View>
@@ -478,10 +491,16 @@ export function ExamplesScreen({
                       ) : null}
                       {canSpeak && (
                         <Pressable
-                          onPress={() => mobileSpeechService.speakEnglish(actualWord || example.word.headword)}
-                          style={{ padding: 2 }}
+                          onPress={() => handleSpeak("answer", actualWord || example.word.headword)}
+                          style={({ pressed }) => ({
+                            width: 32, height: 32, borderRadius: 16,
+                            backgroundColor: speakingKey === "answer" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                            borderWidth: 1,
+                            borderColor: colors.primary,
+                            alignItems: "center", justifyContent: "center",
+                          })}
                         >
-                          <Ionicons name="volume-high-outline" size={17} color={colors.textDim} />
+                          <Ionicons name="volume-high-outline" size={16} color={speakingKey === "answer" ? "#fff" : colors.primary} />
                         </Pressable>
                       )}
                     </View>

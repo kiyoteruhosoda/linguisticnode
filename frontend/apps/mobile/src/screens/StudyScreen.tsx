@@ -30,6 +30,17 @@ export function StudyScreen({
 
   const canSpeak = mobileSpeechService.canSpeak();
 
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
+
   useEffect(() => {
     studyService.getAllTags().then(setAllTags).catch(() => {});
   }, [studyService]);
@@ -274,17 +285,19 @@ export function StudyScreen({
               })()}
               {canSpeak && (
                 <Pressable
-                  onPress={() => mobileSpeechService.speakEnglish(card.word.headword)}
+                  onPress={() => handleSpeak("headword", card.word.headword)}
                   style={({ pressed }) => ({
-                    width: 34,
-                    height: 34,
-                    borderRadius: 17,
-                    backgroundColor: pressed ? colors.primaryBg : colors.surfacePressed,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: speakingKey === "headword" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                    borderWidth: 1,
+                    borderColor: colors.primary,
                     alignItems: "center",
                     justifyContent: "center",
                   })}
                 >
-                  <Ionicons name="volume-high-outline" size={18} color={colors.textDim} />
+                  <Ionicons name="volume-high-outline" size={16} color={speakingKey === "headword" ? "#fff" : colors.primary} />
                 </Pressable>
               )}
             </View>
@@ -357,17 +370,19 @@ export function StudyScreen({
                       <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }}>{ex.en}</Text>
                       {canSpeak && (
                         <Pressable
-                          onPress={() => ex.en.trim() && mobileSpeechService.speakEnglish(ex.en)}
+                          onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
                           style={({ pressed }) => ({
-                            width: 30,
-                            height: 30,
-                            borderRadius: 15,
-                            backgroundColor: pressed ? colors.primaryBg : colors.surfacePressed,
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: speakingKey === `ex-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                            borderWidth: 1,
+                            borderColor: colors.primary,
                             alignItems: "center",
                             justifyContent: "center",
                           })}
                         >
-                          <Ionicons name="volume-high-outline" size={15} color={colors.textDim} />
+                          <Ionicons name="volume-high-outline" size={16} color={speakingKey === `ex-${ex.id}` ? "#fff" : colors.primary} />
                         </Pressable>
                       )}
                     </View>
