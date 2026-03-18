@@ -65,6 +65,38 @@ describe("RNW Pressable shim", () => {
     expect(onPress).not.toHaveBeenCalled();
   });
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // P1修正: type="submit" はブラウザの form.submit() に委ねる
+  // ──────────────────────────────────────────────────────────────────────────
+
+  it("type=submit のとき touchEnd は preventDefault を呼ばない（フォーム送信を妨げない）", () => {
+    render(
+      <Pressable type="submit" testID="submit-pressable">
+        Submit
+      </Pressable>,
+    );
+
+    const button = screen.getByTestId("submit-pressable");
+    const touchEndEvent = new TouchEvent("touchend", { bubbles: true, cancelable: true });
+    const preventDefaultSpy = vi.spyOn(touchEndEvent, "preventDefault");
+
+    button.dispatchEvent(touchEndEvent);
+
+    expect(preventDefaultSpy).not.toHaveBeenCalled();
+  });
+
+  it("type=submit のとき touchEnd で onPress は呼ばれない（form.submit() に委ねる）", () => {
+    const onPress = vi.fn();
+    render(
+      <Pressable type="submit" onPress={onPress} testID="submit-pressable">
+        Submit
+      </Pressable>,
+    );
+
+    fireEvent.touchEnd(screen.getByTestId("submit-pressable"));
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it("touchEnd は preventDefault を呼ぶ（300ms click delay を防ぐ）", () => {
     const onPress = vi.fn();
     render(

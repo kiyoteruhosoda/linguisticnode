@@ -57,10 +57,11 @@ beforeEach(() => {
   } as unknown as SpeechSynthesis;
 
   (window as unknown as Record<string, unknown>).SpeechSynthesisUtterance = class {
+    text: string;
     lang = "";
     onstart: (() => void) | null = null;
     onerror: ((e: { error: string }) => void) | null = null;
-    constructor(public text: string) {}
+    constructor(t: string) { this.text = t; }
   };
 });
 
