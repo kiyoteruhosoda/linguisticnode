@@ -9,7 +9,7 @@ const SILENCE_TIMEOUT_MS = 600;
 const RETRY_DELAY_MS = 300;
 
 // アンマウント後に孤立したリトライタイマーが新画面で発火しないよう追跡する
-const pendingTimers = new Set<ReturnType<typeof window.setTimeout>>();
+const pendingTimers = new Set<number>();
 
 export const webSpeechGateway: SpeechGateway = {
   isAvailable(): boolean {

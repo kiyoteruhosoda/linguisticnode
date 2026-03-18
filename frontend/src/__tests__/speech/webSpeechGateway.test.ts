@@ -30,10 +30,11 @@ function makeSynthMock(overrides: Partial<SpeechSynthesis> = {}): SpeechSynthesi
 beforeEach(() => {
   // SpeechSynthesisUtterance をモック
   (window as unknown as Record<string, unknown>).SpeechSynthesisUtterance = class {
+    text: string;
     lang = "";
     onstart: (() => void) | null = null;
     onerror: ((e: { error: string }) => void) | null = null;
-    constructor(public text: string) {}
+    constructor(t: string) { this.text = t; }
   };
 });
 
@@ -127,8 +128,9 @@ describe("webSpeechGateway.speakEnglish() — cancel() の呼び出し条件", (
 
     // 復元
     (window as unknown as Record<string, unknown>).SpeechSynthesisUtterance = class {
+      text: string;
       lang = ""; onstart = null; onerror = null;
-      constructor(public text: string) {}
+      constructor(t: string) { this.text = t; }
     };
   });
 });
