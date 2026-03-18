@@ -12,13 +12,13 @@ import {
   TextInput,
   View,
 } from "react-native";
-import * as Clipboard from "expo-clipboard";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import type { MemoryState, Pos } from "../../../../src/api/types";
 import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
+import { TextActionMenu } from "../components/TextActionMenu";
 
 type WordItem = Awaited<ReturnType<MobileWordService["listWords"]>>["items"][number];
 type SubRoute = "list" | "create" | "edit";
@@ -68,6 +68,14 @@ export function WordsScreen({ service }: { service: MobileWordService }) {
     } finally {
       setSpeakingKey(null);
     }
+  }, []);
+
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuText, setMenuText] = useState("");
+  const showMenu = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMenuText(text);
+    setMenuVisible(true);
   }, []);
 
   // Android back button: selection mode → exit selection; edit/create → go back to list
@@ -651,8 +659,8 @@ function WordListView({
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} onLongPress={() => Clipboard.setStringAsync(item.headword)} suppressHighlighting>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} onLongPress={() => Clipboard.setStringAsync(item.meaningJa)} suppressHighlighting>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(item.headword)}>{item.headword}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} selectable onLongPress={() => showMenu(item.meaningJa)}>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
                     <PosBadge pos={item.pos} />
@@ -1303,6 +1311,7 @@ function WordFormView({
         onConfirm={handleConfirm}
         onCancel={() => setConfirmAction(null)}
       />
+      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </KeyboardAvoidingView>
   );
 }

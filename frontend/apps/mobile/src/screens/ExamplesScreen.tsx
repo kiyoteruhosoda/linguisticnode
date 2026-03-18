@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import * as Clipboard from "expo-clipboard";
 import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
@@ -8,6 +7,7 @@ import { checkAnswer, createBlankedSentence } from "../../../../src/core/example
 import type { MobileExamplesService, MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
+import { TextActionMenu } from "../components/TextActionMenu";
 
 type Feedback = "correct" | "incorrect" | null;
 
@@ -56,6 +56,14 @@ export function ExamplesScreen({
     } finally {
       setSpeakingKey(null);
     }
+  }, []);
+
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuText, setMenuText] = useState("");
+  const showMenu = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMenuText(text);
+    setMenuVisible(true);
   }, []);
 
   useEffect(() => {
@@ -336,7 +344,7 @@ export function ExamplesScreen({
             {/* Card Body */}
             <View style={{ padding: 20, gap: 14 }}>
               {/* Sentence with blank */}
-              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }} onLongPress={() => Clipboard.setStringAsync(example.en)} suppressHighlighting>
+              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }} selectable onLongPress={() => showMenu(example.en)}>
                 {blankedSentence || example.en}
               </Text>
 
@@ -484,7 +492,7 @@ export function ExamplesScreen({
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} onLongPress={() => Clipboard.setStringAsync(actualWord || example.word.headword)} suppressHighlighting>
+                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(actualWord || example.word.headword)}>
                         {actualWord || example.word.headword}
                       </Text>
                       {example.word.pronunciation ? (
@@ -506,7 +514,7 @@ export function ExamplesScreen({
                       )}
                     </View>
                     {example.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} onLongPress={() => Clipboard.setStringAsync(example.ja)} suppressHighlighting>{example.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} selectable onLongPress={() => showMenu(example.ja)}>{example.ja}</Text>
                     ) : null}
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>
@@ -575,6 +583,7 @@ export function ExamplesScreen({
           </View>
         </ScrollView>
       )}
+      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }
