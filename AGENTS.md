@@ -13,6 +13,7 @@ All domain-specific knowledge is organized in **Agent Skills** under `.agents/sk
 - **security** - Input validation, secret handling, safe errors
 - **auditing-traceability** - Audit logging for state changes
 - **debugging-troubleshooting** - Repeatable debugging workflow
+- **mobile-expo** - Expo SDK package version rules, native module checks, mobile lint/type patterns
 
 **Activate skills implicitly** by mentioning relevant keywords, or **explicitly** with `$skill-name`.
 
