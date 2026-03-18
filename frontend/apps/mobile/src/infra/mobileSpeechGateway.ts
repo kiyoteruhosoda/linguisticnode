@@ -26,7 +26,7 @@ export const mobileSpeechGateway: SpeechGateway = {
             Tts.removeEventListener("tts-error", onError);
             resolve();
           };
-          const onError = (_e: unknown) => {
+          const onError = () => {
             Tts.removeEventListener("tts-finish", onFinish);
             Tts.removeEventListener("tts-error", onError);
             reject(new Error("TTS error"));
