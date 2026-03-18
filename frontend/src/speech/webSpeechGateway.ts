@@ -21,6 +21,7 @@ export const webSpeechGateway: SpeechGateway = {
       return Promise.resolve();
     }
     attemptSpeak(text, 1);
+    return Promise.resolve();
   },
 };
 
