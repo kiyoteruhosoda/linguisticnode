@@ -115,7 +115,7 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
                 required
               />
               <button
-                className="btn btn-outline-secondary"
+                className="btn btn-outline-primary"
                 style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
                 type="button"
                 onClick={(e) => speakHeadword(e)}
@@ -174,7 +174,7 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
                             placeholder="Example sentence in English..."
                           />
                           <button
-                            className="btn btn-outline-secondary"
+                            className="btn btn-outline-primary"
                             style={{ width: "2.75rem", height: "2.75rem", padding: 0, flexShrink: 0 }}
                             type="button"
                             onClick={(e) => speakExample(ex.en, e)}
