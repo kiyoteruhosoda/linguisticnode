@@ -28,6 +28,12 @@ export function ExamplesTestPage() {
   const [error, setError] = useState<string | null>(null);
   const canSpeak = useMemo(() => speechApplicationService.canSpeak(), []);
 
+  useEffect(() => {
+    return () => {
+      speechApplicationService.stop();
+    };
+  }, []);
+
   const [allTags, setAllTags] = useState<string[]>([]);
   const {
     selectedTags,

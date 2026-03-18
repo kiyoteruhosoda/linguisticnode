@@ -119,7 +119,7 @@ export function RnwExamplesQuizCard({
           onPress={onSpeakSentence}
           icon={<i className="fa-solid fa-volume-high" aria-hidden="true" />}
           title="Speak"
-          disabled={!canSpeak}
+          disabled={!canSpeak || !showAnswer}
         />
       </div>
 

@@ -7,4 +7,7 @@ export const noopSpeechGateway: SpeechGateway = {
   speakEnglish(): Promise<void> {
     return Promise.resolve();
   },
+  stop(): void {
+    // noop
+  },
 };
