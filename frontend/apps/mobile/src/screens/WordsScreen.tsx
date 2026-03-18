@@ -19,6 +19,7 @@ import type { MobileWordService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
 import { TextActionMenu } from "../components/TextActionMenu";
+import { debugLogger } from "../infra/debugLogger";
 
 type WordItem = Awaited<ReturnType<MobileWordService["listWords"]>>["items"][number];
 type SubRoute = "list" | "create" | "edit";
@@ -605,14 +606,19 @@ function WordListView({
             return (
               <Pressable
                 onPress={() => {
+                  debugLogger.log("WordList", `onPress id=${item.id} selectionMode=${selectionMode}`);
                   if (selectionMode) {
                     onToggleSelection(item.id);
                   } else {
+                    debugLogger.log("WordList", `navigating to edit: ${item.headword}`);
                     onSelectWord(item);
                   }
                 }}
-                onLongPress={() => onLongPressWord(item.id)}
-                delayLongPress={400}
+                onLongPress={() => {
+                  debugLogger.log("WordList", `onLongPress id=${item.id}`);
+                  onLongPressWord(item.id);
+                }}
+                delayLongPress={200}
                 style={({ pressed }) => ({
                   backgroundColor: isSelected ? colors.primaryBg : pressed ? colors.primaryBg : colors.surface,
                   borderRadius: 12,
@@ -646,8 +652,8 @@ function WordListView({
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} onLongPress={() => showMenu(item.headword)}>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} onLongPress={() => showMenu(item.meaningJa)}>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>{item.headword}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }}>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
                     <PosBadge pos={item.pos} />

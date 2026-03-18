@@ -8,6 +8,7 @@ import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
 import { LicenseScreen } from "./LicenseScreen";
+import { debugLogger } from "../infra/debugLogger";
 
 type ImportMode = "merge" | "overwrite";
 
@@ -20,6 +21,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [sharingLog, setSharingLog] = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
@@ -74,6 +76,29 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
       setImportError(e instanceof Error ? e.message : "Failed to read or parse the file");
     } finally {
       setImportBusy(false);
+    }
+  };
+
+  const handleShareLog = async () => {
+    setSharingLog(true);
+    try {
+      debugLogger.log("DataScreen", "debug log download requested");
+      const content = debugLogger.getLogs();
+      const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const filePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
+      await FileSystem.writeAsStringAsync(filePath, content || "(no logs yet)", {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(filePath, {
+          mimeType: "text/plain",
+          dialogTitle: "Share debug log",
+          UTI: "public.plain-text",
+        });
+      }
+    } finally {
+      setSharingLog(false);
     }
   };
 
@@ -250,6 +275,44 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Pressable>
+
+        {/* Debug Log */}
+        <Pressable
+          onPress={() => void handleShareLog()}
+          disabled={sharingLog}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+            backgroundColor: pressed || sharingLog ? colors.surfacePressed : colors.surface,
+            borderRadius: 14,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: colors.border,
+          })}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: isDark ? "#2d2540" : "#f3f0ff",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="bug-outline" size={22} color="#5f3dc4" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: sharingLog ? colors.textMuted : colors.text }}>
+              {sharingLog ? "Preparing..." : "Debug Log"}
+            </Text>
+            <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
+              Share diagnostic log for troubleshooting
+            </Text>
+          </View>
+          {!sharingLog && <Ionicons name="share-outline" size={18} color={colors.textMuted} />}
         </Pressable>
 
         {/* App Version */}
