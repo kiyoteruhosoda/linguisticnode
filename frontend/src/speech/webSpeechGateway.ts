@@ -16,9 +16,9 @@ export const webSpeechGateway: SpeechGateway = {
     const browserWindow = window as BrowserWindow;
     return typeof browserWindow.SpeechSynthesisUtterance !== "undefined" && "speechSynthesis" in window;
   },
-  speakEnglish(text: string): void {
+  speakEnglish(text: string): Promise<void> {
     if (!this.isAvailable()) {
-      return;
+      return Promise.resolve();
     }
     attemptSpeak(text, 1);
   },

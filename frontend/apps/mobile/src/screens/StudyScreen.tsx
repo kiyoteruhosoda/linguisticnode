@@ -5,6 +5,7 @@ import type { Rating } from "../../../../src/api/types";
 import type { MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
+import { TextActionMenu } from "../components/TextActionMenu";
 
 type Card = Awaited<ReturnType<MobileStudyService["fetchNextCard"]>>;
 
@@ -29,6 +30,25 @@ export function StudyScreen({
   const [appliedTags, setAppliedTags] = useState<string[]>([]);
 
   const canSpeak = mobileSpeechService.canSpeak();
+
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
+
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuText, setMenuText] = useState("");
+  const showMenu = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMenuText(text);
+    setMenuVisible(true);
+  }, []);
 
   useEffect(() => {
     studyService.getAllTags().then(setAllTags).catch(() => {});
@@ -274,23 +294,25 @@ export function StudyScreen({
               })()}
               {canSpeak && (
                 <Pressable
-                  onPress={() => mobileSpeechService.speakEnglish(card.word.headword)}
+                  onPress={() => handleSpeak("headword", card.word.headword)}
                   style={({ pressed }) => ({
-                    width: 34,
-                    height: 34,
-                    borderRadius: 17,
-                    backgroundColor: pressed ? colors.primaryBg : colors.surfacePressed,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: speakingKey === "headword" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                    borderWidth: 1,
+                    borderColor: colors.primary,
                     alignItems: "center",
                     justifyContent: "center",
                   })}
                 >
-                  <Ionicons name="volume-high-outline" size={18} color={colors.textDim} />
+                  <Ionicons name="volume-high-outline" size={16} color={speakingKey === "headword" ? "#fff" : colors.primary} />
                 </Pressable>
               )}
             </View>
 
             <View style={{ padding: 28, alignItems: "center", gap: 10 }}>
-              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }}>
+              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }} selectable onLongPress={() => showMenu(card.word.headword)}>
                 {card.word.headword}
               </Text>
               <View style={{ backgroundColor: colors.primaryBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}>
@@ -301,7 +323,7 @@ export function StudyScreen({
 
               {revealed ? (
                 <View style={{ alignItems: "center", gap: 10, width: "100%" }}>
-                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }}>
+                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }} selectable onLongPress={() => showMenu(card.word.meaningJa)}>
                     {card.word.meaningJa}
                   </Text>
                   {card.word.memo ? (
@@ -354,25 +376,27 @@ export function StudyScreen({
                 {card.word.examples.map((ex) => (
                   <View key={ex.id} style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, paddingLeft: 12, gap: 4 }}>
                     <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }}>{ex.en}</Text>
+                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }} selectable onLongPress={() => showMenu(ex.en)}>{ex.en}</Text>
                       {canSpeak && (
                         <Pressable
-                          onPress={() => ex.en.trim() && mobileSpeechService.speakEnglish(ex.en)}
+                          onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
                           style={({ pressed }) => ({
-                            width: 30,
-                            height: 30,
-                            borderRadius: 15,
-                            backgroundColor: pressed ? colors.primaryBg : colors.surfacePressed,
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: speakingKey === `ex-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                            borderWidth: 1,
+                            borderColor: colors.primary,
                             alignItems: "center",
                             justifyContent: "center",
                           })}
                         >
-                          <Ionicons name="volume-high-outline" size={15} color={colors.textDim} />
+                          <Ionicons name="volume-high-outline" size={16} color={speakingKey === `ex-${ex.id}` ? "#fff" : colors.primary} />
                         </Pressable>
                       )}
                     </View>
                     {ex.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub }}>{ex.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub }} selectable onLongPress={() => showMenu(ex.ja ?? "")}>{ex.ja}</Text>
                     ) : null}
                   </View>
                 ))}
@@ -464,6 +488,7 @@ export function StudyScreen({
           </View>
         </ScrollView>
       )}
+      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }

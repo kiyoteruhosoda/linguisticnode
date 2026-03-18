@@ -18,6 +18,7 @@ import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
+import { TextActionMenu } from "../components/TextActionMenu";
 
 type WordItem = Awaited<ReturnType<MobileWordService["listWords"]>>["items"][number];
 type SubRoute = "list" | "create" | "edit";
@@ -381,6 +382,13 @@ function WordListView({
   const { colors } = useTheme();
   const [bulkConfirm, setBulkConfirm] = useState<"delete" | "reset" | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuText, setMenuText] = useState("");
+  const showMenu = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMenuText(text);
+    setMenuVisible(true);
+  }, []);
   const [tagInput, setTagInput] = useState("");
   const [tagMode, setTagMode] = useState<"add" | "replace">("add");
 
@@ -638,8 +646,8 @@ function WordListView({
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }}>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(item.headword)}>{item.headword}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} selectable onLongPress={() => showMenu(item.meaningJa)}>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
                     <PosBadge pos={item.pos} />
@@ -902,6 +910,7 @@ function WordListView({
           </View>
         </View>
       </Modal>
+      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }
@@ -934,6 +943,17 @@ function WordFormView({
   const { colors } = useTheme();
   const [confirmAction, setConfirmAction] = useState<"delete" | "reset" | null>(null);
   const canSpeak = mobileSpeechService.canSpeak();
+
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
 
   const labelStyle = {
     fontSize: 12,
@@ -1037,20 +1057,20 @@ function WordFormView({
               />
               {canSpeak && (
                 <Pressable
-                  onPress={() => draft.headword.trim() && mobileSpeechService.speakEnglish(draft.headword)}
+                  onPress={() => handleSpeak("headword", draft.headword)}
                   disabled={!draft.headword.trim()}
                   style={({ pressed }) => ({
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: !draft.headword.trim() ? colors.surfacePressed : pressed ? colors.primaryBg : colors.bg,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: !draft.headword.trim() ? colors.surfacePressed : speakingKey === "headword" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
                     borderWidth: 1,
                     borderColor: !draft.headword.trim() ? colors.borderMid : colors.primary,
                     alignItems: "center",
                     justifyContent: "center",
                   })}
                 >
-                  <Ionicons name="volume-high-outline" size={18} color={!draft.headword.trim() ? colors.textMuted : colors.primary} />
+                  <Ionicons name="volume-high-outline" size={16} color={!draft.headword.trim() ? colors.textMuted : speakingKey === "headword" ? "#fff" : colors.primary} />
                 </Pressable>
               )}
             </View>
@@ -1180,20 +1200,20 @@ function WordFormView({
                       />
                       {canSpeak && (
                         <Pressable
-                          onPress={() => ex.en.trim() && mobileSpeechService.speakEnglish(ex.en)}
+                          onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
                           disabled={!ex.en.trim()}
                           style={({ pressed }) => ({
                             width: 32,
                             height: 32,
                             borderRadius: 16,
-                            backgroundColor: !ex.en.trim() ? colors.surfacePressed : pressed ? colors.primaryBg : colors.bg,
+                            backgroundColor: !ex.en.trim() ? colors.surfacePressed : speakingKey === `ex-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
                             borderWidth: 1,
                             borderColor: !ex.en.trim() ? colors.borderMid : colors.primary,
                             alignItems: "center",
                             justifyContent: "center",
                           })}
                         >
-                          <Ionicons name="volume-high-outline" size={16} color={!ex.en.trim() ? colors.textMuted : colors.primary} />
+                          <Ionicons name="volume-high-outline" size={16} color={!ex.en.trim() ? colors.textMuted : speakingKey === `ex-${ex.id}` ? "#fff" : colors.primary} />
                         </Pressable>
                       )}
                     </View>

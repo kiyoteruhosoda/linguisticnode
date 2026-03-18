@@ -17,6 +17,7 @@ export const lightColors = {
   textDim: "#495057",
   primary: "#0d6efd",
   primaryBg: "#e7f1ff",
+  primaryBgPressed: "#bbd6ff",
   primaryPressed: "#0b5ed7",
   // Semantic memory colors
   memNew: { color: "#6c757d", bg: "#f1f3f5" },
@@ -44,6 +45,7 @@ export const darkColors = {
   textDim: "#ced4da",
   primary: "#4d90fe",
   primaryBg: "#1a2940",
+  primaryBgPressed: "#213a5e",
   primaryPressed: "#3a7aee",
   // Semantic memory colors
   memNew: { color: "#9ba5b0", bg: "#252c30" },
