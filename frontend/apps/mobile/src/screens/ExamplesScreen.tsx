@@ -514,7 +514,7 @@ export function ExamplesScreen({
                       )}
                     </View>
                     {example.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} selectable onLongPress={() => showMenu(example.ja)}>{example.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} selectable onLongPress={() => showMenu(example.ja ?? "")}>{example.ja}</Text>
                     ) : null}
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>

@@ -396,7 +396,7 @@ export function StudyScreen({
                       )}
                     </View>
                     {ex.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub }} selectable onLongPress={() => showMenu(ex.ja)}>{ex.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub }} selectable onLongPress={() => showMenu(ex.ja ?? "")}>{ex.ja}</Text>
                     ) : null}
                   </View>
                 ))}

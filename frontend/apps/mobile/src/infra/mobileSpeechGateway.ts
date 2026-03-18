@@ -26,10 +26,10 @@ export const mobileSpeechGateway: SpeechGateway = {
             Tts.removeEventListener("tts-error", onError);
             resolve();
           };
-          const onError = (e: { utteranceId?: string; error?: string }) => {
+          const onError = (_e: unknown) => {
             Tts.removeEventListener("tts-finish", onFinish);
             Tts.removeEventListener("tts-error", onError);
-            reject(new Error(e.error ?? "TTS error"));
+            reject(new Error("TTS error"));
           };
           Tts.addEventListener("tts-finish", onFinish);
           Tts.addEventListener("tts-error", onError);
