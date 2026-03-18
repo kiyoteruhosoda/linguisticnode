@@ -58,9 +58,15 @@ export function Pressable({
       onMouseUp={() => setPressed(false)}
       onMouseLeave={() => setPressed(false)}
       onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => setPressed(false)}
+      onTouchEnd={(e) => {
+        e.preventDefault(); // prevent 300ms click delay on mobile
+        setPressed(false);
+        if (!disabled && onPress) {
+          onPress();
+        }
+      }}
       data-testid={testID}
-      style={resolvedStyle}
+      style={{ touchAction: "manipulation", ...resolvedStyle }}
       disabled={disabled}
       aria-label={ariaLabel}
     >

@@ -23,6 +23,10 @@ export const webSpeechGateway: SpeechGateway = {
     attemptSpeak(text, 1);
     return Promise.resolve();
   },
+  stop(): void {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+  },
 };
 
 function attemptSpeak(text: string, attempt: number): void {
@@ -33,7 +37,10 @@ function attemptSpeak(text: string, attempt: number): void {
     synth.resume();
   }
 
-  synth.cancel();
+  // Only cancel if something is currently playing to avoid unnecessary audio session resets on mobile
+  if (synth.speaking || synth.pending) {
+    synth.cancel();
+  }
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
