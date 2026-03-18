@@ -59,8 +59,13 @@ export function Pressable({
       onMouseLeave={() => setPressed(false)}
       onTouchStart={() => setPressed(true)}
       onTouchEnd={(e) => {
-        e.preventDefault(); // prevent 300ms click delay on mobile
         setPressed(false);
+        if (type === "submit") {
+          // submit ボタンはブラウザのネイティブ form.submit() に委ねる
+          // preventDefault() を呼ぶと click イベントが抑制されフォーム送信が壊れる
+          return;
+        }
+        e.preventDefault(); // prevent 300ms click delay on mobile (button/reset のみ)
         if (!disabled && onPress) {
           onPress();
         }

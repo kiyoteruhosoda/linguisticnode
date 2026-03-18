@@ -53,6 +53,25 @@ describe("webSpeechGateway.stop()", () => {
 
     expect(() => webSpeechGateway.stop()).not.toThrow();
   });
+
+  // P2修正: stop() で孤立リトライタイマーをキャンセルする
+  it("stop() を呼ぶと無音検知タイマーが発火してもリトライしない", async () => {
+    vi.useFakeTimers();
+    const synth = makeSynthMock({ speaking: false, pending: false });
+    window.speechSynthesis = synth;
+
+    webSpeechGateway.speakEnglish("hello");
+    // タイマーが仕掛けられた直後に stop() を呼ぶ（= ページ遷移）
+    webSpeechGateway.stop();
+
+    // 600ms 経過させて無音検知タイマーを発火させる
+    await vi.runAllTimersAsync();
+
+    // speak は最初の1回のみ（リトライが発生していない）
+    expect(synth.speak).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
+  });
 });
 
 describe("webSpeechGateway.speakEnglish() — cancel() の呼び出し条件", () => {
