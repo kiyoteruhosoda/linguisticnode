@@ -44,4 +44,7 @@ export const mobileSpeechGateway: SpeechGateway = {
       }
     }
   },
+  stop(): void {
+    Tts.stop();
+  },
 };
