@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import type { MemoryState, Pos } from "../../../../src/api/types";
 import type { WordDraft } from "../../../../src/core/word/wordGateway";
@@ -650,8 +651,8 @@ function WordListView({
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }}>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} onLongPress={() => Clipboard.setStringAsync(item.headword)} suppressHighlighting>{item.headword}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} onLongPress={() => Clipboard.setStringAsync(item.meaningJa)} suppressHighlighting>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
                     <PosBadge pos={item.pos} />

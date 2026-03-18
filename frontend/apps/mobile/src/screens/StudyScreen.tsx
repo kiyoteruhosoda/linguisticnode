@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { AntDesign, FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
 import type { MobileStudyService } from "../app/mobileServices";
@@ -303,7 +304,7 @@ export function StudyScreen({
             </View>
 
             <View style={{ padding: 28, alignItems: "center", gap: 10 }}>
-              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }}>
+              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }} onLongPress={() => Clipboard.setStringAsync(card.word.headword)} suppressHighlighting>
                 {card.word.headword}
               </Text>
               <View style={{ backgroundColor: colors.primaryBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}>
@@ -314,7 +315,7 @@ export function StudyScreen({
 
               {revealed ? (
                 <View style={{ alignItems: "center", gap: 10, width: "100%" }}>
-                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }}>
+                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }} onLongPress={() => Clipboard.setStringAsync(card.word.meaningJa)} suppressHighlighting>
                     {card.word.meaningJa}
                   </Text>
                   {card.word.memo ? (
@@ -367,7 +368,7 @@ export function StudyScreen({
                 {card.word.examples.map((ex) => (
                   <View key={ex.id} style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, paddingLeft: 12, gap: 4 }}>
                     <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }}>{ex.en}</Text>
+                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }} onLongPress={() => Clipboard.setStringAsync(ex.en)} suppressHighlighting>{ex.en}</Text>
                       {canSpeak && (
                         <Pressable
                           onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
@@ -387,7 +388,7 @@ export function StudyScreen({
                       )}
                     </View>
                     {ex.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub }}>{ex.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub }} onLongPress={() => Clipboard.setStringAsync(ex.ja)} suppressHighlighting>{ex.ja}</Text>
                     ) : null}
                   </View>
                 ))}

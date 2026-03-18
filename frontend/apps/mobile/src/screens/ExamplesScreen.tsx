@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as Clipboard from "expo-clipboard";
 import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import type { Rating } from "../../../../src/api/types";
@@ -335,7 +336,7 @@ export function ExamplesScreen({
             {/* Card Body */}
             <View style={{ padding: 20, gap: 14 }}>
               {/* Sentence with blank */}
-              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }}>
+              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }} onLongPress={() => Clipboard.setStringAsync(example.en)} suppressHighlighting>
                 {blankedSentence || example.en}
               </Text>
 
@@ -483,7 +484,7 @@ export function ExamplesScreen({
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>
+                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} onLongPress={() => Clipboard.setStringAsync(actualWord || example.word.headword)} suppressHighlighting>
                         {actualWord || example.word.headword}
                       </Text>
                       {example.word.pronunciation ? (
@@ -505,7 +506,7 @@ export function ExamplesScreen({
                       )}
                     </View>
                     {example.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }}>{example.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} onLongPress={() => Clipboard.setStringAsync(example.ja)} suppressHighlighting>{example.ja}</Text>
                     ) : null}
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>
