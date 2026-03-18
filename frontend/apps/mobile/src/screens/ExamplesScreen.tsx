@@ -7,6 +7,7 @@ import { checkAnswer, createBlankedSentence } from "../../../../src/core/example
 import type { MobileExamplesService, MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
+import { TextActionMenu } from "../components/TextActionMenu";
 
 type Feedback = "correct" | "incorrect" | null;
 
@@ -45,6 +46,25 @@ export function ExamplesScreen({
   const [appliedTags, setAppliedTags] = useState<string[]>([]);
 
   const canSpeak = mobileSpeechService.canSpeak();
+
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const handleSpeak = useCallback(async (key: string, text: string) => {
+    if (!text.trim()) return;
+    setSpeakingKey(key);
+    try {
+      await mobileSpeechService.speakEnglish(text);
+    } finally {
+      setSpeakingKey(null);
+    }
+  }, []);
+
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuText, setMenuText] = useState("");
+  const showMenu = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMenuText(text);
+    setMenuVisible(true);
+  }, []);
 
   useEffect(() => {
     examplesService.getAllTags().then(setAllTags).catch(() => {});
@@ -307,14 +327,16 @@ export function ExamplesScreen({
               </View>
               {canSpeak && (
                 <Pressable
-                  onPress={() => mobileSpeechService.speakEnglish(example.en)}
+                  onPress={() => handleSpeak("header", example.en)}
                   style={({ pressed }) => ({
                     width: 32, height: 32, borderRadius: 16,
-                    backgroundColor: pressed ? colors.primaryBg : colors.surfacePressed,
+                    backgroundColor: speakingKey === "header" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                    borderWidth: 1,
+                    borderColor: colors.primary,
                     alignItems: "center", justifyContent: "center",
                   })}
                 >
-                  <Ionicons name="volume-high-outline" size={17} color={colors.textDim} />
+                  <Ionicons name="volume-high-outline" size={16} color={speakingKey === "header" ? "#fff" : colors.primary} />
                 </Pressable>
               )}
             </View>
@@ -322,7 +344,7 @@ export function ExamplesScreen({
             {/* Card Body */}
             <View style={{ padding: 20, gap: 14 }}>
               {/* Sentence with blank */}
-              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }}>
+              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }} selectable onLongPress={() => showMenu(example.en)}>
                 {blankedSentence || example.en}
               </Text>
 
@@ -470,7 +492,7 @@ export function ExamplesScreen({
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>
+                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(actualWord || example.word.headword)}>
                         {actualWord || example.word.headword}
                       </Text>
                       {example.word.pronunciation ? (
@@ -478,15 +500,21 @@ export function ExamplesScreen({
                       ) : null}
                       {canSpeak && (
                         <Pressable
-                          onPress={() => mobileSpeechService.speakEnglish(actualWord || example.word.headword)}
-                          style={{ padding: 2 }}
+                          onPress={() => handleSpeak("answer", actualWord || example.word.headword)}
+                          style={({ pressed }) => ({
+                            width: 32, height: 32, borderRadius: 16,
+                            backgroundColor: speakingKey === "answer" ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                            borderWidth: 1,
+                            borderColor: colors.primary,
+                            alignItems: "center", justifyContent: "center",
+                          })}
                         >
-                          <Ionicons name="volume-high-outline" size={17} color={colors.textDim} />
+                          <Ionicons name="volume-high-outline" size={16} color={speakingKey === "answer" ? "#fff" : colors.primary} />
                         </Pressable>
                       )}
                     </View>
                     {example.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }}>{example.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} selectable onLongPress={() => showMenu(example.ja ?? "")}>{example.ja}</Text>
                     ) : null}
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>
@@ -555,6 +583,7 @@ export function ExamplesScreen({
           </View>
         </ScrollView>
       )}
+      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }
