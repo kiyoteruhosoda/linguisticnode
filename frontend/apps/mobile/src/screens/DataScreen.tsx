@@ -89,26 +89,24 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
     setSharingLog(true);
     debugLogger.log("DataScreen", "debug log download requested");
     try {
-      let sharePath: string;
+      // 常に cacheDirectory の .txt ファイルにコピーしてから共有する
+      // （Files by Google 等は documentDirectory を直接読めないため）
+      const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const sharePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
 
       if (debugMode) {
-        // デバッグモード ON: ファイルが存在すればそのまま共有（クラッシュ前のログも含む）
+        // デバッグモード ON: 永続ファイルを読み込んでコピー（クラッシュ前のログも含む）
         const persistentPath = debugLogger.getLogFilePath();
         const info = await FileSystem.getInfoAsync(persistentPath);
         if (info.exists) {
-          sharePath = persistentPath;
+          await FileSystem.copyAsync({ from: persistentPath, to: sharePath });
         } else {
-          // ファイルがなければインメモリ内容をキャッシュに書き出して共有
-          const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-          sharePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
           await FileSystem.writeAsStringAsync(sharePath, debugLogger.getLogs() || "(no logs yet)", {
             encoding: FileSystem.EncodingType.UTF8,
           });
         }
       } else {
         // デバッグモード OFF: インメモリのみ
-        const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-        sharePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
         await FileSystem.writeAsStringAsync(sharePath, debugLogger.getLogs() || "(no logs yet)", {
           encoding: FileSystem.EncodingType.UTF8,
         });

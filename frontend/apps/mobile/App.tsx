@@ -8,6 +8,10 @@ import { WordsScreen } from "./src/screens/WordsScreen";
 import { StudyScreen } from "./src/screens/StudyScreen";
 import { DataScreen } from "./src/screens/DataScreen";
 import { ExamplesScreen } from "./src/screens/ExamplesScreen";
+import { debugLogger } from "./src/infra/debugLogger";
+
+// アプリ起動をログに記録（クラッシュ前後の区切りとして機能する）
+debugLogger.log("App", `===== APP START ${new Date().toISOString()} =====`);
 
 // SyncScreen is kept for future server sync UI
 // import { SyncScreen } from "./src/screens/SyncScreen";
