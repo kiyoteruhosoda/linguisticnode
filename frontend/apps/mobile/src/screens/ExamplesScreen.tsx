@@ -51,7 +51,7 @@ export function ExamplesScreen({
   // アンマウント時に音声を確実に停止（画面遷移後に音声が残らないようにする）
   useEffect(() => {
     return () => {
-      debugLogger.log("ExamplesScreen", "unmount → stop()");
+      debugLogger.log("ExamplesScreen", "unmount -> stop()");
       mobileSpeechService.stop();
     };
   }, []);
