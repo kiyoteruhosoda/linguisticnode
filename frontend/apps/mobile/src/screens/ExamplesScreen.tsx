@@ -356,7 +356,7 @@ export function ExamplesScreen({
             {/* Card Body */}
             <View style={{ padding: 20, gap: 14 }}>
               {/* Sentence with blank */}
-              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }} selectable onLongPress={() => showMenu(example.en)}>
+              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }}onLongPress={() => showMenu(example.en)}>
                 {blankedSentence || example.en}
               </Text>
 
@@ -504,7 +504,7 @@ export function ExamplesScreen({
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(actualWord || example.word.headword)}>
+                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}onLongPress={() => showMenu(actualWord || example.word.headword)}>
                         {actualWord || example.word.headword}
                       </Text>
                       {example.word.pronunciation ? (
@@ -526,7 +526,7 @@ export function ExamplesScreen({
                       )}
                     </View>
                     {example.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} selectable onLongPress={() => showMenu(example.ja ?? "")}>{example.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }}onLongPress={() => showMenu(example.ja ?? "")}>{example.ja}</Text>
                     ) : null}
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>
