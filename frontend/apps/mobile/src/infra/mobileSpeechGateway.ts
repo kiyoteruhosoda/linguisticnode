@@ -1,6 +1,8 @@
 import Tts from "react-native-tts";
 import type { SpeechGateway } from "../../../../src/core/speech/speechGateway";
+import { debugLogger } from "./debugLogger";
 
+const TAG = "TTS";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 400;
 
@@ -14,18 +16,22 @@ export const mobileSpeechGateway: SpeechGateway = {
     return true;
   },
   async speakEnglish(text: string): Promise<void> {
+    debugLogger.log(TAG, `speakEnglish start: "${text.slice(0, 40)}" ttsActive=${ttsActive}`);
     try {
       await Tts.setDefaultLanguage("en-US");
-    } catch {
-      // language setting failed, proceed anyway
+      debugLogger.log(TAG, "setDefaultLanguage OK");
+    } catch (e) {
+      debugLogger.log(TAG, `setDefaultLanguage failed: ${String(e)}`);
     }
 
     // Only stop if currently speaking to avoid unnecessary audio session resets
     if (ttsActive) {
+      debugLogger.log(TAG, "stopping previous speech before new speak");
       Tts.stop();
     }
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      debugLogger.log(TAG, `attempt ${attempt + 1}/${MAX_RETRIES + 1}`);
       try {
         await new Promise<void>((resolve, reject) => {
           const cleanup = () => {
@@ -34,30 +40,46 @@ export const mobileSpeechGateway: SpeechGateway = {
             Tts.removeEventListener("tts-error", onError);
             Tts.removeEventListener("tts-cancel", onCancel);
           };
-          const onFinish = () => { cleanup(); resolve(); };
-          const onError = () => { cleanup(); reject(new Error("TTS error")); };
-          // tts-cancel fires when stop() is called intentionally → resolve cleanly
-          const onCancel = () => { cleanup(); resolve(); };
+          const onFinish = () => {
+            debugLogger.log(TAG, "tts-finish");
+            cleanup();
+            resolve();
+          };
+          const onError = (e: unknown) => {
+            debugLogger.log(TAG, `tts-error: ${JSON.stringify(e)}`);
+            cleanup();
+            reject(new Error("TTS error"));
+          };
+          const onCancel = () => {
+            debugLogger.log(TAG, "tts-cancel (stop called intentionally)");
+            cleanup();
+            resolve();
+          };
 
           Tts.addEventListener("tts-finish", onFinish);
           Tts.addEventListener("tts-error", onError);
           Tts.addEventListener("tts-cancel", onCancel);
           ttsActive = true;
+          debugLogger.log(TAG, "Tts.speak() called");
           Tts.speak(text);
         });
-        return; // success
-      } catch {
+        debugLogger.log(TAG, "speakEnglish success");
+        return;
+      } catch (e) {
+        debugLogger.log(TAG, `attempt ${attempt + 1} failed: ${String(e)}`);
         ttsActive = false;
         if (attempt < MAX_RETRIES) {
           await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
         }
       }
     }
+    debugLogger.log(TAG, "speakEnglish: all attempts failed");
   },
   stop(): void {
+    debugLogger.log(TAG, `stop() called ttsActive=${ttsActive}`);
     if (ttsActive) {
       Tts.stop();
-      // ttsActive will be reset to false by the tts-cancel handler above
+      // ttsActive will be reset to false by the tts-cancel handler
     }
   },
 };
