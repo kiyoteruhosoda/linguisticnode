@@ -44,14 +44,14 @@ class JsonFormatter(logging.Formatter):
             if hasattr(record, k):
                 v = getattr(record, k)
 
-                # detail が大きくなるのを防ぐ（運用で十分なサイズに）
+                # Truncate large fields to avoid bloated log entries
                 if k in ("detail", "request_body"):
                     s = None
                     try:
-                        s = json.dumps(v, ensure_ascii=False)
+                        s = json.dumps(v, ensure_ascii=True)
                     except Exception:
                         s = str(v)
-                    # 4KB に丸める（必要なら調整）
+                    # Truncate at 4KB
                     if len(s) > 4096:
                         s = s[:4096] + "...(truncated)"
                     base[k] = s
@@ -83,8 +83,8 @@ def _make_stdout_handler(level: int) -> logging.Handler:
 def setup_logging(*, data_dir: Path) -> None:
     """
     - root logger: app.log + stdout
-    - app.audit logger: audit.log + stdout（必要なら stdout は外せる）
-    - uvicorn loggers: root に流す（app.log に入る）
+    - app.audit logger: audit.log + stdout (propagate=False to avoid duplicates)
+    - uvicorn loggers: forwarded to root (goes to app.log)
     """
     level_name = os.getenv("VOCAB_LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
@@ -95,14 +95,14 @@ def setup_logging(*, data_dir: Path) -> None:
     app_log_path = log_dir / "app.log"
     audit_log_path = log_dir / "audit.log"
 
-    # root: アプリ全般
+    # root: general application logging
     root = logging.getLogger()
     root.setLevel(level)
     root.handlers.clear()
     root.addHandler(_make_stdout_handler(level))
     root.addHandler(_make_rotating_file_handler(app_log_path, level))
 
-    # audit: 監査専用（root に二重で流さないため propagate=False）
+    # audit: audit-only logger (propagate=False to avoid double-logging to root)
     audit = logging.getLogger("app.audit")
     audit.setLevel(level)
     audit.handlers.clear()
@@ -110,14 +110,14 @@ def setup_logging(*, data_dir: Path) -> None:
     audit.addHandler(_make_stdout_handler(level))
     audit.addHandler(_make_rotating_file_handler(audit_log_path, level))
 
-    # uvicorn.error は root に流す（app.logへ）
+    # uvicorn.error: forward to root (goes to app.log)
     for name in ("uvicorn", "uvicorn.error"):
         lg = logging.getLogger(name)
         lg.handlers.clear()
         lg.propagate = True
 
-    # uvicorn.access は "消す"（app.http のみ残す）
+    # uvicorn.access: disable (app.http handles request logging)
     access = logging.getLogger("uvicorn.access")
     access.handlers.clear()
     access.propagate = False
-    access.disabled = True 
+    access.disabled = True

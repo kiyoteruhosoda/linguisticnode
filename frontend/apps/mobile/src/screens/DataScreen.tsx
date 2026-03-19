@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -8,6 +8,7 @@ import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
 import { LicenseScreen } from "./LicenseScreen";
+import { DebugScreen } from "./DebugScreen";
 
 type ImportMode = "merge" | "overwrite";
 
@@ -16,10 +17,26 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const [exporting, setExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLicenses, setShowLicenses] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const [importMode, setImportMode] = useState<ImportMode>("merge");
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
+  const versionTapCount = useRef(0);
+  const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleVersionTap = () => {
+    versionTapCount.current += 1;
+    if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
+    if (versionTapCount.current >= 7) {
+      versionTapCount.current = 0;
+      setShowDebug(true);
+    } else {
+      versionTapTimer.current = setTimeout(() => {
+        versionTapCount.current = 0;
+      }, 2000);
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -252,8 +269,9 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </Pressable>
 
-        {/* App Version */}
-        <View
+        {/* App Version - tap 7 times to unlock debug */}
+        <Pressable
+          onPress={handleVersionTap}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -286,10 +304,12 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
                 : ""}
             </Text>
           </View>
-        </View>
+        </Pressable>
       </ScrollView>
 
       <LicenseScreen visible={showLicenses} onClose={() => setShowLicenses(false)} />
+
+      <DebugScreen visible={showDebug} onClose={() => setShowDebug(false)} />
 
       <ImportModal
         visible={showImportModal}
