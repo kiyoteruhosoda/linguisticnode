@@ -10,6 +10,8 @@ import { RnwTagFilterPanel } from "../rnw/components/RnwTagFilterPanel";
 import { RnwInlineNotice } from "../rnw/components/RnwInlineNotice";
 import { RnwExamplesQuizCard } from "../rnw/components/RnwExamplesQuizCard";
 import { CrossFeatureActionBar } from "../components/CrossFeatureActionBar";
+import { RnwPageHeader } from "@linguisticnode/ui";
+import pageConfig from "../config/pageConfig.json";
 
 export function ExamplesTestPage() {
   const navigate = useNavigate();
@@ -138,6 +140,11 @@ export function ExamplesTestPage() {
 
   return (
     <div className="vstack gap-3" data-testid="examples-page-ready">
+      <RnwPageHeader
+        title={pageConfig.pages.examples.title}
+        icon={<i className={pageConfig.pages.examples.iconClass} aria-hidden="true" />}
+        testID={pageConfig.pages.examples.testID}
+      />
       <CrossFeatureActionBar
         current="examples"
         onNavigate={(target) => navigate(`/${target}`)}

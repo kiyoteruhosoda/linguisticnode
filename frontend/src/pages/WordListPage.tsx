@@ -14,6 +14,8 @@ import { RnwButton } from "../rnw/components/RnwButton";
 import { useTagFilterState } from "../hooks/useTagFilterState";
 import { RnwTagFilterPanel } from "../rnw/components/RnwTagFilterPanel";
 import { CrossFeatureActionBar } from "../components/CrossFeatureActionBar";
+import { RnwPageHeader } from "@linguisticnode/ui";
+import pageConfig from "../config/pageConfig.json";
 
 export function WordListPage() {
   const navigate = useNavigate();
@@ -88,6 +90,11 @@ export function WordListPage() {
 
   return (
     <div className="vstack gap-3" data-testid="word-list-page-ready">
+      <RnwPageHeader
+        title={pageConfig.pages.words.title}
+        icon={<i className={pageConfig.pages.words.iconClass} aria-hidden="true" />}
+        testID={pageConfig.pages.words.testID}
+      />
       <CrossFeatureActionBar
         current="words"
         onNavigate={(target) => navigate(`/${target}`)}
