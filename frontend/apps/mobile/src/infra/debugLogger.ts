@@ -16,7 +16,7 @@ const MAX_MEMORY_LOGS = 500;
 const MAX_PREV_CONTENT_CHARS = 8000;
 
 const buffer: string[] = [];
-let _debugMode = true; // 問題解決まで ON がデフォルト
+let _debugMode = false;
 let _writing = false;
 let _needsFlush = false;
 let _firstFlush = true;
@@ -44,7 +44,7 @@ async function flushToFile(): Promise<void> {
             encoding: FileSystem.EncodingType.UTF8,
           });
           if (prev.length > MAX_PREV_CONTENT_CHARS) {
-            prev = `...(前セッションログ省略)\n` + prev.slice(-MAX_PREV_CONTENT_CHARS);
+            prev = `...(prev session log truncated)\n` + prev.slice(-MAX_PREV_CONTENT_CHARS);
           }
           _previousContent = prev.trim() + "\n--- NEW SESSION ---\n";
         }

@@ -35,7 +35,7 @@ export function StudyScreen({
   // アンマウント時に音声を確実に停止
   useEffect(() => {
     return () => {
-      debugLogger.log("StudyScreen", "unmount → stop()");
+      debugLogger.log("StudyScreen", "unmount -> stop()");
       mobileSpeechService.stop();
     };
   }, []);

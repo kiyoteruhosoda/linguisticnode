@@ -7,6 +7,7 @@ import * as Sharing from "expo-sharing";
 import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
+import { DebugInfoScreen } from "./DebugInfoScreen";
 import { LicenseScreen } from "./LicenseScreen";
 import { debugLogger } from "../infra/debugLogger";
 
@@ -23,10 +24,23 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const [importSuccess, setImportSuccess] = useState(false);
   const [sharingLog, setSharingLog] = useState(false);
   const [debugMode, setDebugMode] = useState(() => debugLogger.isDebugMode());
+  const [versionTapCount, setVersionTapCount] = useState(0);
+  const [showDebug, setShowDebug] = useState(false);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
 
   const toggleDebugMode = (value: boolean) => {
     setDebugMode(value);
     debugLogger.setDebugMode(value);
+  };
+
+  const handleVersionTap = () => {
+    const next = versionTapCount + 1;
+    if (next >= 7) {
+      setVersionTapCount(0);
+      setShowDebug(true);
+    } else {
+      setVersionTapCount(next);
+    }
   };
 
   const handleExport = async () => {
@@ -300,85 +314,9 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </Pressable>
 
-        {/* Debug Mode */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 14,
-            backgroundColor: colors.surface,
-            borderRadius: 14,
-            padding: 18,
-            borderWidth: 1,
-            borderColor: debugMode ? colors.primary : colors.border,
-          }}
-        >
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: debugMode ? "#fff3e0" : colors.surfacePressed,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="bug-outline" size={22} color={debugMode ? "#e65100" : colors.textMuted} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Debug Mode</Text>
-            <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
-              {debugMode ? "Logs written to file (survives crashes)" : "In-memory logs only"}
-            </Text>
-          </View>
-          <Switch
-            value={debugMode}
-            onValueChange={toggleDebugMode}
-            trackColor={{ false: colors.borderMid, true: "#e65100" }}
-            thumbColor="#fff"
-          />
-        </View>
-
-        {/* Debug Log */}
+        {/* App Version (tap 7 times to unlock debug section) */}
         <Pressable
-          onPress={() => void handleShareLog()}
-          disabled={sharingLog}
-          style={({ pressed }) => ({
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 14,
-            backgroundColor: pressed || sharingLog ? colors.surfacePressed : colors.surface,
-            borderRadius: 14,
-            padding: 18,
-            borderWidth: 1,
-            borderColor: colors.border,
-          })}
-        >
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: isDark ? "#2d2540" : "#f3f0ff",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="bug-outline" size={22} color="#5f3dc4" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: sharingLog ? colors.textMuted : colors.text }}>
-              {sharingLog ? "Preparing..." : "Debug Log"}
-            </Text>
-            <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
-              Share diagnostic log for troubleshooting
-            </Text>
-          </View>
-          {!sharingLog && <Ionicons name="share-outline" size={18} color={colors.textMuted} />}
-        </Pressable>
-
-        {/* App Version */}
-        <View
+          onPress={handleVersionTap}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -387,7 +325,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
             borderRadius: 14,
             padding: 18,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: showDebug ? colors.primary : colors.border,
           }}
         >
           <View
@@ -411,10 +349,145 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
                 : ""}
             </Text>
           </View>
-        </View>
+          {versionTapCount > 0 && !showDebug && (
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>{7 - versionTapCount} more</Text>
+          )}
+        </Pressable>
+
+        {/* Debug section (hidden by default, unlock by tapping version 7 times) */}
+        {showDebug && (
+          <>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                paddingHorizontal: 4,
+              }}
+            >
+              <Ionicons name="bug-outline" size={14} color="#e65100" />
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#e65100", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                Developer
+              </Text>
+            </View>
+
+            {/* Debug Mode */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 14,
+                backgroundColor: colors.surface,
+                borderRadius: 14,
+                padding: 18,
+                borderWidth: 1,
+                borderColor: debugMode ? "#e65100" : colors.border,
+              }}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: debugMode ? "#fff3e0" : colors.surfacePressed,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="bug-outline" size={22} color={debugMode ? "#e65100" : colors.textMuted} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Debug Mode</Text>
+                <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
+                  {debugMode ? "Logs written to file (survives crashes)" : "In-memory logs only"}
+                </Text>
+              </View>
+              <Switch
+                value={debugMode}
+                onValueChange={toggleDebugMode}
+                trackColor={{ false: colors.borderMid, true: "#e65100" }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            {/* Debug Log download */}
+            <Pressable
+              onPress={() => void handleShareLog()}
+              disabled={sharingLog}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 14,
+                backgroundColor: pressed || sharingLog ? colors.surfacePressed : colors.surface,
+                borderRadius: 14,
+                padding: 18,
+                borderWidth: 1,
+                borderColor: colors.border,
+              })}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: isDark ? "#2d2540" : "#f3f0ff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="document-text-outline" size={22} color="#5f3dc4" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: "700", color: sharingLog ? colors.textMuted : colors.text }}>
+                  {sharingLog ? "Preparing..." : "Debug Log"}
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
+                  Download diagnostic log
+                </Text>
+              </View>
+              {!sharingLog && <Ionicons name="arrow-down-outline" size={18} color={colors.textMuted} />}
+            </Pressable>
+
+            {/* Debug Info screen */}
+            <Pressable
+              onPress={() => setShowDebugInfo(true)}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 14,
+                backgroundColor: pressed ? colors.surfacePressed : colors.surface,
+                borderRadius: 14,
+                padding: 18,
+                borderWidth: 1,
+                borderColor: colors.border,
+              })}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: "#fff3e0",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="analytics-outline" size={22} color="#e65100" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Debug Info</Text>
+                <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
+                  System info, logs, diagnostics
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          </>
+        )}
       </ScrollView>
 
       <LicenseScreen visible={showLicenses} onClose={() => setShowLicenses(false)} />
+      <DebugInfoScreen visible={showDebugInfo} onClose={() => setShowDebugInfo(false)} />
 
       <ImportModal
         visible={showImportModal}
