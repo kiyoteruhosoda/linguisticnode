@@ -8,6 +8,7 @@ import type { MobileExamplesService, MobileStudyService } from "../app/mobileSer
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
 import { TextActionMenu } from "../components/TextActionMenu";
+import { debugLogger } from "../infra/debugLogger";
 
 type Feedback = "correct" | "incorrect" | null;
 
@@ -47,12 +48,23 @@ export function ExamplesScreen({
 
   const canSpeak = mobileSpeechService.canSpeak();
 
+  // アンマウント時に音声を確実に停止（画面遷移後に音声が残らないようにする）
+  useEffect(() => {
+    return () => {
+      debugLogger.log("ExamplesScreen", "unmount → stop()");
+      mobileSpeechService.stop();
+    };
+  }, []);
+
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
   const handleSpeak = useCallback(async (key: string, text: string) => {
     if (!text.trim()) return;
+    debugLogger.log("ExamplesScreen", `handleSpeak key=${key} text="${text.slice(0, 30)}"`);
     setSpeakingKey(key);
     try {
       await mobileSpeechService.speakEnglish(text);
+    } catch (e) {
+      debugLogger.log("ExamplesScreen", `handleSpeak error: ${String(e)}`);
     } finally {
       setSpeakingKey(null);
     }
@@ -344,7 +356,7 @@ export function ExamplesScreen({
             {/* Card Body */}
             <View style={{ padding: 20, gap: 14 }}>
               {/* Sentence with blank */}
-              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }} selectable onLongPress={() => showMenu(example.en)}>
+              <Text style={{ fontSize: 17, color: colors.text, lineHeight: 26, textAlign: "center" }}onLongPress={() => showMenu(example.en)}>
                 {blankedSentence || example.en}
               </Text>
 
@@ -492,7 +504,7 @@ export function ExamplesScreen({
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(actualWord || example.word.headword)}>
+                      <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}onLongPress={() => showMenu(actualWord || example.word.headword)}>
                         {actualWord || example.word.headword}
                       </Text>
                       {example.word.pronunciation ? (
@@ -514,7 +526,7 @@ export function ExamplesScreen({
                       )}
                     </View>
                     {example.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }} selectable onLongPress={() => showMenu(example.ja ?? "")}>{example.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub, fontStyle: "italic" }}onLongPress={() => showMenu(example.ja ?? "")}>{example.ja}</Text>
                     ) : null}
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>

@@ -58,9 +58,20 @@ export function Pressable({
       onMouseUp={() => setPressed(false)}
       onMouseLeave={() => setPressed(false)}
       onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => setPressed(false)}
+      onTouchEnd={(e) => {
+        setPressed(false);
+        if (type === "submit") {
+          // submit ボタンはブラウザのネイティブ form.submit() に委ねる
+          // preventDefault() を呼ぶと click イベントが抑制されフォーム送信が壊れる
+          return;
+        }
+        e.preventDefault(); // prevent 300ms click delay on mobile (button/reset のみ)
+        if (!disabled && onPress) {
+          onPress();
+        }
+      }}
       data-testid={testID}
-      style={resolvedStyle}
+      style={{ touchAction: "manipulation", ...resolvedStyle }}
       disabled={disabled}
       aria-label={ariaLabel}
     >

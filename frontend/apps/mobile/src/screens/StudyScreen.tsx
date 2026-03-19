@@ -6,6 +6,7 @@ import type { MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
 import { TextActionMenu } from "../components/TextActionMenu";
+import { debugLogger } from "../infra/debugLogger";
 
 type Card = Awaited<ReturnType<MobileStudyService["fetchNextCard"]>>;
 
@@ -31,12 +32,23 @@ export function StudyScreen({
 
   const canSpeak = mobileSpeechService.canSpeak();
 
+  // アンマウント時に音声を確実に停止
+  useEffect(() => {
+    return () => {
+      debugLogger.log("StudyScreen", "unmount → stop()");
+      mobileSpeechService.stop();
+    };
+  }, []);
+
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
   const handleSpeak = useCallback(async (key: string, text: string) => {
     if (!text.trim()) return;
+    debugLogger.log("StudyScreen", `handleSpeak key=${key} text="${text.slice(0, 30)}"`);
     setSpeakingKey(key);
     try {
       await mobileSpeechService.speakEnglish(text);
+    } catch (e) {
+      debugLogger.log("StudyScreen", `handleSpeak error: ${String(e)}`);
     } finally {
       setSpeakingKey(null);
     }
@@ -312,7 +324,7 @@ export function StudyScreen({
             </View>
 
             <View style={{ padding: 28, alignItems: "center", gap: 10 }}>
-              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }} selectable onLongPress={() => showMenu(card.word.headword)}>
+              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }}onLongPress={() => showMenu(card.word.headword)}>
                 {card.word.headword}
               </Text>
               <View style={{ backgroundColor: colors.primaryBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}>
@@ -323,7 +335,7 @@ export function StudyScreen({
 
               {revealed ? (
                 <View style={{ alignItems: "center", gap: 10, width: "100%" }}>
-                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }} selectable onLongPress={() => showMenu(card.word.meaningJa)}>
+                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }}onLongPress={() => showMenu(card.word.meaningJa)}>
                     {card.word.meaningJa}
                   </Text>
                   {card.word.memo ? (
@@ -376,7 +388,7 @@ export function StudyScreen({
                 {card.word.examples.map((ex) => (
                   <View key={ex.id} style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, paddingLeft: 12, gap: 4 }}>
                     <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }} selectable onLongPress={() => showMenu(ex.en)}>{ex.en}</Text>
+                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }}onLongPress={() => showMenu(ex.en)}>{ex.en}</Text>
                       {canSpeak && (
                         <Pressable
                           onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
@@ -396,7 +408,7 @@ export function StudyScreen({
                       )}
                     </View>
                     {ex.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub }} selectable onLongPress={() => showMenu(ex.ja ?? "")}>{ex.ja}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub }}onLongPress={() => showMenu(ex.ja ?? "")}>{ex.ja}</Text>
                     ) : null}
                   </View>
                 ))}

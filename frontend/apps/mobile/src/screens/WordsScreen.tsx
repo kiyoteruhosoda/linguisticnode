@@ -18,7 +18,7 @@ import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
-import { TextActionMenu } from "../components/TextActionMenu";
+import { debugLogger } from "../infra/debugLogger";
 
 type WordItem = Awaited<ReturnType<MobileWordService["listWords"]>>["items"][number];
 type SubRoute = "list" | "create" | "edit";
@@ -37,8 +37,14 @@ const EMPTY_DRAFT: WordDraft = {
 
 // ─── WordsScreen (root) ───────────────────────────────────────────────────────
 
-export function WordsScreen({ service }: { service: MobileWordService }) {
+export function WordsScreen({ service, resetKey }: { service: MobileWordService; resetKey?: number }) {
   const [subRoute, setSubRoute] = useState<SubRoute>("list");
+
+  // Words タブを押したら編集中でも一覧に戻す
+  useEffect(() => {
+    setSubRoute("list");
+  }, [resetKey]);
+
   const [query, setQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [words, setWords] = useState<WordItem[]>([]);
@@ -382,13 +388,6 @@ function WordListView({
   const { colors } = useTheme();
   const [bulkConfirm, setBulkConfirm] = useState<"delete" | "reset" | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [menuText, setMenuText] = useState("");
-  const showMenu = useCallback((text: string) => {
-    if (!text.trim()) return;
-    setMenuText(text);
-    setMenuVisible(true);
-  }, []);
   const [tagInput, setTagInput] = useState("");
   const [tagMode, setTagMode] = useState<"add" | "replace">("add");
 
@@ -605,14 +604,19 @@ function WordListView({
             return (
               <Pressable
                 onPress={() => {
+                  debugLogger.log("WordList", `onPress id=${item.id} selectionMode=${selectionMode}`);
                   if (selectionMode) {
                     onToggleSelection(item.id);
                   } else {
+                    debugLogger.log("WordList", `navigating to edit: ${item.headword}`);
                     onSelectWord(item);
                   }
                 }}
-                onLongPress={() => onLongPressWord(item.id)}
-                delayLongPress={400}
+                onLongPress={() => {
+                  debugLogger.log("WordList", `onLongPress id=${item.id}`);
+                  onLongPressWord(item.id);
+                }}
+                delayLongPress={200}
                 style={({ pressed }) => ({
                   backgroundColor: isSelected ? colors.primaryBg : pressed ? colors.primaryBg : colors.surface,
                   borderRadius: 12,
@@ -646,8 +650,8 @@ function WordListView({
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }} selectable onLongPress={() => showMenu(item.headword)}>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }} selectable onLongPress={() => showMenu(item.meaningJa)}>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>{item.headword}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }}>{item.meaningJa}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
                     <PosBadge pos={item.pos} />
@@ -910,7 +914,6 @@ function WordListView({
           </View>
         </View>
       </Modal>
-      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }

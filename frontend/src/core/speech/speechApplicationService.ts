@@ -12,6 +12,9 @@ export function createSpeechApplicationService(gateway: SpeechGateway) {
       }
       return gateway.speakEnglish(normalized);
     },
+    stop(): void {
+      gateway.stop();
+    },
   };
 }
 
