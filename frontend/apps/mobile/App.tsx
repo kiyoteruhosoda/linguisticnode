@@ -41,6 +41,7 @@ function AppContent() {
   const [compositionRoot, setCompositionRoot] = useState<MobileCompositionRoot | null>(null);
   const [quizPreferredWordId, setQuizPreferredWordId] = useState<string | null>(null);
   const [studyPreferredWordId, setStudyPreferredWordId] = useState<string | null>(null);
+  const [wordsResetKey, setWordsResetKey] = useState(0);
   const routeHistoryRef = useRef<Array<{ route: MobileRoute; wordId: string | null }>>([]);
   const insets = useSafeAreaInsets();
 
@@ -77,10 +78,12 @@ function AppContent() {
   }, [route]);
 
   // Tab bar press: clear navigation history and preferred word state
+  // "words" タブは常に wordsResetKey をインクリメントして一覧に戻す
   const navigateToTab = useCallback((tab: MobileRoute) => {
     routeHistoryRef.current = [];
     setQuizPreferredWordId(null);
     setStudyPreferredWordId(null);
+    if (tab === "words") setWordsResetKey((k) => k + 1);
     setRoute(tab);
   }, []);
 
@@ -135,8 +138,8 @@ function AppContent() {
       return <DataScreen ioGateway={compositionRoot.ioGateway} />;
     }
 
-    return <WordsScreen service={compositionRoot.wordService} />;
-  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors]);
+    return <WordsScreen service={compositionRoot.wordService} resetKey={wordsResetKey} />;
+  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>

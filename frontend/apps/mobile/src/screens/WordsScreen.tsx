@@ -37,8 +37,14 @@ const EMPTY_DRAFT: WordDraft = {
 
 // ─── WordsScreen (root) ───────────────────────────────────────────────────────
 
-export function WordsScreen({ service }: { service: MobileWordService }) {
+export function WordsScreen({ service, resetKey }: { service: MobileWordService; resetKey?: number }) {
   const [subRoute, setSubRoute] = useState<SubRoute>("list");
+
+  // Words タブを押したら編集中でも一覧に戻す
+  useEffect(() => {
+    setSubRoute("list");
+  }, [resetKey]);
+
   const [query, setQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [words, setWords] = useState<WordItem[]>([]);

@@ -22,6 +22,12 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const [sharingLog, setSharingLog] = useState(false);
+  const [debugMode, setDebugMode] = useState(() => debugLogger.isDebugMode());
+
+  const toggleDebugMode = (value: boolean) => {
+    setDebugMode(value);
+    debugLogger.setDebugMode(value);
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -81,17 +87,36 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
 
   const handleShareLog = async () => {
     setSharingLog(true);
+    debugLogger.log("DataScreen", "debug log download requested");
     try {
-      debugLogger.log("DataScreen", "debug log download requested");
-      const content = debugLogger.getLogs();
-      const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-      const filePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
-      await FileSystem.writeAsStringAsync(filePath, content || "(no logs yet)", {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+      let sharePath: string;
+
+      if (debugMode) {
+        // デバッグモード ON: ファイルが存在すればそのまま共有（クラッシュ前のログも含む）
+        const persistentPath = debugLogger.getLogFilePath();
+        const info = await FileSystem.getInfoAsync(persistentPath);
+        if (info.exists) {
+          sharePath = persistentPath;
+        } else {
+          // ファイルがなければインメモリ内容をキャッシュに書き出して共有
+          const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+          sharePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
+          await FileSystem.writeAsStringAsync(sharePath, debugLogger.getLogs() || "(no logs yet)", {
+            encoding: FileSystem.EncodingType.UTF8,
+          });
+        }
+      } else {
+        // デバッグモード OFF: インメモリのみ
+        const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+        sharePath = `${FileSystem.cacheDirectory}debug-log-${ts}.txt`;
+        await FileSystem.writeAsStringAsync(sharePath, debugLogger.getLogs() || "(no logs yet)", {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+      }
+
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
-        await Sharing.shareAsync(filePath, {
+        await Sharing.shareAsync(sharePath, {
           mimeType: "text/plain",
           dialogTitle: "Share debug log",
           UTI: "public.plain-text",
@@ -276,6 +301,45 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </Pressable>
+
+        {/* Debug Mode */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+            backgroundColor: colors.surface,
+            borderRadius: 14,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: debugMode ? colors.primary : colors.border,
+          }}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: debugMode ? "#fff3e0" : colors.surfacePressed,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="bug-outline" size={22} color={debugMode ? "#e65100" : colors.textMuted} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Debug Mode</Text>
+            <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
+              {debugMode ? "Logs written to file (survives crashes)" : "In-memory logs only"}
+            </Text>
+          </View>
+          <Switch
+            value={debugMode}
+            onValueChange={toggleDebugMode}
+            trackColor={{ false: colors.borderMid, true: "#e65100" }}
+            thumbColor="#fff"
+          />
+        </View>
 
         {/* Debug Log */}
         <Pressable
