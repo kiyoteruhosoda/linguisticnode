@@ -18,7 +18,6 @@ import type { WordDraft } from "../../../../src/core/word/wordGateway";
 import type { MobileWordService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
-import { TextActionMenu } from "../components/TextActionMenu";
 import { debugLogger } from "../infra/debugLogger";
 
 type WordItem = Awaited<ReturnType<MobileWordService["listWords"]>>["items"][number];
@@ -383,13 +382,6 @@ function WordListView({
   const { colors } = useTheme();
   const [bulkConfirm, setBulkConfirm] = useState<"delete" | "reset" | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [menuText, setMenuText] = useState("");
-  const showMenu = useCallback((text: string) => {
-    if (!text.trim()) return;
-    setMenuText(text);
-    setMenuVisible(true);
-  }, []);
   const [tagInput, setTagInput] = useState("");
   const [tagMode, setTagMode] = useState<"add" | "replace">("add");
 
@@ -916,7 +908,6 @@ function WordListView({
           </View>
         </View>
       </Modal>
-      <TextActionMenu visible={menuVisible} text={menuText} onClose={() => setMenuVisible(false)} />
     </View>
   );
 }
