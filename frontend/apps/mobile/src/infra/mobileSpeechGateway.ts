@@ -17,12 +17,16 @@ export const mobileSpeechGateway: SpeechGateway = {
   },
   async speakEnglish(text: string): Promise<void> {
     debugLogger.log(TAG, `speakEnglish start: "${text.slice(0, 40)}" ttsActive=${ttsActive}`);
+    // クラッシュ前にログが確実にファイルに書き込まれるよう flush を待つ
+    await debugLogger.flush();
+
     try {
       await Tts.setDefaultLanguage("en-US");
       debugLogger.log(TAG, "setDefaultLanguage OK");
     } catch (e) {
       debugLogger.log(TAG, `setDefaultLanguage failed: ${String(e)}`);
     }
+    await debugLogger.flush();
 
     // Only stop if currently speaking to avoid unnecessary audio session resets
     if (ttsActive) {
@@ -32,6 +36,8 @@ export const mobileSpeechGateway: SpeechGateway = {
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       debugLogger.log(TAG, `attempt ${attempt + 1}/${MAX_RETRIES + 1}`);
+      // Tts.speak() でクラッシュしてもこのログがファイルに残るよう先に flush する
+      await debugLogger.flush();
       try {
         await new Promise<void>((resolve, reject) => {
           const cleanup = () => {
