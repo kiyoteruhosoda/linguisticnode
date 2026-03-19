@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,12 +11,7 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
   const [logContent, setLogContent] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    if (!visible) return;
-    void loadInfo();
-  }, [visible, refreshKey]);
-
-  const loadInfo = async () => {
+  const loadInfo = useCallback(async () => {
     const path = debugLogger.getLogFilePath();
     try {
       const info = await FileSystem.getInfoAsync(path, { size: true });
@@ -29,7 +24,12 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
       setLogFileSize(null);
     }
     setLogContent(debugLogger.getLogs());
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    void loadInfo();
+  }, [visible, refreshKey, loadInfo]);
 
   const appVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0";
   const gitCommit = process.env.EXPO_PUBLIC_GIT_COMMIT ?? "(unknown)";
