@@ -46,6 +46,8 @@ function AppContent() {
   const [quizPreferredWordId, setQuizPreferredWordId] = useState<string | null>(null);
   const [studyPreferredWordId, setStudyPreferredWordId] = useState<string | null>(null);
   const [wordsResetKey, setWordsResetKey] = useState(0);
+  const [studyAppliedTags, setStudyAppliedTags] = useState<string[]>([]);
+  const [quizAppliedTags, setQuizAppliedTags] = useState<string[]>([]);
   const routeHistoryRef = useRef<Array<{ route: MobileRoute; wordId: string | null }>>([]);
   const insets = useSafeAreaInsets();
 
@@ -123,6 +125,8 @@ function AppContent() {
           studyService={compositionRoot.studyService}
           preferredWordId={studyPreferredWordId}
           onNavigateToQuiz={navigateToQuiz}
+          appliedTags={studyAppliedTags}
+          onAppliedTagsChange={setStudyAppliedTags}
         />
       );
     }
@@ -134,6 +138,8 @@ function AppContent() {
           studyService={compositionRoot.studyService}
           preferredWordId={quizPreferredWordId}
           onNavigateToStudy={navigateToStudy}
+          appliedTags={quizAppliedTags}
+          onAppliedTagsChange={setQuizAppliedTags}
         />
       );
     }
@@ -143,7 +149,7 @@ function AppContent() {
     }
 
     return <WordsScreen service={compositionRoot.wordService} resetKey={wordsResetKey} />;
-  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey]);
+  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, studyAppliedTags, quizAppliedTags, setStudyAppliedTags, setQuizAppliedTags]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>
