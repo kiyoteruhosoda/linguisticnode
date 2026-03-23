@@ -14,10 +14,14 @@ export function StudyScreen({
   studyService,
   preferredWordId,
   onNavigateToQuiz,
+  appliedTags,
+  onAppliedTagsChange,
 }: {
   studyService: MobileStudyService;
   preferredWordId?: string | null;
   onNavigateToQuiz?: (wordId: string) => void;
+  appliedTags: string[];
+  onAppliedTagsChange: (tags: string[]) => void;
 }) {
   const { colors } = useTheme();
   const [card, setCard] = useState<Card>(null);
@@ -27,8 +31,7 @@ export function StudyScreen({
 
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [appliedTags, setAppliedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([...appliedTags]);
 
   const canSpeak = mobileSpeechService.canSpeak();
 
@@ -92,13 +95,13 @@ export function StudyScreen({
   };
 
   const applyTagFilter = () => {
-    setAppliedTags([...selectedTags]);
+    onAppliedTagsChange([...selectedTags]);
     setShowTagPanel(false);
   };
 
   const clearTagFilter = () => {
     setSelectedTags([]);
-    setAppliedTags([]);
+    onAppliedTagsChange([]);
     setShowTagPanel(false);
   };
 
