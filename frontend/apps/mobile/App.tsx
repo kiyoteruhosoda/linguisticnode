@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Pressable, StatusBar, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createMobileCompositionRoot, type MobileCompositionRoot } from "./src/app/mobileCompositionRoot";
 import { ThemeProvider, useTheme } from "./src/app/ThemeContext";
 import { WordsScreen } from "./src/screens/WordsScreen";
@@ -29,6 +30,8 @@ const TABS: { route: MobileRoute; label: string; icon: TabIcon }[] = [
   { route: "data", label: "Settings", icon: { lib: "Ionicons", name: "settings-outline" } },
 ];
 
+const FILTER_STORAGE_KEY = "@applied_tags";
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -46,8 +49,8 @@ function AppContent() {
   const [quizPreferredWordId, setQuizPreferredWordId] = useState<string | null>(null);
   const [studyPreferredWordId, setStudyPreferredWordId] = useState<string | null>(null);
   const [wordsResetKey, setWordsResetKey] = useState(0);
-  const [studyAppliedTags, setStudyAppliedTags] = useState<string[]>([]);
-  const [quizAppliedTags, setQuizAppliedTags] = useState<string[]>([]);
+  // アプリ全体で共有する単一フィルタ (Words / Cards / Fill 横断)
+  const [appliedTags, setAppliedTagsState] = useState<string[]>([]);
   const routeHistoryRef = useRef<Array<{ route: MobileRoute; wordId: string | null }>>([]);
   const insets = useSafeAreaInsets();
 
@@ -55,6 +58,24 @@ function AppContent() {
     void createMobileCompositionRoot().then((root) => {
       setCompositionRoot(root);
     });
+  }, []);
+
+  // アプリ起動時に AsyncStorage からフィルタを復元
+  useEffect(() => {
+    AsyncStorage.getItem(FILTER_STORAGE_KEY)
+      .then((json) => {
+        if (json) {
+          const parsed: unknown = JSON.parse(json);
+          if (Array.isArray(parsed)) setAppliedTagsState(parsed as string[]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // フィルタ変更時に AsyncStorage へ永続化
+  const handleAppliedTagsChange = useCallback((tags: string[]) => {
+    setAppliedTagsState(tags);
+    AsyncStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(tags)).catch(() => {});
   }, []);
 
   // Android hardware back button:
@@ -125,8 +146,8 @@ function AppContent() {
           studyService={compositionRoot.studyService}
           preferredWordId={studyPreferredWordId}
           onNavigateToQuiz={navigateToQuiz}
-          appliedTags={studyAppliedTags}
-          onAppliedTagsChange={setStudyAppliedTags}
+          appliedTags={appliedTags}
+          onAppliedTagsChange={handleAppliedTagsChange}
         />
       );
     }
@@ -138,8 +159,8 @@ function AppContent() {
           studyService={compositionRoot.studyService}
           preferredWordId={quizPreferredWordId}
           onNavigateToStudy={navigateToStudy}
-          appliedTags={quizAppliedTags}
-          onAppliedTagsChange={setQuizAppliedTags}
+          appliedTags={appliedTags}
+          onAppliedTagsChange={handleAppliedTagsChange}
         />
       );
     }
@@ -148,8 +169,15 @@ function AppContent() {
       return <DataScreen ioGateway={compositionRoot.ioGateway} />;
     }
 
-    return <WordsScreen service={compositionRoot.wordService} resetKey={wordsResetKey} />;
-  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, studyAppliedTags, quizAppliedTags, setStudyAppliedTags, setQuizAppliedTags]);
+    return (
+      <WordsScreen
+        service={compositionRoot.wordService}
+        resetKey={wordsResetKey}
+        appliedTags={appliedTags}
+        onAppliedTagsChange={handleAppliedTagsChange}
+      />
+    );
+  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, appliedTags, handleAppliedTagsChange]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>

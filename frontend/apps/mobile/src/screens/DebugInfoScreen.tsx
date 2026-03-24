@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import * as FileSystem from "expo-file-system";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { type AppColors, useTheme } from "../app/ThemeContext";
 import { debugLogger } from "../infra/debugLogger";
+
+// app.config.ts の extra フィールドから取得（Azure / EAS Build 両対応）
+const extra = Constants.expoConfig?.extra as
+  | { appVersion?: string; versionCode?: number; gitCommit?: string }
+  | undefined;
 
 export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors } = useTheme();
@@ -31,8 +37,10 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
     void loadInfo();
   }, [visible, refreshKey, loadInfo]);
 
-  const appVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0";
-  const gitCommit = process.env.EXPO_PUBLIC_GIT_COMMIT ?? "(unknown)";
+  // extra 優先、フォールバックとして EXPO_PUBLIC_* 変数を参照
+  const appVersion = extra?.appVersion ?? process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0";
+  const versionCode = extra?.versionCode ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
+  const gitCommit = extra?.gitCommit || process.env.EXPO_PUBLIC_GIT_COMMIT || "(unknown)";
   const debugMode = debugLogger.isDebugMode();
   const logLines = logContent ? logContent.split("\n").filter(Boolean).length : 0;
 
@@ -67,6 +75,7 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
           {/* App Info */}
           <InfoSection title="App" colors={colors}>
             <InfoRow label="Version" value={appVersion} colors={colors} />
+            <InfoRow label="Version Code" value={String(versionCode)} colors={colors} />
             <InfoRow
               label="Commit"
               value={gitCommit !== "(unknown)" ? gitCommit.slice(0, 7) : "(unknown)"}

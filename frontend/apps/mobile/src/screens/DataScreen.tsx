@@ -4,12 +4,19 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import Constants from "expo-constants";
 import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
 import { DebugInfoScreen } from "./DebugInfoScreen";
 import { LicenseScreen } from "./LicenseScreen";
 import { debugLogger } from "../infra/debugLogger";
+
+const _extra = Constants.expoConfig?.extra as
+  | { appVersion?: string; versionCode?: number }
+  | undefined;
+const _appVersion = _extra?.appVersion ?? process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0";
+const _versionCode = _extra?.versionCode ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
 
 type ImportMode = "merge" | "overwrite";
 
@@ -343,10 +350,10 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>App Version</Text>
             <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
-              {process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0"}
-              {process.env.EXPO_PUBLIC_GIT_COMMIT
-                ? `  (${process.env.EXPO_PUBLIC_GIT_COMMIT.slice(0, 7)})`
-                : ""}
+              {_appVersion}{"  "}
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                (build {_versionCode})
+              </Text>
             </Text>
           </View>
           {versionTapCount > 0 && !showDebug && (
