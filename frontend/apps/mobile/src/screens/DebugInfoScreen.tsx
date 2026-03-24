@@ -6,8 +6,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { type AppColors, useTheme } from "../app/ThemeContext";
 import { debugLogger } from "../infra/debugLogger";
 
-// app.config.ts の extra フィールドから取得（Azure / EAS Build 両対応）
-const extra = Constants.expoConfig?.extra as
+// バージョン情報: ランタイム計算 + app.config.ts の extra 両対応
+// EXPO_PUBLIC_* はビルド時静的置換のため Expo Go でも有効
+const _versionCode = Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
+const _today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+const _runtimeVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? `${_today}-${_versionCode}`;
+
+// extra フィールド (EAS Build / ネイティブビルドで利用可能)
+const _extra = Constants.expoConfig?.extra as
   | { appVersion?: string; versionCode?: number; gitCommit?: string }
   | undefined;
 
@@ -37,10 +43,10 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
     void loadInfo();
   }, [visible, refreshKey, loadInfo]);
 
-  // extra 優先、フォールバックとして EXPO_PUBLIC_* 変数を参照
-  const appVersion = extra?.appVersion ?? process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0";
-  const versionCode = extra?.versionCode ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
-  const gitCommit = extra?.gitCommit || process.env.EXPO_PUBLIC_GIT_COMMIT || "(unknown)";
+  // extra 優先（ネイティブビルド）、フォールバックとしてランタイム計算値を使用
+  const appVersion = _extra?.appVersion ?? _runtimeVersion;
+  const versionCode = _extra?.versionCode ?? _versionCode;
+  const gitCommit = _extra?.gitCommit || process.env.EXPO_PUBLIC_GIT_COMMIT || "(unknown)";
   const debugMode = debugLogger.isDebugMode();
   const logLines = logContent ? logContent.split("\n").filter(Boolean).length : 0;
 

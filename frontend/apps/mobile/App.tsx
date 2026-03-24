@@ -31,6 +31,7 @@ const TABS: { route: MobileRoute; label: string; icon: TabIcon }[] = [
 ];
 
 const FILTER_STORAGE_KEY = "@applied_tags";
+const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
 
 export default function App() {
   return (
@@ -60,22 +61,43 @@ function AppContent() {
     });
   }, []);
 
-  // アプリ起動時に AsyncStorage からフィルタを復元
+  // アプリ起動時に AsyncStorage から設定を復元
   useEffect(() => {
+    // デバッグモード復元
+    AsyncStorage.getItem(DEBUG_MODE_STORAGE_KEY)
+      .then((val) => {
+        if (val === "true") {
+          debugLogger.setDebugMode(true);
+          debugLogger.log("App", "debug mode restored from storage: ON");
+        }
+      })
+      .catch(() => {});
+
+    // フィルタ復元
     AsyncStorage.getItem(FILTER_STORAGE_KEY)
       .then((json) => {
         if (json) {
           const parsed: unknown = JSON.parse(json);
-          if (Array.isArray(parsed)) setAppliedTagsState(parsed as string[]);
+          if (Array.isArray(parsed)) {
+            debugLogger.log("App", `appliedTags loaded from storage: [${(parsed as string[]).join(", ")}]`);
+            setAppliedTagsState(parsed as string[]);
+          } else {
+            debugLogger.log("App", "appliedTags: storage value was not an array, ignored");
+          }
+        } else {
+          debugLogger.log("App", "appliedTags: no stored value (empty filter)");
         }
       })
-      .catch(() => {});
+      .catch((e) => { debugLogger.log("App", `appliedTags load error: ${String(e)}`); });
   }, []);
 
-  // フィルタ変更時に AsyncStorage へ永続化
+  // フィルタ変更時に AsyncStorage へ永続化・ログ記録
   const handleAppliedTagsChange = useCallback((tags: string[]) => {
+    debugLogger.log("App", `appliedTags changed: [${tags.join(", ")}]`);
     setAppliedTagsState(tags);
-    AsyncStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(tags)).catch(() => {});
+    AsyncStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(tags))
+      .then(() => { debugLogger.log("App", "appliedTags saved to storage"); })
+      .catch((e) => { debugLogger.log("App", `appliedTags save error: ${String(e)}`); });
   }, []);
 
   // Android hardware back button:
