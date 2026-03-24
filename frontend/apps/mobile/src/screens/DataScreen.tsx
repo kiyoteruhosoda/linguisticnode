@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
@@ -10,6 +11,14 @@ import { useTheme } from "../app/ThemeContext";
 import { DebugInfoScreen } from "./DebugInfoScreen";
 import { LicenseScreen } from "./LicenseScreen";
 import { debugLogger } from "../infra/debugLogger";
+
+const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
+
+// バージョン情報: app.config.ts と同じ計算式をランタイムで再現
+// EXPO_PUBLIC_* はビルド時に静的置換されるため Expo Go でも正常動作する
+const _versionCode = Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
+const _today = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // yyyyMMdd
+const _appVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? `${_today}-${_versionCode}`;
 
 type ImportMode = "merge" | "overwrite";
 
@@ -31,6 +40,8 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const toggleDebugMode = (value: boolean) => {
     setDebugMode(value);
     debugLogger.setDebugMode(value);
+    AsyncStorage.setItem(DEBUG_MODE_STORAGE_KEY, value ? "true" : "false").catch(() => {});
+    debugLogger.log("DataScreen", `debug mode set to: ${value ? "ON" : "OFF"}`);
   };
 
   const handleVersionTap = () => {
@@ -343,10 +354,10 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>App Version</Text>
             <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
-              {process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0"}
-              {process.env.EXPO_PUBLIC_GIT_COMMIT
-                ? `  (${process.env.EXPO_PUBLIC_GIT_COMMIT.slice(0, 7)})`
-                : ""}
+              {_appVersion}{"  "}
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                (build {_versionCode})
+              </Text>
             </Text>
           </View>
           {versionTapCount > 0 && !showDebug && (

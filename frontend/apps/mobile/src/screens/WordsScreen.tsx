@@ -37,7 +37,17 @@ const EMPTY_DRAFT: WordDraft = {
 
 // ─── WordsScreen (root) ───────────────────────────────────────────────────────
 
-export function WordsScreen({ service, resetKey }: { service: MobileWordService; resetKey?: number }) {
+export function WordsScreen({
+  service,
+  resetKey,
+  appliedTags,
+  onAppliedTagsChange,
+}: {
+  service: MobileWordService;
+  resetKey?: number;
+  appliedTags: string[];
+  onAppliedTagsChange: (tags: string[]) => void;
+}) {
   const [subRoute, setSubRoute] = useState<SubRoute>("list");
 
   // Words タブを押したら編集中でも一覧に戻す
@@ -57,8 +67,7 @@ export function WordsScreen({ service, resetKey }: { service: MobileWordService;
   // Tag filter state
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [appliedTags, setAppliedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([...appliedTags]);
 
   // Bulk selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -103,13 +112,13 @@ export function WordsScreen({ service, resetKey }: { service: MobileWordService;
   }, [load, service]);
 
   const applyTagFilter = () => {
-    setAppliedTags([...selectedTags]);
+    onAppliedTagsChange([...selectedTags]);
     setShowTagPanel(false);
   };
 
   const clearTagFilter = () => {
     setSelectedTags([]);
-    setAppliedTags([]);
+    onAppliedTagsChange([]);
     setShowTagPanel(false);
   };
 

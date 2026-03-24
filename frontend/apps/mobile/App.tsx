@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Pressable, StatusBar, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createMobileCompositionRoot, type MobileCompositionRoot } from "./src/app/mobileCompositionRoot";
 import { ThemeProvider, useTheme } from "./src/app/ThemeContext";
 import { WordsScreen } from "./src/screens/WordsScreen";
@@ -29,6 +30,9 @@ const TABS: { route: MobileRoute; label: string; icon: TabIcon }[] = [
   { route: "data", label: "Settings", icon: { lib: "Ionicons", name: "settings-outline" } },
 ];
 
+const FILTER_STORAGE_KEY = "@applied_tags";
+const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -46,8 +50,8 @@ function AppContent() {
   const [quizPreferredWordId, setQuizPreferredWordId] = useState<string | null>(null);
   const [studyPreferredWordId, setStudyPreferredWordId] = useState<string | null>(null);
   const [wordsResetKey, setWordsResetKey] = useState(0);
-  const [studyAppliedTags, setStudyAppliedTags] = useState<string[]>([]);
-  const [quizAppliedTags, setQuizAppliedTags] = useState<string[]>([]);
+  // アプリ全体で共有する単一フィルタ (Words / Cards / Fill 横断)
+  const [appliedTags, setAppliedTagsState] = useState<string[]>([]);
   const routeHistoryRef = useRef<Array<{ route: MobileRoute; wordId: string | null }>>([]);
   const insets = useSafeAreaInsets();
 
@@ -55,6 +59,45 @@ function AppContent() {
     void createMobileCompositionRoot().then((root) => {
       setCompositionRoot(root);
     });
+  }, []);
+
+  // アプリ起動時に AsyncStorage から設定を復元
+  useEffect(() => {
+    // デバッグモード復元
+    AsyncStorage.getItem(DEBUG_MODE_STORAGE_KEY)
+      .then((val) => {
+        if (val === "true") {
+          debugLogger.setDebugMode(true);
+          debugLogger.log("App", "debug mode restored from storage: ON");
+        }
+      })
+      .catch(() => {});
+
+    // フィルタ復元
+    AsyncStorage.getItem(FILTER_STORAGE_KEY)
+      .then((json) => {
+        if (json) {
+          const parsed: unknown = JSON.parse(json);
+          if (Array.isArray(parsed)) {
+            debugLogger.log("App", `appliedTags loaded from storage: [${(parsed as string[]).join(", ")}]`);
+            setAppliedTagsState(parsed as string[]);
+          } else {
+            debugLogger.log("App", "appliedTags: storage value was not an array, ignored");
+          }
+        } else {
+          debugLogger.log("App", "appliedTags: no stored value (empty filter)");
+        }
+      })
+      .catch((e) => { debugLogger.log("App", `appliedTags load error: ${String(e)}`); });
+  }, []);
+
+  // フィルタ変更時に AsyncStorage へ永続化・ログ記録
+  const handleAppliedTagsChange = useCallback((tags: string[]) => {
+    debugLogger.log("App", `appliedTags changed: [${tags.join(", ")}]`);
+    setAppliedTagsState(tags);
+    AsyncStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(tags))
+      .then(() => { debugLogger.log("App", "appliedTags saved to storage"); })
+      .catch((e) => { debugLogger.log("App", `appliedTags save error: ${String(e)}`); });
   }, []);
 
   // Android hardware back button:
@@ -125,8 +168,8 @@ function AppContent() {
           studyService={compositionRoot.studyService}
           preferredWordId={studyPreferredWordId}
           onNavigateToQuiz={navigateToQuiz}
-          appliedTags={studyAppliedTags}
-          onAppliedTagsChange={setStudyAppliedTags}
+          appliedTags={appliedTags}
+          onAppliedTagsChange={handleAppliedTagsChange}
         />
       );
     }
@@ -138,8 +181,8 @@ function AppContent() {
           studyService={compositionRoot.studyService}
           preferredWordId={quizPreferredWordId}
           onNavigateToStudy={navigateToStudy}
-          appliedTags={quizAppliedTags}
-          onAppliedTagsChange={setQuizAppliedTags}
+          appliedTags={appliedTags}
+          onAppliedTagsChange={handleAppliedTagsChange}
         />
       );
     }
@@ -148,8 +191,15 @@ function AppContent() {
       return <DataScreen ioGateway={compositionRoot.ioGateway} />;
     }
 
-    return <WordsScreen service={compositionRoot.wordService} resetKey={wordsResetKey} />;
-  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, studyAppliedTags, quizAppliedTags, setStudyAppliedTags, setQuizAppliedTags]);
+    return (
+      <WordsScreen
+        service={compositionRoot.wordService}
+        resetKey={wordsResetKey}
+        appliedTags={appliedTags}
+        onAppliedTagsChange={handleAppliedTagsChange}
+      />
+    );
+  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, appliedTags, handleAppliedTagsChange]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>

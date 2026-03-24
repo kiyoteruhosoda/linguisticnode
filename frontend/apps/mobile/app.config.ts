@@ -2,8 +2,19 @@
 
 import type { ExpoConfig } from 'expo/config';
 
-const appVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? '1.0.0';
 const versionCode = Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? '1', 10);
+
+// バージョン名: yyyyMMdd-{versionCode}
+// EXPO_PUBLIC_APP_VERSION が明示的に指定された場合はそちらを優先
+const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // yyyyMMdd
+const appVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? `${today}-${versionCode}`;
+
+// Git コミットハッシュ: Azure Pipelines では EXPO_PUBLIC_GIT_COMMIT、
+// EAS Build では EAS_BUILD_GIT_COMMIT_HASH が自動的に提供される
+const gitCommit =
+  process.env.EXPO_PUBLIC_GIT_COMMIT ??
+  process.env.EAS_BUILD_GIT_COMMIT_HASH ??
+  '';
 
 const config: ExpoConfig = {
   name: 'linguisticnode',
@@ -60,6 +71,11 @@ const config: ExpoConfig = {
     eas: {
       projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '06cdd41b-e8e7-4cce-ad1f-5ca2aed8fa53',
     },
+    // JS ランタイムからアクセス可能なビルド情報
+    // expo-constants の Constants.expoConfig.extra で参照できる
+    appVersion,
+    versionCode: Number.isNaN(versionCode) ? 1 : versionCode,
+    gitCommit,
   },
 };
 
