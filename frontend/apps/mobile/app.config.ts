@@ -2,7 +2,9 @@
 
 import type { ExpoConfig } from 'expo/config';
 
-const versionCode = Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? '1', 10);
+// EAS Build の autoIncrement 使用時は EXPO_PUBLIC_ANDROID_VERSION_CODE 未設定になる。
+// Play Store は versionCode が常に増加している必要があるため、最低値を 10 に設定。
+const versionCode = Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? '10', 10);
 
 // バージョン名: yyyyMMdd-{versionCode}
 // EXPO_PUBLIC_APP_VERSION が明示的に指定された場合はそちらを優先
