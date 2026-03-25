@@ -17,8 +17,13 @@ describe("RnwWordForm", () => {
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({
           headword: "run",
-          meaningJa: "走る",
-          tags: ["sports", "daily"],
+          entries: expect.arrayContaining([
+            expect.objectContaining({
+              meanings: expect.arrayContaining([
+                expect.objectContaining({ meaningJa: "走る", tags: ["sports", "daily"] }),
+              ]),
+            }),
+          ]),
         }),
       );
     });

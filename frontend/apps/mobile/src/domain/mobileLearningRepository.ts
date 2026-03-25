@@ -51,20 +51,27 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
   listWords(query: WordListQuery): WordListResult {
     const q = query.q?.trim().toLowerCase();
     const tagSet = query.tags && query.tags.length > 0 ? new Set(query.tags) : null;
+
     const filtered = this.words.filter((word) => {
-      if (query.pos && word.pos !== query.pos) {
+      // POS filter: check if any entry matches
+      if (query.pos && !word.entries.some((e) => e.pos === query.pos)) {
         return false;
       }
-      if (tagSet && !word.tags.some((tag) => tagSet.has(tag))) {
+      // Tag filter: check if any entry has any meaning with a matching tag
+      if (tagSet && !word.entries.some((e) =>
+        e.meanings.some((m) => m.tags?.some((tag) => tagSet.has(tag)))
+      )) {
         return false;
       }
-      if (!q) {
-        return true;
-      }
+      if (!q) return true;
       return (
         word.headword.toLowerCase().includes(q)
-        || word.meaningJa.toLowerCase().includes(q)
-        || word.tags.some((tag) => tag.toLowerCase().includes(q))
+        || word.entries.some((e) =>
+          e.meanings.some((m) => m.meaningJa.toLowerCase().includes(q))
+        )
+        || word.entries.some((e) =>
+          e.meanings.some((m) => m.tags?.some((tag) => tag.toLowerCase().includes(q)))
+        )
       );
     });
 
@@ -135,16 +142,26 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
   }
 
   listTags(): string[] {
-    return [...new Set(this.words.flatMap((word) => word.tags))].sort();
+    const tagSet = new Set<string>();
+    for (const word of this.words) {
+      for (const entry of word.entries) {
+        for (const meaning of entry.meanings) {
+          for (const tag of (meaning.tags ?? [])) {
+            tagSet.add(tag);
+          }
+        }
+      }
+    }
+    return [...tagSet].sort();
   }
 
   nextCard(tags?: string[]): StudyCard | null {
     const tagSet = new Set(tags ?? []);
     const candidates = this.words.filter((word) => {
-      if (tagSet.size === 0) {
-        return true;
-      }
-      return word.tags.some((tag) => tagSet.has(tag));
+      if (tagSet.size === 0) return true;
+      return word.entries.some((e) =>
+        e.meanings.some((m) => m.tags?.some((tag) => tagSet.has(tag)))
+      );
     });
 
     if (candidates.length === 0) {
@@ -191,7 +208,7 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
 
   exportVocabFile(): VocabFile {
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       words: this.words,
       memory: Object.values(this.memoryMap),
       updatedAt: new Date(this.clock()).toISOString(),
@@ -207,15 +224,14 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       this.words = file.words;
       this.memoryMap = memoryMap;
     } else {
-      // merge: add only words not already present by ID or headword+pos
+      // merge: add only words not already present by ID or headword (case-insensitive)
       const existingIds = new Set(this.words.map((w) => w.id));
-      const existingHeadwordPos = new Set(this.words.map((w) => `${w.headword.toLowerCase()}|${w.pos}`));
+      const existingHeadwords = new Set(this.words.map((w) => w.headword.toLowerCase()));
       for (const word of file.words) {
-        const headwordPosKey = `${word.headword.toLowerCase()}|${word.pos}`;
-        if (!existingIds.has(word.id) && !existingHeadwordPos.has(headwordPosKey)) {
+        if (!existingIds.has(word.id) && !existingHeadwords.has(word.headword.toLowerCase())) {
           this.words.unshift(word);
           existingIds.add(word.id);
-          existingHeadwordPos.add(headwordPosKey);
+          existingHeadwords.add(word.headword.toLowerCase());
         }
       }
       const existingMemoryIds = new Set(Object.keys(this.memoryMap));
@@ -310,20 +326,50 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
   private seed(): void {
     const first = this.createWord({
       headword: "ubiquitous",
-      pronunciation: "juːˈbɪkwɪtəs",
-      pos: "adj",
-      meaningJa: "いたるところに存在する",
-      examples: [{ id: generateUUID(), en: "Smartphones are ubiquitous.", ja: "スマートフォンはどこにでもある。", source: null }],
-      tags: ["daily", "advanced"],
+      pronunciation: { notation: "juːˈbɪkwɪtəs" },
+      entries: [
+        {
+          pos: "adj",
+          meanings: [
+            {
+              meaningJa: "いたるところに存在する",
+              tags: ["daily", "advanced"],
+              examples: [
+                {
+                  id: generateUUID(),
+                  en: "Smartphones are ubiquitous.",
+                  ja: "スマートフォンはどこにでもある。",
+                  source: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
       memo: "Useful for essays",
     });
     const second = this.createWord({
       headword: "meticulous",
-      pronunciation: "məˈtɪkjʊləs",
-      pos: "adj",
-      meaningJa: "細部まで注意深い",
-      examples: [{ id: generateUUID(), en: "She is meticulous about notes.", ja: "彼女はノートを几帳面に取る。", source: null }],
-      tags: ["writing"],
+      pronunciation: { notation: "məˈtɪkjʊləs" },
+      entries: [
+        {
+          pos: "adj",
+          meanings: [
+            {
+              meaningJa: "細部まで注意深い",
+              tags: ["writing"],
+              examples: [
+                {
+                  id: generateUUID(),
+                  en: "She is meticulous about notes.",
+                  ja: "彼女はノートを几帳面に取る。",
+                  source: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
       memo: null,
     });
     this.memoryMap[first.id] = this.createMemory(first.id);

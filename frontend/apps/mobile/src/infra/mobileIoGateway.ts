@@ -12,7 +12,7 @@ export function createMobileIoGateway(repository: MobileLearningRepositoryPort):
     exportData(): AppData {
       const file = repository.exportVocabFile();
       return {
-        schemaVersion: file.schemaVersion,
+        schemaVersion: 2,
         exportedAt: new Date().toISOString(),
         words: file.words,
         memory: file.memory,

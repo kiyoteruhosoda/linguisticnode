@@ -15,20 +15,24 @@ export function createMobileExamplesGateway(
     async next(tags, lastExampleId, preferredWordId) {
       const result = repository.listWords({ tags: tags && tags.length > 0 ? tags : undefined });
       let items: ExampleTestItem[] = result.words.flatMap((word) =>
-        (word.examples ?? []).map((ex) => ({
-          id: ex.id,
-          en: ex.en,
-          ja: ex.ja,
-          source: null,
-          word: {
-            id: word.id,
-            headword: word.headword,
-            pronunciation: word.pronunciation,
-            pos: word.pos,
-            meaningJa: word.meaningJa,
-            tags: word.tags,
-          },
-        })),
+        word.entries.flatMap((entry) =>
+          entry.meanings.flatMap((meaning) =>
+            (meaning.examples ?? []).map((ex) => ({
+              id: ex.id,
+              en: ex.en,
+              ja: ex.ja,
+              source: null,
+              word: {
+                id: word.id,
+                headword: word.headword,
+                pronunciation: word.pronunciation?.notation ?? null,
+                pos: entry.pos,
+                meaningJa: meaning.meaningJa,
+                tags: meaning.tags ?? [],
+              },
+            }))
+          )
+        )
       );
 
       if (preferredWordId) {

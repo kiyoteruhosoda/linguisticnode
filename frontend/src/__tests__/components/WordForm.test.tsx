@@ -47,12 +47,9 @@ describe('WordForm', () => {
     const initialWord: WordEntry = {
       id: '1',
       headword: 'test',
-      pos: 'noun',
-      meaningJa: 'テスト',
-      examples: [{ id: '1', en: 'This is a test', ja: 'これはテストです', source: null }],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: 'noun', meanings: [{ meaningJa: 'テスト', tags: [], examples: [{ id: '1', en: 'This is a test', ja: 'これはテストです', source: null }] }] }],
       memo: 'test memo',
-      pronunciation: null,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
     };
@@ -82,8 +79,14 @@ describe('WordForm', () => {
       expect(mockOnSave).toHaveBeenCalledWith(
         expect.objectContaining({
           headword: 'hello',
-          pos: 'noun',
-          meaningJa: 'こんにちは',
+          entries: expect.arrayContaining([
+            expect.objectContaining({
+              pos: 'noun',
+              meanings: expect.arrayContaining([
+                expect.objectContaining({ meaningJa: 'こんにちは' }),
+              ]),
+            }),
+          ]),
         })
       );
     });
@@ -122,12 +125,9 @@ describe('WordForm', () => {
     const initialWord: WordEntry = {
       id: '1',
       headword: 'test',
-      pos: 'noun',
-      meaningJa: 'テスト',
-      examples: [],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: 'noun', meanings: [{ meaningJa: 'テスト', tags: [], examples: [] }] }],
       memo: null,
-      pronunciation: null,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
     };

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ExampleSentence, Pos, WordEntry } from "../../api/types";
-import { buildWordSaveDraft, createEmptyExample } from "../../core/word/wordDraftPolicy";
+import { buildWordSaveDraft, createEmptyExample, getFormInitialValues } from "../../core/word/wordDraftPolicy";
 import { createUuidGenerator } from "../../core/identity/uuid";
 import { speechApplicationService } from "../../speech/speechApplication";
 import { RnwButton } from "./RnwButton";
@@ -31,13 +31,15 @@ const textInputStyle = {
 export function RnwWordForm({ initial, onSave, onCancel }: RnwWordFormProps) {
   const idGenerator = useMemo(() => createUuidGenerator(), []);
 
+  const initValues = useMemo(() => getFormInitialValues(initial), [initial]);
+
   const [headword, setHeadword] = useState(initial?.headword ?? "");
-  const [pos, setPos] = useState<Pos>(initial?.pos ?? "noun");
-  const [meaningJa, setMeaningJa] = useState(initial?.meaningJa ?? "");
-  const [tagsInput, setTagsInput] = useState((initial?.tags ?? []).join(", "));
+  const [pos, setPos] = useState<Pos>(initValues.pos);
+  const [meaningJa, setMeaningJa] = useState(initValues.meaningJa);
+  const [tagsInput, setTagsInput] = useState(initValues.tagsInput);
   const [memo, setMemo] = useState(initial?.memo ?? "");
   const [examples, setExamples] = useState<ExampleSentence[]>(
-    initial?.examples && initial.examples.length > 0 ? initial.examples : [createEmptyExample(idGenerator)],
+    initValues.examples.length > 0 ? initValues.examples : [createEmptyExample(idGenerator)],
   );
   const [busy, setBusy] = useState(false);
 
@@ -45,12 +47,13 @@ export function RnwWordForm({ initial, onSave, onCancel }: RnwWordFormProps) {
 
   useEffect(() => {
     if (!initial) return;
+    const vals = getFormInitialValues(initial);
     setHeadword(initial.headword);
-    setPos(initial.pos);
-    setMeaningJa(initial.meaningJa);
-    setTagsInput((initial.tags ?? []).join(", "));
+    setPos(vals.pos);
+    setMeaningJa(vals.meaningJa);
+    setTagsInput(vals.tagsInput);
     setMemo(initial.memo ?? "");
-    setExamples(initial.examples && initial.examples.length > 0 ? initial.examples : [createEmptyExample(idGenerator)]);
+    setExamples(vals.examples.length > 0 ? vals.examples : [createEmptyExample(idGenerator)]);
   }, [idGenerator, initial]);
 
   function addExample() {

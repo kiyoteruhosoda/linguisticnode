@@ -25,6 +25,11 @@ export function RnwWordListTable({ items, memoryMap, onSelectWord }: RnwWordList
 
       {items.map((word) => {
         const memoryLevel = memoryMap[word.id]?.memoryLevel ?? 0;
+        const primaryMeaning = word.entries[0]?.meanings[0]?.meaningJa ?? "";
+        const exampleCount = word.entries.reduce(
+          (sum, e) => sum + e.meanings.reduce((s, m) => s + (m.examples?.length ?? 0), 0),
+          0,
+        );
         return (
           <Pressable
             key={word.id}
@@ -37,10 +42,12 @@ export function RnwWordListTable({ items, memoryMap, onSelectWord }: RnwWordList
           >
             <Text style={{ ...styles.cell, ...styles.wordCell, ...styles.wordText }}>{word.headword}</Text>
             <Text style={{ ...styles.cell, ...styles.posCell }}>
-              <RnwBadge tone="secondary" variant="pill">{word.pos}</RnwBadge>
+              {word.entries.map((e) => (
+                <RnwBadge key={e.pos} tone="secondary" variant="pill">{e.pos}</RnwBadge>
+              ))}
             </Text>
-            <Text style={{ ...styles.cell, ...styles.meaningCell }}>{word.meaningJa}</Text>
-            <Text style={{ ...styles.cell, ...styles.examplesCell }}>{word.examples?.length ?? 0}</Text>
+            <Text style={{ ...styles.cell, ...styles.meaningCell }}>{primaryMeaning}</Text>
+            <Text style={{ ...styles.cell, ...styles.examplesCell }}>{exampleCount}</Text>
             <Text style={{ ...styles.cell, ...styles.levelCell }}>
               <RnwLevelBadge level={memoryLevel} />
             </Text>

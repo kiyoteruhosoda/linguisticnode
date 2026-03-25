@@ -27,8 +27,8 @@ describe('Words API', () => {
   describe('list', () => {
     it('should return list of words', async () => {
       const mockWords = [
-        { id: '1', headword: 'hello', meaningJa: 'こんにちは', pos: 'noun' as Pos, pronunciation: null, examples: [], tags: [], createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-        { id: '2', headword: 'world', meaningJa: '世界', pos: 'noun' as Pos, pronunciation: null, examples: [], tags: [], createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+        { id: '1', headword: 'hello', pronunciation: undefined, entries: [{ pos: 'noun' as Pos, meanings: [{ meaningJa: 'こんにちは', tags: [], examples: [] }] }], memo: null, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+        { id: '2', headword: 'world', pronunciation: undefined, entries: [{ pos: 'noun' as Pos, meanings: [{ meaningJa: '世界', tags: [], examples: [] }] }], memo: null, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
       ];
       const mockMemoryMap = {};
       vi.mocked(client.api.get).mockResolvedValueOnce({ ok: true, words: mockWords, memoryMap: mockMemoryMap });
@@ -41,7 +41,7 @@ describe('Words API', () => {
 
   describe('create', () => {
     it('should create new word', async () => {
-      const newWord = { headword: 'apple', meaningJa: 'りんご', pos: 'noun' as Pos, pronunciation: null, examples: [], tags: [] };
+      const newWord = { headword: 'apple', pronunciation: undefined, entries: [{ pos: 'noun' as Pos, meanings: [{ meaningJa: 'りんご', tags: [], examples: [] }] }], memo: null };
       const mockCreated = { id: '999', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', ...newWord };
       vi.mocked(client.api.post).mockResolvedValueOnce({ ok: true, word: mockCreated });
 
@@ -53,7 +53,7 @@ describe('Words API', () => {
 
   describe('update', () => {
     it('should update existing word', async () => {
-      const updates = { headword: 'update', meaningJa: '更新されました', pos: 'verb' as Pos, pronunciation: null, examples: [], tags: [] };
+      const updates = { headword: 'update', pronunciation: undefined, entries: [{ pos: 'verb' as Pos, meanings: [{ meaningJa: '更新されました', tags: [], examples: [] }] }], memo: null };
       const mockUpdated = { id: '111', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z', ...updates };
       vi.mocked(client.api.put).mockResolvedValueOnce({ ok: true, word: mockUpdated });
 

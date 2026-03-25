@@ -14,11 +14,13 @@ function makeWord(id: string, extras: Partial<WordEntry> = {}): WordEntry {
   return {
     id,
     headword: `word-${id}`,
-    pronunciation: null,
-    pos: "noun",
-    meaningJa: `意味-${id}`,
-    examples: [],
-    tags: [],
+    pronunciation: undefined,
+    entries: [
+      {
+        pos: "noun",
+        meanings: [{ meaningJa: `意味-${id}`, tags: [], examples: [] }],
+      },
+    ],
     memo: null,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
@@ -110,11 +112,14 @@ describe("createMobileExamplesGateway", () => {
 
   it("next advances sequentially when lastExampleId is provided", async () => {
     const word = makeWord("w1", {
-      examples: [
-        { id: "ex1", en: "Hello", ja: "こんにちは", source: null },
-        { id: "ex2", en: "World", ja: "世界", source: null },
-        { id: "ex3", en: "Foo", ja: "フー", source: null },
-      ],
+      entries: [{
+        pos: "noun",
+        meanings: [{ meaningJa: "意味-w1", tags: [], examples: [
+          { id: "ex1", en: "Hello", ja: "こんにちは", source: null },
+          { id: "ex2", en: "World", ja: "世界", source: null },
+          { id: "ex3", en: "Foo", ja: "フー", source: null },
+        ] }],
+      }],
     });
     const repo = createRepoMock({
       listWords: vi.fn(() => ({ words: [word], memoryMap: {}, total: 1 })),
@@ -130,10 +135,13 @@ describe("createMobileExamplesGateway", () => {
 
   it("next wraps around to first example after the last one", async () => {
     const word = makeWord("w1", {
-      examples: [
-        { id: "ex1", en: "A", ja: null, source: null },
-        { id: "ex2", en: "B", ja: null, source: null },
-      ],
+      entries: [{
+        pos: "noun",
+        meanings: [{ meaningJa: "意味-w1", tags: [], examples: [
+          { id: "ex1", en: "A", ja: null, source: null },
+          { id: "ex2", en: "B", ja: null, source: null },
+        ] }],
+      }],
     });
     const repo = createRepoMock({
       listWords: vi.fn(() => ({ words: [word], memoryMap: {}, total: 1 })),
@@ -146,10 +154,10 @@ describe("createMobileExamplesGateway", () => {
 
   it("next restricts to preferredWordId's examples when they exist", async () => {
     const w1 = makeWord("w1", {
-      examples: [{ id: "ex-w1", en: "from w1", ja: null, source: null }],
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "意味-w1", tags: [], examples: [{ id: "ex-w1", en: "from w1", ja: null, source: null }] }] }],
     });
     const w2 = makeWord("w2", {
-      examples: [{ id: "ex-w2", en: "from w2", ja: null, source: null }],
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "意味-w2", tags: [], examples: [{ id: "ex-w2", en: "from w2", ja: null, source: null }] }] }],
     });
     const repo = createRepoMock({
       listWords: vi.fn(() => ({ words: [w1, w2], memoryMap: {}, total: 2 })),
@@ -163,7 +171,7 @@ describe("createMobileExamplesGateway", () => {
 
   it("next falls back to all examples when preferredWordId has none", async () => {
     const w1 = makeWord("w1", {
-      examples: [{ id: "ex-w1", en: "from w1", ja: null, source: null }],
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "意味-w1", tags: [], examples: [{ id: "ex-w1", en: "from w1", ja: null, source: null }] }] }],
     });
     const w2 = makeWord("w2"); // no examples
     const repo = createRepoMock({
@@ -178,8 +186,7 @@ describe("createMobileExamplesGateway", () => {
 
   it("next filters by tags when provided", async () => {
     const word = makeWord("w1", {
-      tags: ["vocab"],
-      examples: [{ id: "ex1", en: "test", ja: null, source: null }],
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "意味-w1", tags: ["vocab"], examples: [{ id: "ex1", en: "test", ja: null, source: null }] }] }],
     });
     const repo = createRepoMock({
       listWords: vi.fn(() => ({ words: [word], memoryMap: {}, total: 1 })),
@@ -267,7 +274,7 @@ describe("createMobileIoGateway", () => {
 
     const result = gateway.exportData();
 
-    expect(result.schemaVersion).toBe(1);
+    expect(result.schemaVersion).toBe(2);
     expect(result.words).toBe(words);
     expect(result.memory).toEqual([]);
     expect(typeof result.exportedAt).toBe("string");
@@ -334,7 +341,7 @@ describe("createMobileIoGateway", () => {
 
     const [calledFile] = (repo.importVocabFile as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(calledFile.words[0].id).toBe("existing-id-123");
-    expect(calledFile.words[0].examples[0].id).toBe("ex-id-456");
+    expect(calledFile.words[0].entries[0].meanings[0].examples[0].id).toBe("ex-id-456");
   });
 
   it("importData throws when words is not an array", () => {
@@ -384,7 +391,7 @@ describe("createMobileWordGateway", () => {
 
     const result = await gateway.exportWords();
 
-    expect(result.schemaVersion).toBe(1);
+    expect(result.schemaVersion).toBe(2);
     expect(result.words).toBe(words);
     expect(result.memory).toEqual([mem]);
     expect(typeof result.exportedAt).toBe("string");
@@ -392,14 +399,7 @@ describe("createMobileWordGateway", () => {
 
   it("getTags returns sorted unique tags across all words", async () => {
     const repo = createRepoMock({
-      listWords: vi.fn(() => ({
-        words: [
-          makeWord("w1", { tags: ["zzz", "aaa"] }),
-          makeWord("w2", { tags: ["aaa", "mmm"] }),
-        ],
-        memoryMap: {},
-        total: 2,
-      })),
+      listTags: vi.fn(() => ["aaa", "mmm", "zzz"]),
     });
     const gateway = createMobileWordGateway(repo);
 
@@ -410,7 +410,7 @@ describe("createMobileWordGateway", () => {
 
   it("getTags returns empty array when no words have tags", async () => {
     const repo = createRepoMock({
-      listWords: vi.fn(() => ({ words: [makeWord("w1")], memoryMap: {}, total: 1 })),
+      listTags: vi.fn(() => []),
     });
     const gateway = createMobileWordGateway(repo);
     expect(await gateway.getTags()).toEqual([]);

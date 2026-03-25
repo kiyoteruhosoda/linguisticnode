@@ -13,6 +13,7 @@ export type RnwFlashCardProps = {
   memory: MemoryState;
   onRate: (rating: Rating) => Promise<void>;
   onOpenExamples: (wordId: string) => void;
+  appliedTags?: string[];
 };
 
 const cardStyle = {
@@ -56,7 +57,7 @@ const ratingPalette: Record<
   easy: { tone: "success", label: "Easy", iconClass: "fa-solid fa-face-smile", kind: "outline" },
 };
 
-export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashCardProps) {
+export function RnwFlashCard({ word, memory, onRate, onOpenExamples, appliedTags = [] }: RnwFlashCardProps) {
   const [showAnswer, setShowAnswer] = useState(false);
   const canSpeak = useMemo(() => speechApplicationService.canSpeak(), []);
 
@@ -81,6 +82,22 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
     speechApplicationService.speakEnglish(text.trim());
   }
 
+  // Filtered entries (for front face + summary)
+  const filteredEntries = appliedTags.length > 0
+    ? word.entries.filter((e) =>
+        e.meanings.some((m) => appliedTags.some((tag) => m.tags?.includes(tag)))
+      )
+    : word.entries;
+
+  function getFilteredMeanings(entry: typeof word.entries[0]) {
+    if (appliedTags.length === 0) return entry.meanings;
+    return entry.meanings.filter((m) => appliedTags.some((tag) => m.tags?.includes(tag)));
+  }
+
+  const hasAnyExamples = word.entries.some((e) =>
+    e.meanings.some((m) => (m.examples ?? []).length > 0)
+  );
+
   return (
     <section style={cardStyle} data-testid="rnw-study-flash-card">
       <header style={headerStyle}>
@@ -103,13 +120,13 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
       </header>
 
       <div style={bodyStyle}>
+        {/* Front face */}
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 36, fontWeight: 700 }}>{word.headword}</div>
-          <div style={{ marginBottom: 4 }}>
-            <RnwBadge
-              tone="secondary" variant="pill">
-              {word.pos}
-            </RnwBadge>
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginBottom: 4 }}>
+            {filteredEntries.map((e) => (
+              <RnwBadge key={e.pos} tone="secondary" variant="pill">{e.pos}</RnwBadge>
+            ))}
           </div>
           <div style={{ color: "#6c757d", fontSize: 14 }}>
             due: {new Date(memory.dueAt).toLocaleString("en-US", {
@@ -130,35 +147,82 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
           />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Summary: filtered meanings */}
             <div style={answerPanelStyle}>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>Meaning (JA)</div>
-              <div>{word.meaningJa}</div>
+              <div style={{ fontWeight: 600, marginBottom: 8 }}>Meaning (JA)</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {filteredEntries.map((entry) =>
+                  getFilteredMeanings(entry).map((meaning, mi) => (
+                    <div key={`${entry.pos}-${mi}`} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <span>{meaning.meaningJa}</span>
+                      {(meaning.tags ?? []).map((tag) => (
+                        <span
+                          key={tag}
+                          style={{ fontSize: 11, backgroundColor: "#e9ecef", borderRadius: 4, padding: "1px 6px", color: "#6c757d" }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            {word.examples?.length ? (
-              <div style={answerPanelStyle}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Examples</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {word.examples.map((example) => (
-                    <div key={example.id} style={{ borderLeft: "3px solid #0d6efd", paddingLeft: 10 }}>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-                        <div style={{ flex: 1 }}>{example.en}</div>
-                        <RnwButton
-                          title="Speak"
-                          onPress={() => speakExample(example.en)}
-                          disabled={!canSpeak}
-                          icon={<i className="fa-solid fa-volume-high" aria-hidden="true" />}
-                          kind="outline"
-                          tone="secondary"
-                          size="icon"
-                        />
+            {/* Divider */}
+            <hr style={{ margin: "4px 0", borderColor: "#dee2e6" }} />
+
+            {/* Detail: all entries, all meanings */}
+            <div style={answerPanelStyle}>
+              {word.entries.map((entry) => (
+                <div key={entry.pos} style={{ marginBottom: 16 }}>
+                  {/* POS header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#0d6efd", letterSpacing: "0.05em" }}>
+                      {entry.pos.toUpperCase()}
+                    </span>
+                    <hr style={{ flex: 1, margin: 0, borderColor: "#dee2e6" }} />
+                  </div>
+
+                  {entry.meanings.map((meaning, mi) => (
+                    <div key={mi} style={{ marginBottom: 12 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>{meaning.meaningJa}</div>
+                      {(meaning.tags ?? []).length > 0 && (
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                          {(meaning.tags ?? []).map((tag) => (
+                            <span
+                              key={tag}
+                              style={{ fontSize: 11, backgroundColor: "#e9ecef", borderRadius: 4, padding: "1px 6px", color: "#6c757d" }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {(meaning.examples ?? []).map((example) => (
+                          <div key={example.id} style={{ borderLeft: "3px solid #0d6efd", paddingLeft: 10 }}>
+                            <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
+                              <div style={{ flex: 1 }}>{example.en}</div>
+                              <RnwButton
+                                title="Speak"
+                                onPress={() => speakExample(example.en)}
+                                disabled={!canSpeak}
+                                icon={<i className="fa-solid fa-volume-high" aria-hidden="true" />}
+                                kind="outline"
+                                tone="secondary"
+                                size="icon"
+                              />
+                            </div>
+                            {example.ja ? <div style={{ color: "#6c757d", fontSize: 13 }}>{example.ja}</div> : null}
+                          </div>
+                        ))}
                       </div>
-                      {example.ja ? <div style={{ color: "#6c757d", fontSize: 13 }}>{example.ja}</div> : null}
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : null}
+              ))}
+            </div>
 
             <RnwButton
               type="button"
@@ -168,6 +232,7 @@ export function RnwFlashCard({ word, memory, onRate, onOpenExamples }: RnwFlashC
               icon={<i className="fa-solid fa-language" aria-hidden="true" />}
               onPress={() => onOpenExamples(word.id)}
               fullWidth
+              disabled={!hasAnyExamples}
             />
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>

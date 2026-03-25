@@ -4,6 +4,11 @@ export type Pos =
 
 export type Rating = "again" | "hard" | "good" | "easy";
 
+export interface Pronunciation {
+  ipa?: string;
+  notation?: string;
+}
+
 export interface ExampleSentence {
   id: string;
   en: string;
@@ -11,14 +16,23 @@ export interface ExampleSentence {
   source?: string | null;
 }
 
+export interface MeaningEntry {
+  meaningJa: string;
+  tags?: string[];
+  examples?: ExampleSentence[];
+}
+
+export interface PosEntry {
+  pos: Pos;
+  pronunciation?: Pronunciation;
+  meanings: MeaningEntry[];
+}
+
 export interface WordEntry {
   id: string;
   headword: string;
-  pronunciation?: string | null;
-  pos: Pos;
-  meaningJa: string;
-  examples: ExampleSentence[];
-  tags: string[];
+  pronunciation?: Pronunciation;
+  entries: PosEntry[];
   memo?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -55,6 +69,7 @@ export interface AppData {
 
 /**
  * Flexible input types for manual file creation (optional fields)
+ * Supports both v1 flat format and v2 entries format.
  */
 export interface ExampleSentenceForImport {
   id?: string;
@@ -63,17 +78,32 @@ export interface ExampleSentenceForImport {
   source?: string | null;
 }
 
+export interface MeaningEntryForImport {
+  meaningJa: string;
+  tags?: string[];
+  examples?: ExampleSentenceForImport[];
+}
+
+export interface PosEntryForImport {
+  pos: Pos;
+  pronunciation?: { ipa?: string; notation?: string };
+  meanings: MeaningEntryForImport[];
+}
+
 export interface WordEntryForImport {
   id?: string;
   headword: string;
-  pronunciation?: string | null;
-  pos: Pos;
-  meaningJa: string;
-  examples?: ExampleSentenceForImport[];
-  tags?: string[];
   memo?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  // v2 format
+  pronunciation?: { ipa?: string; notation?: string } | string | null;
+  entries?: PosEntryForImport[];
+  // v1 flat format (backward compat)
+  pos?: Pos;
+  meaningJa?: string;
+  examples?: ExampleSentenceForImport[];
+  tags?: string[];
 }
 
 export interface MemoryStateForImport {
@@ -95,7 +125,7 @@ export interface AppDataForImport {
   memory?: MemoryStateForImport[];
 }
 
-// Example Test Types
+// Example Test Types (flat structure, compatible with backend API)
 export interface ExampleTestItem {
   id: string;
   en: string;

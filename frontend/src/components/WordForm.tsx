@@ -5,6 +5,7 @@ import type { Pos, WordEntry, ExampleSentence } from "../api/types";
 import {
   buildWordSaveDraft,
   createEmptyExample,
+  getFormInitialValues,
 } from "../core/word/wordDraftPolicy";
 import { createUuidGenerator } from "../core/identity/uuid";
 import { speechApplicationService } from "../speech/speechApplication";
@@ -20,29 +21,28 @@ type Props = {
 export function WordForm({ initial, onSave, onCancel }: Props) {
   const idGenerator = useMemo(() => createUuidGenerator(), []);
 
+  const initValues = useMemo(() => getFormInitialValues(initial), [initial]);
+
   const [headword, setHeadword] = useState(initial?.headword ?? "");
-  const [pos, setPos] = useState<Pos>(initial?.pos ?? "noun");
-  const [meaningJa, setMeaningJa] = useState(initial?.meaningJa ?? "");
+  const [pos, setPos] = useState<Pos>(initValues.pos);
+  const [meaningJa, setMeaningJa] = useState(initValues.meaningJa);
+  const [tagsInput, setTagsInput] = useState(initValues.tagsInput);
   const [memo, setMemo] = useState(initial?.memo ?? "");
   const [examples, setExamples] = useState<ExampleSentence[]>(
-    initial?.examples && initial.examples.length > 0
-      ? initial.examples
-      : [createEmptyExample(idGenerator)]
+    initValues.examples.length > 0 ? initValues.examples : [createEmptyExample(idGenerator)]
   );
   const [busy, setBusy] = useState(false);
 
   // Update state when initial changes (for edit mode)
   useEffect(() => {
     if (initial) {
+      const vals = getFormInitialValues(initial);
       setHeadword(initial.headword);
-      setPos(initial.pos);
-      setMeaningJa(initial.meaningJa);
+      setPos(vals.pos);
+      setMeaningJa(vals.meaningJa);
+      setTagsInput(vals.tagsInput);
       setMemo(initial.memo ?? "");
-      setExamples(
-        initial.examples && initial.examples.length > 0
-          ? initial.examples
-          : [createEmptyExample(idGenerator)]
-      );
+      setExamples(vals.examples.length > 0 ? vals.examples : [createEmptyExample(idGenerator)]);
     }
   }, [idGenerator, initial]);
 
@@ -78,7 +78,7 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
     e.preventDefault();
     setBusy(true);
     try {
-      await onSave(buildWordSaveDraft({ headword, pos, meaningJa, tagsInput: (initial?.tags ?? []).join(","), memo, examples }, initial));
+      await onSave(buildWordSaveDraft({ headword, pos, meaningJa, tagsInput, memo, examples }, initial));
       if (!initial) {
         setHeadword("");
         setMeaningJa("");

@@ -32,11 +32,13 @@ function makeRepo() {
 
 const DRAFT = {
   headword: "serendipity",
-  pronunciation: "ˌsɛrənˈdɪpɪti",
-  pos: "noun" as const,
-  meaningJa: "思いがけない幸運",
-  examples: [],
-  tags: ["daily"],
+  pronunciation: { notation: "ˌsɛrənˈdɪpɪti" },
+  entries: [
+    {
+      pos: "noun" as const,
+      meanings: [{ meaningJa: "思いがけない幸運", tags: ["daily"], examples: [] }],
+    },
+  ],
   memo: null,
 };
 
@@ -49,11 +51,8 @@ describe("PersistedMobileLearningRepository", () => {
 
     const created = firstRepo.createWord({
       headword: "resilient",
-      pronunciation: "rɪˈzɪliənt",
-      pos: "adj",
-      meaningJa: "回復力のある",
-      examples: [],
-      tags: ["mobile"],
+      pronunciation: { notation: "rɪˈzɪliənt" },
+      entries: [{ pos: "adj", meanings: [{ meaningJa: "回復力のある", tags: ["mobile"], examples: [] }] }],
       memo: null,
     });
 
@@ -103,32 +102,32 @@ describe("MobileLearningRepository listWords", () => {
 
   it("filters by meaningJa query", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, meaningJa: "テスト専用" });
+    repo.createWord({ headword: "testword-unique", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "テスト専用", tags: [], examples: [] }] }], memo: null });
     const result = repo.listWords({ q: "テスト専用" });
-    expect(result.words.some((w) => w.meaningJa === "テスト専用")).toBe(true);
+    expect(result.words.some((w) => w.entries.some((e) => e.meanings.some((m) => m.meaningJa === "テスト専用")))).toBe(true);
   });
 
   it("filters by tag query", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, tags: ["unique-tag-xyz"] });
+    repo.createWord({ headword: "tagword-unique", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "タグ", tags: ["unique-tag-xyz"], examples: [] }] }], memo: null });
     const result = repo.listWords({ q: "unique-tag-xyz" });
-    expect(result.words.some((w) => w.tags.includes("unique-tag-xyz"))).toBe(true);
+    expect(result.words.some((w) => w.entries.some((e) => e.meanings.some((m) => m.tags?.includes("unique-tag-xyz"))))).toBe(true);
   });
 
   it("filters by pos", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, pos: "verb" });
+    repo.createWord({ headword: "verbword-unique", pronunciation: undefined, entries: [{ pos: "verb" as const, meanings: [{ meaningJa: "動詞", tags: [], examples: [] }] }], memo: null });
     const result = repo.listWords({ pos: "verb" });
-    expect(result.words.every((w) => w.pos === "verb")).toBe(true);
+    expect(result.words.every((w) => w.entries.some((e) => e.pos === "verb"))).toBe(true);
     expect(result.total).toBeGreaterThanOrEqual(1);
   });
 
   it("filters by tags array (OR match)", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, tags: ["alpha"] });
-    repo.createWord({ ...DRAFT, tags: ["beta"] });
+    repo.createWord({ headword: "alpha-word", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "アルファ", tags: ["alpha"], examples: [] }] }], memo: null });
+    repo.createWord({ headword: "beta-word", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "ベータ", tags: ["beta"], examples: [] }] }], memo: null });
     const result = repo.listWords({ tags: ["alpha"] });
-    expect(result.words.every((w) => w.tags.some((t) => ["alpha"].includes(t)))).toBe(true);
+    expect(result.words.every((w) => w.entries.some((e) => e.meanings.some((m) => m.tags?.some((t) => ["alpha"].includes(t)))))).toBe(true);
   });
 
   it("returns zero results for query that matches nothing", () => {
@@ -176,9 +175,10 @@ describe("MobileLearningRepository updateWord", () => {
   it("updates headword and meaningJa", () => {
     const repo = makeRepo();
     const word = repo.createWord(DRAFT);
-    const updated = repo.updateWord(word.id, { ...DRAFT, headword: "updated", meaningJa: "更新済み" });
+    const updatedDraft = { ...DRAFT, headword: "updated", entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "更新済み", tags: ["daily"], examples: [] }] }] };
+    const updated = repo.updateWord(word.id, updatedDraft);
     expect(updated.headword).toBe("updated");
-    expect(updated.meaningJa).toBe("更新済み");
+    expect(updated.entries[0].meanings[0].meaningJa).toBe("更新済み");
   });
 
   it("preserves id and createdAt", () => {
@@ -249,8 +249,8 @@ describe("MobileLearningRepository resetMemory", () => {
 describe("MobileLearningRepository listTags", () => {
   it("returns sorted unique tags across all words", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, tags: ["zzz", "aaa"] });
-    repo.createWord({ ...DRAFT, tags: ["aaa", "mmm"] });
+    repo.createWord({ headword: "tag-word-1", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "タグ語1", tags: ["zzz", "aaa"], examples: [] }] }], memo: null });
+    repo.createWord({ headword: "tag-word-2", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "タグ語2", tags: ["aaa", "mmm"], examples: [] }] }], memo: null });
     const tags = repo.listTags();
     expect(tags).toEqual([...tags].sort());
     const unique = new Set(tags);
@@ -280,9 +280,9 @@ describe("MobileLearningRepository nextCard", () => {
 
   it("filters by tags", () => {
     const repo = makeRepo();
-    repo.createWord({ ...DRAFT, tags: ["only-tag"] });
+    repo.createWord({ headword: "only-tag-word", pronunciation: undefined, entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "専用タグ語", tags: ["only-tag"], examples: [] }] }], memo: null });
     const card = repo.nextCard(["only-tag"]);
-    expect(card?.word.tags).toContain("only-tag");
+    expect(card?.word.entries.some((e) => e.meanings.some((m) => m.tags?.includes("only-tag")))).toBe(true);
   });
 });
 
@@ -379,11 +379,8 @@ describe("MobileLearningRepository importVocabFile", () => {
           {
             id: "brand-new-id",
             headword: "new-word",
-            pronunciation: null,
-            pos: "noun",
-            meaningJa: "新しい",
-            examples: [],
-            tags: [],
+            pronunciation: undefined,
+            entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "新しい", tags: [], examples: [] }] }],
             memo: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
@@ -402,17 +399,14 @@ describe("MobileLearningRepository importVocabFile", () => {
     const repo = makeRepo();
     repo.importVocabFile(
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         updatedAt: "2026-01-01T00:00:00.000Z",
         words: [
           {
             id: "first-import-id",
             headword: "serendipity",
-            pronunciation: null,
-            pos: "noun",
-            meaningJa: "思いがけない幸運",
-            examples: [],
-            tags: [],
+            pronunciation: undefined,
+            entries: [{ pos: "noun", meanings: [{ meaningJa: "思いがけない幸運", tags: [], examples: [] }] }],
             memo: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
@@ -427,17 +421,14 @@ describe("MobileLearningRepository importVocabFile", () => {
     // Same file re-imported but with a different ID (as if ID was absent and regenerated)
     repo.importVocabFile(
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         updatedAt: "2026-01-01T00:00:00.000Z",
         words: [
           {
             id: "second-import-id",
             headword: "serendipity",
-            pronunciation: null,
-            pos: "noun",
-            meaningJa: "思いがけない幸運",
-            examples: [],
-            tags: [],
+            pronunciation: undefined,
+            entries: [{ pos: "noun", meanings: [{ meaningJa: "思いがけない幸運", tags: [], examples: [] }] }],
             memo: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
@@ -488,17 +479,14 @@ describe("MobileLearningRepository importVocabFile", () => {
     const repo = makeRepo();
     repo.importVocabFile(
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         updatedAt: "2026-01-01T00:00:00.000Z",
         words: [
           {
             id: "only-word",
             headword: "overwrite",
-            pronunciation: null,
-            pos: "noun",
-            meaningJa: "上書き",
-            examples: [],
-            tags: [],
+            pronunciation: undefined,
+            entries: [{ pos: "noun", meanings: [{ meaningJa: "上書き", tags: [], examples: [] }] }],
             memo: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
@@ -524,17 +512,14 @@ describe("MobileLearningRepository applyServerFile", () => {
 
     repo.applyServerFile(
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         updatedAt: "2026-06-01T00:00:00.000Z",
         words: [
           {
             id: "server-word",
             headword: "server",
-            pronunciation: null,
-            pos: "noun",
-            meaningJa: "サーバー",
-            examples: [],
-            tags: [],
+            pronunciation: undefined,
+            entries: [{ pos: "noun", meanings: [{ meaningJa: "サーバー", tags: [], examples: [] }] }],
             memo: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
