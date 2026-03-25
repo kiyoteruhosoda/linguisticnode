@@ -4,6 +4,7 @@ import type {
   MemoryState,
   MemoryStateForImport,
   MeaningEntry,
+  Pos,
   PosEntry,
   Pronunciation,
   WordEntry,
@@ -11,6 +12,25 @@ import type {
 } from "../../../../src/api/types";
 import type { VocabFile } from "../../../../src/db/types";
 import { generateUUID } from "./mobileUuid";
+
+const VALID_POS = new Set<Pos>(["noun", "verb", "adj", "adv", "prep", "conj", "pron", "det", "interj", "other"]);
+
+const POS_ALIAS: Record<string, Pos> = {
+  adjective: "adj",
+  adverb: "adv",
+  preposition: "prep",
+  conjunction: "conj",
+  pronoun: "pron",
+  determiner: "det",
+  interjection: "interj",
+};
+
+function normalizePos(raw: string): Pos {
+  const lower = raw.toLowerCase();
+  if (VALID_POS.has(lower as Pos)) return lower as Pos;
+  if (POS_ALIAS[lower]) return POS_ALIAS[lower];
+  return "other";
+}
 
 export interface VocabFileNormalizerOptions {
   /** ID が未指定のエントリに付与する関数。テストで決定論的な値を注入できる。 */
@@ -54,7 +74,7 @@ export function normalizeVocabFileForImport(
           };
         });
         return {
-          pos: entry.pos,
+          pos: normalizePos(entry.pos),
           pronunciation: entry.pronunciation,
           meanings,
         };
@@ -69,7 +89,7 @@ export function normalizeVocabFileForImport(
       }));
       entries = [
         {
-          pos: w.pos,
+          pos: normalizePos(w.pos),
           meanings: [
             {
               meaningJa: w.meaningJa,
