@@ -80,30 +80,38 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const handlePickFile = async () => {
     setImportError(null);
     setImportSuccess(false);
+    debugLogger.log("DataScreen", "handlePickFile: opening document picker");
     let result: DocumentPicker.DocumentPickerResult;
     try {
       result = await DocumentPicker.getDocumentAsync({
         type: "application/json",
         copyToCacheDirectory: true,
       });
-    } catch {
+    } catch (e) {
+      debugLogger.log("DataScreen", `handlePickFile: picker threw error: ${String(e)}`);
       setImportError("Failed to open file picker");
       return;
     }
+    debugLogger.log("DataScreen", `handlePickFile: picker result canceled=${result.canceled} assets=${result.assets?.length ?? 0}`);
     if (result.canceled || !result.assets?.length) return;
 
+    const uri = result.assets[0].uri;
+    debugLogger.log("DataScreen", `handlePickFile: reading file uri=${uri}`);
     setImportBusy(true);
     try {
-      const json = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+      const json = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
+      debugLogger.log("DataScreen", `handlePickFile: file read ok, length=${json.length}`);
       ioGateway.importData(JSON.parse(json) as AppDataForImport, importMode);
+      debugLogger.log("DataScreen", "handlePickFile: importData ok");
       setImportSuccess(true);
       setTimeout(() => {
         setImportSuccess(false);
         setShowImportModal(false);
       }, 2000);
     } catch (e) {
+      debugLogger.log("DataScreen", `handlePickFile: error: ${String(e)}`);
       setImportError(e instanceof Error ? e.message : "Failed to read or parse the file");
     } finally {
       setImportBusy(false);

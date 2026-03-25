@@ -29,6 +29,17 @@ function generateUUID(): string {
   });
 }
 
+const VALID_POS = new Set<Pos>(["noun", "verb", "adj", "adv", "prep", "conj", "pron", "det", "interj", "other"]);
+const POS_ALIAS: Record<string, Pos> = {
+  adjective: "adj", adverb: "adv", preposition: "prep",
+  conjunction: "conj", pronoun: "pron", determiner: "det", interjection: "interj",
+};
+function normalizePos(raw: string): Pos {
+  const lower = raw.toLowerCase();
+  if (VALID_POS.has(lower as Pos)) return lower as Pos;
+  return POS_ALIAS[lower] ?? "other";
+}
+
 /**
  * Normalize AppDataForImport to AppData
  * Generate missing IDs and timestamps
@@ -49,7 +60,7 @@ function normalizeAppDataForImport(data: AppDataForImport): AppData {
     let entries: WordEntry["entries"];
     if (w.entries && w.entries.length > 0) {
       entries = w.entries.map((e) => ({
-        pos: e.pos,
+        pos: normalizePos(e.pos),
         pronunciation: e.pronunciation,
         meanings: e.meanings.map((m) => ({
           meaningJa: m.meaningJa,
@@ -71,7 +82,7 @@ function normalizeAppDataForImport(data: AppDataForImport): AppData {
         source: ex.source,
       }));
       entries = [{
-        pos: (w.pos || "noun") as Pos,
+        pos: normalizePos(w.pos || "noun"),
         meanings: [{
           meaningJa: w.meaningJa || "",
           tags: w.tags || [],
