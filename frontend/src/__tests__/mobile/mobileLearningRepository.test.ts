@@ -398,6 +398,59 @@ describe("MobileLearningRepository importVocabFile", () => {
     expect(repo.getWord("brand-new-id")?.headword).toBe("new-word");
   });
 
+  it("merge: skips words with same headword+pos even when ID differs (re-import of ID-less file)", () => {
+    const repo = makeRepo();
+    repo.importVocabFile(
+      {
+        schemaVersion: 1,
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        words: [
+          {
+            id: "first-import-id",
+            headword: "serendipity",
+            pronunciation: null,
+            pos: "noun",
+            meaningJa: "思いがけない幸運",
+            examples: [],
+            tags: [],
+            memo: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+        memory: [],
+      },
+      "merge",
+    );
+    const afterFirst = repo.listWords({}).total;
+
+    // Same file re-imported but with a different ID (as if ID was absent and regenerated)
+    repo.importVocabFile(
+      {
+        schemaVersion: 1,
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        words: [
+          {
+            id: "second-import-id",
+            headword: "serendipity",
+            pronunciation: null,
+            pos: "noun",
+            meaningJa: "思いがけない幸運",
+            examples: [],
+            tags: [],
+            memo: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+        memory: [],
+      },
+      "merge",
+    );
+
+    expect(repo.listWords({}).total).toBe(afterFirst);
+  });
+
   it("merge: adds only new memory entries (skips existing wordIds)", () => {
     const repo = makeRepo();
     const word = repo.createWord(DRAFT);

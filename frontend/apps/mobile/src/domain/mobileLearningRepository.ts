@@ -207,12 +207,15 @@ export class MobileLearningRepository implements MobileLearningRepositoryPort {
       this.words = file.words;
       this.memoryMap = memoryMap;
     } else {
-      // merge: add only words not already present by ID
+      // merge: add only words not already present by ID or headword+pos
       const existingIds = new Set(this.words.map((w) => w.id));
+      const existingHeadwordPos = new Set(this.words.map((w) => `${w.headword.toLowerCase()}|${w.pos}`));
       for (const word of file.words) {
-        if (!existingIds.has(word.id)) {
+        const headwordPosKey = `${word.headword.toLowerCase()}|${word.pos}`;
+        if (!existingIds.has(word.id) && !existingHeadwordPos.has(headwordPosKey)) {
           this.words.unshift(word);
           existingIds.add(word.id);
+          existingHeadwordPos.add(headwordPosKey);
         }
       }
       const existingMemoryIds = new Set(Object.keys(this.memoryMap));
