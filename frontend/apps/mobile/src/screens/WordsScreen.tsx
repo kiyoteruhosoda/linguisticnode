@@ -96,6 +96,7 @@ export function WordsScreen({
     setBusy(true);
     try {
       const listed = await service.listWords({ q: query, tags: appliedTags.length ? appliedTags : undefined });
+      debugLogger.log("WordsScreen", `load: ${listed.items.length} words (filter: [${appliedTags.join(", ")}])`);
       setWords(listed.items);
       setMemoryMap(listed.memoryMap);
     } finally {
