@@ -29,11 +29,8 @@ describe("mobile regression flow (create -> study -> sync)", () => {
 
     const created = await wordService.createWord({
       headword: "portable",
-      pronunciation: "ˈpɔːrtəbl",
-      pos: "adj",
-      meaningJa: "持ち運びできる",
-      examples: [],
-      tags: ["mobile", "phase-e"],
+      pronunciation: { notation: "ˈpɔːrtəbl" },
+      entries: [{ pos: "adj", meanings: [{ meaningJa: "持ち運びできる", tags: ["mobile", "phase-e"], examples: [] }] }],
       memo: "mobile regression",
     });
 

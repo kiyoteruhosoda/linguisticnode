@@ -15,14 +15,22 @@ import type { MemoryState, WordEntry } from "../../api/types";
 const mockWord: WordEntry = {
   id: "w1",
   headword: "fluent",
-  pos: "adj",
-  meaningJa: "流暢な",
-  examples: [
-    { id: "e1", en: "She speaks fluent French.", ja: "彼女は流暢なフランス語を話す。", source: null },
+  pronunciation: undefined,
+  entries: [
+    {
+      pos: "adj",
+      meanings: [
+        {
+          meaningJa: "流暢な",
+          tags: [],
+          examples: [
+            { id: "e1", en: "She speaks fluent French.", ja: "彼女は流暢なフランス語を話す。", source: null },
+          ],
+        },
+      ],
+    },
   ],
-  tags: [],
   memo: null,
-  pronunciation: null,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
@@ -136,8 +144,10 @@ describe("RnwFlashCard — userSelect 除去（長押しメニュー競合防止
 
     fireEvent.click(screen.getByText("Show Answer"));
 
-    const meaning = screen.getByText("流暢な");
-    expect(meaning).not.toHaveStyle({ userSelect: "text" });
+    const meanings = screen.getAllByText("流暢な");
+    for (const meaning of meanings) {
+      expect(meaning).not.toHaveStyle({ userSelect: "text" });
+    }
   });
 
   it("回答後の例文英語に userSelect:text が設定されていない", () => {
@@ -152,7 +162,9 @@ describe("RnwFlashCard — userSelect 除去（長押しメニュー競合防止
 
     fireEvent.click(screen.getByText("Show Answer"));
 
-    const exampleEn = screen.getByText("She speaks fluent French.");
-    expect(exampleEn).not.toHaveStyle({ userSelect: "text" });
+    const exampleEns = screen.getAllByText("She speaks fluent French.");
+    for (const exampleEn of exampleEns) {
+      expect(exampleEn).not.toHaveStyle({ userSelect: "text" });
+    }
   });
 });

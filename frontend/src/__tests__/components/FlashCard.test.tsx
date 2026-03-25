@@ -35,19 +35,22 @@ describe('FlashCard', () => {
   const mockWord: WordEntry = {
     id: '1',
     headword: 'hello',
-    pos: 'noun',
-    meaningJa: 'こんにちは',
-    examples: [
+    pronunciation: undefined,
+    entries: [
       {
-        id: '1',
-        en: 'Hello, world!',
-        ja: 'こんにちは、世界！',
-        source: null,
+        pos: 'noun',
+        meanings: [
+          {
+            meaningJa: 'こんにちは',
+            tags: [],
+            examples: [
+              { id: '1', en: 'Hello, world!', ja: 'こんにちは、世界！', source: null },
+            ],
+          },
+        ],
       },
     ],
-    tags: [],
     memo: null,
-    pronunciation: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   };
@@ -93,7 +96,7 @@ describe('FlashCard', () => {
 
     fireEvent.click(screen.getByText('Show Answer'));
 
-    expect(screen.getByText('こんにちは')).toBeInTheDocument();
+    expect(screen.getAllByText('こんにちは').length).toBeGreaterThan(0);
     expect(screen.getByText('Again')).toBeInTheDocument();
     expect(screen.getByText('Hard')).toBeInTheDocument();
     expect(screen.getByText('Good')).toBeInTheDocument();
@@ -110,7 +113,7 @@ describe('FlashCard', () => {
   });
 
   it('should not show example section when no examples', () => {
-    const wordWithoutExamples = { ...mockWord, examples: [] };
+    const wordWithoutExamples = { ...mockWord, entries: [{ pos: 'noun' as const, meanings: [{ meaningJa: 'こんにちは', tags: [], examples: [] }] }] };
     render(<FlashCard word={wordWithoutExamples} memory={mockMemory} onRate={mockOnRate} />);
 
     fireEvent.click(screen.getByText('Show Answer'));

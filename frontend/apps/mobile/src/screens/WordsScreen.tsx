@@ -27,11 +27,8 @@ const POS_OPTIONS: Pos[] = ["noun", "verb", "adj", "adv", "prep", "conj", "pron"
 
 const EMPTY_DRAFT: WordDraft = {
   headword: "",
-  pronunciation: "",
-  pos: "noun",
-  meaningJa: "",
-  examples: [],
-  tags: [],
+  pronunciation: undefined,
+  entries: [{ pos: "noun", meanings: [{ meaningJa: "", tags: [], examples: [] }] }],
   memo: "",
 };
 
@@ -138,11 +135,8 @@ export function WordsScreen({
     setSelectedWord(word);
     setDraft({
       headword: word.headword,
-      pronunciation: word.pronunciation ?? "",
-      pos: word.pos,
-      meaningJa: word.meaningJa,
-      examples: word.examples,
-      tags: word.tags,
+      pronunciation: word.pronunciation,
+      entries: word.entries,
       memo: word.memo ?? "",
     });
     setErrorMsg(null);
@@ -150,7 +144,8 @@ export function WordsScreen({
   };
 
   const submitCreate = async () => {
-    if (!draft.headword.trim() || !draft.meaningJa.trim()) {
+    const firstMeaning = draft.entries[0]?.meanings[0];
+    if (!draft.headword.trim() || !(firstMeaning?.meaningJa ?? "").trim()) {
       setErrorMsg("Headword and meaning are required");
       return;
     }
@@ -158,7 +153,7 @@ export function WordsScreen({
     setBusy(true);
     setErrorMsg(null);
     try {
-      await service.createWord({ ...draft, headword: draft.headword.trim(), meaningJa: draft.meaningJa.trim() });
+      await service.createWord({ ...draft, headword: draft.headword.trim() });
       await load();
       setSubRoute("list");
     } catch {
@@ -252,15 +247,19 @@ export function WordsScreen({
       for (const id of selectedIds) {
         const word = words.find((w) => w.id === id);
         if (!word) continue;
-        const tags = mode === "replace" ? newTags : [...new Set([...word.tags, ...newTags])];
+        const firstMeaning = word.entries[0]?.meanings[0];
+        const existingTags = firstMeaning?.tags ?? [];
+        const mergedTags = mode === "replace" ? newTags : [...new Set([...existingTags, ...newTags])];
+        const updatedEntries = word.entries.map((e, i) =>
+          i === 0
+            ? { ...e, meanings: e.meanings.map((m, j) => j === 0 ? { ...m, tags: mergedTags } : m) }
+            : e
+        );
         await service.updateWord(id, {
           headword: word.headword,
-          pronunciation: word.pronunciation ?? "",
-          pos: word.pos,
-          meaningJa: word.meaningJa,
-          examples: word.examples,
-          tags,
-          memo: word.memo ?? "",
+          pronunciation: word.pronunciation,
+          entries: updatedEntries,
+          memo: word.memo ?? null,
         });
       }
       await load();
@@ -334,6 +333,27 @@ export function WordsScreen({
       onBulkResetMemory={() => void handleBulkResetMemory()}
       onBulkChangeTags={(tags, mode) => void handleBulkChangeTags(tags, mode)}
     />
+  );
+}
+
+function WordListItemFooter({ item, colors }: { item: WordItem; colors: { surfacePressed: string; textSub: string; textMuted: string } }) {
+  const allTags = item.entries.flatMap((e) => e.meanings.flatMap((m) => m.tags ?? []));
+  const allExCount = item.entries.reduce((acc, e) => acc + e.meanings.reduce((a, m) => a + (m.examples?.length ?? 0), 0), 0);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+      {allTags.length > 0 ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, flex: 1 }}>
+          {allTags.map((tag, idx) => (
+            <View key={`${tag}-${idx}`} style={{ backgroundColor: colors.surfacePressed, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+              <Text style={{ fontSize: 11, color: colors.textSub }}>{tag}</Text>
+            </View>
+          ))}
+        </View>
+      ) : <View style={{ flex: 1 }} />}
+      {allExCount > 0 && (
+        <Text style={{ fontSize: 11, color: colors.textMuted }}>{allExCount} example{allExCount !== 1 ? "s" : ""}</Text>
+      )}
+    </View>
   );
 }
 
@@ -660,10 +680,10 @@ function WordListView({
                   )}
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text }}>{item.headword}</Text>
-                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }}>{item.meaningJa}</Text>
+                    <Text style={{ fontSize: 15, color: colors.textDim, marginTop: 4 }}>{item.entries[0]?.meanings[0]?.meaningJa ?? ""}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 4 }}>
-                    <PosBadge pos={item.pos} />
+                    <PosBadge pos={item.entries[0]?.pos ?? "noun"} />
                     {memInfo && (
                       <View style={{ backgroundColor: memInfo.bg, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
                         <Text style={{ fontSize: 10, fontWeight: "600", color: memInfo.color }}>{memInfo.label}</Text>
@@ -671,20 +691,7 @@ function WordListView({
                     )}
                   </View>
                 </View>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-                  {item.tags.length > 0 ? (
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, flex: 1 }}>
-                      {item.tags.map((tag) => (
-                        <View key={tag} style={{ backgroundColor: colors.surfacePressed, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
-                          <Text style={{ fontSize: 11, color: colors.textSub }}>{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  ) : <View style={{ flex: 1 }} />}
-                  {item.examples.length > 0 && (
-                    <Text style={{ fontSize: 11, color: colors.textMuted }}>{item.examples.length} example{item.examples.length !== 1 ? "s" : ""}</Text>
-                  )}
-                </View>
+                <WordListItemFooter item={item} colors={colors} />
               </Pressable>
             );
           }}
@@ -980,12 +987,27 @@ function WordFormView({
     paddingVertical: 2,
   };
 
-  const set = <K extends keyof WordDraft>(key: K, value: WordDraft[K]) =>
-    onChangeDraft({ ...draft, [key]: value });
+  const firstEntry = draft.entries[0] ?? { pos: "noun" as Pos, meanings: [{ meaningJa: "", tags: [], examples: [] }] };
+  const firstMeaning = firstEntry.meanings[0] ?? { meaningJa: "", tags: [], examples: [] };
 
-  const isValid = useMemo(() => draft.headword.trim() && draft.meaningJa.trim(), [draft]);
+  const updateFirstMeaning = (update: Partial<typeof firstMeaning>) => {
+    const updatedMeaning = { ...firstMeaning, ...update };
+    const entries = draft.entries.length > 0
+      ? draft.entries.map((e, i) => i === 0 ? { ...e, meanings: e.meanings.length > 0 ? e.meanings.map((m, j) => j === 0 ? updatedMeaning : m) : [updatedMeaning] } : e)
+      : [{ pos: "noun" as Pos, meanings: [updatedMeaning] }];
+    onChangeDraft({ ...draft, entries });
+  };
 
-  const draftExamples: DraftExample[] = (draft.examples ?? []).map((e) => ({
+  const setPos = (pos: Pos) => {
+    const entries = draft.entries.length > 0
+      ? draft.entries.map((e, i) => i === 0 ? { ...e, pos } : e)
+      : [{ pos, meanings: [firstMeaning] }];
+    onChangeDraft({ ...draft, entries });
+  };
+
+  const isValid = useMemo(() => draft.headword.trim() && firstMeaning.meaningJa.trim(), [draft, firstMeaning]);
+
+  const draftExamples: DraftExample[] = (firstMeaning.examples ?? []).map((e) => ({
     id: e.id,
     en: e.en,
     ja: e.ja ?? "",
@@ -993,18 +1015,17 @@ function WordFormView({
 
   const addExample = () => {
     const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    set("examples", [...(draft.examples ?? []), { id: newId, en: "", ja: "" }]);
+    updateFirstMeaning({ examples: [...(firstMeaning.examples ?? []), { id: newId, en: "", ja: null, source: null }] });
   };
 
   const updateExample = (id: string, field: "en" | "ja", value: string) => {
-    set(
-      "examples",
-      (draft.examples ?? []).map((e) => (e.id === id ? { ...e, [field]: value } : e)),
-    );
+    updateFirstMeaning({
+      examples: (firstMeaning.examples ?? []).map((e) => e.id === id ? { ...e, [field]: value || null } : e),
+    });
   };
 
   const removeExample = (id: string) => {
-    set("examples", (draft.examples ?? []).filter((e) => e.id !== id));
+    updateFirstMeaning({ examples: (firstMeaning.examples ?? []).filter((e) => e.id !== id) });
   };
 
   const handleConfirm = () => {
@@ -1062,7 +1083,7 @@ function WordFormView({
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <TextInput
                 value={draft.headword}
-                onChangeText={(v) => set("headword", v)}
+                onChangeText={(v) => onChangeDraft({ ...draft, headword: v })}
                 placeholder="e.g. ephemeral"
                 placeholderTextColor={colors.textMuted}
                 style={[fieldInputStyle, { flex: 1 }]}
@@ -1090,8 +1111,8 @@ function WordFormView({
           <Divider colors={colors} />
           <FieldRow label="Meaning (JA) *" labelStyle={labelStyle}>
             <TextInput
-              value={draft.meaningJa}
-              onChangeText={(v) => set("meaningJa", v)}
+              value={firstMeaning.meaningJa}
+              onChangeText={(v) => updateFirstMeaning({ meaningJa: v })}
               placeholder="e.g. 短命の、はかない"
               placeholderTextColor={colors.textMuted}
               style={fieldInputStyle}
@@ -1106,17 +1127,17 @@ function WordFormView({
             {POS_OPTIONS.map((pos) => (
               <Pressable
                 key={pos}
-                onPress={() => set("pos", pos)}
+                onPress={() => setPos(pos)}
                 style={{
                   paddingVertical: 7,
                   paddingHorizontal: 14,
                   borderRadius: 20,
                   borderWidth: 1.5,
-                  borderColor: draft.pos === pos ? colors.primary : colors.borderMid,
-                  backgroundColor: draft.pos === pos ? colors.primaryBg : colors.surface,
+                  borderColor: firstEntry.pos === pos ? colors.primary : colors.borderMid,
+                  backgroundColor: firstEntry.pos === pos ? colors.primaryBg : colors.surface,
                 }}
               >
-                <Text style={{ fontSize: 13, fontWeight: draft.pos === pos ? "700" : "400", color: draft.pos === pos ? colors.primary : colors.textDim }}>
+                <Text style={{ fontSize: 13, fontWeight: firstEntry.pos === pos ? "700" : "400", color: firstEntry.pos === pos ? colors.primary : colors.textDim }}>
                   {pos}
                 </Text>
               </Pressable>
@@ -1128,8 +1149,8 @@ function WordFormView({
         <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: "hidden" }}>
           <FieldRow label="Tags (comma-separated)" labelStyle={labelStyle}>
             <TextInput
-              value={(draft.tags ?? []).join(", ")}
-              onChangeText={(v) => set("tags", v.split(",").map((t) => t.trim()).filter(Boolean))}
+              value={(firstMeaning.tags ?? []).join(", ")}
+              onChangeText={(v) => updateFirstMeaning({ tags: v.split(",").map((t) => t.trim()).filter(Boolean) })}
               placeholder="e.g. TOEFL, important"
               placeholderTextColor={colors.textMuted}
               style={fieldInputStyle}
@@ -1139,7 +1160,7 @@ function WordFormView({
           <FieldRow label="Memo" labelStyle={labelStyle}>
             <TextInput
               value={draft.memo ?? ""}
-              onChangeText={(v) => set("memo", v)}
+              onChangeText={(v) => onChangeDraft({ ...draft, memo: v })}
               placeholder="Optional note"
               placeholderTextColor={colors.textMuted}
               multiline

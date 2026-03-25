@@ -51,11 +51,20 @@ describe("wordDraftPolicy", () => {
 
     expect(draft).toEqual({
       headword: "reach",
-      pos: "verb",
-      meaningJa: "到達する",
-      pronunciation: null,
-      tags: ["verb", "basic"],
-      examples: [{ id: "1", en: "Reach here.", ja: "ここに到達", source: "note" }],
+      pronunciation: undefined,
+      entries: [
+        {
+          pos: "verb",
+          pronunciation: undefined,
+          meanings: [
+            {
+              meaningJa: "到達する",
+              tags: ["verb", "basic"],
+              examples: [{ id: "1", en: "Reach here.", ja: "ここに到達", source: "note" }],
+            },
+          ],
+        },
+      ],
       memo: null,
     });
   });
@@ -64,11 +73,10 @@ describe("wordDraftPolicy", () => {
     const initial: WordEntry = {
       id: "w-1",
       headword: "reach",
-      pos: "verb",
-      meaningJa: "届く",
-      pronunciation: "riːtʃ",
-      tags: ["travel"],
-      examples: [],
+      pronunciation: { notation: "riːtʃ" },
+      entries: [
+        { pos: "verb", meanings: [{ meaningJa: "届く", tags: ["travel"], examples: [] }] },
+      ],
       memo: null,
       createdAt: "2026-01-01T00:00:00Z",
       updatedAt: "2026-01-01T00:00:00Z",
@@ -86,8 +94,8 @@ describe("wordDraftPolicy", () => {
       initial,
     );
 
-    expect(draft.pronunciation).toBe("riːtʃ");
-    expect(draft.tags).toEqual(["updated", "travel"]);
+    expect(draft.pronunciation).toEqual({ notation: "riːtʃ" });
+    expect(draft.entries[0].meanings[0].tags).toEqual(["updated", "travel"]);
     expect(draft.memo).toBe("memo");
   });
 });
