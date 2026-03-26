@@ -17,11 +17,15 @@ export function ExamplesScreen({
   studyService,
   preferredWordId,
   onNavigateToStudy,
+  appliedTags,
+  onAppliedTagsChange,
 }: {
   examplesService: MobileExamplesService;
   studyService?: MobileStudyService;
   preferredWordId?: string | null;
   onNavigateToStudy?: (wordId: string) => void;
+  appliedTags: string[];
+  onAppliedTagsChange: (tags: string[]) => void;
 }) {
   const { colors } = useTheme();
   const [example, setExample] = useState<ExampleTestItem | null>(null);
@@ -43,8 +47,7 @@ export function ExamplesScreen({
   // Tag filter state
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [appliedTags, setAppliedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([...appliedTags]);
 
   const canSpeak = mobileSpeechService.canSpeak();
 
@@ -153,13 +156,13 @@ export function ExamplesScreen({
   };
 
   const applyTagFilter = () => {
-    setAppliedTags([...selectedTags]);
+    onAppliedTagsChange([...selectedTags]);
     setShowTagPanel(false);
   };
 
   const clearTagFilter = () => {
     setSelectedTags([]);
-    setAppliedTags([]);
+    onAppliedTagsChange([]);
     setShowTagPanel(false);
   };
 
@@ -531,26 +534,24 @@ export function ExamplesScreen({
                     <Text style={{ fontSize: 14, color: colors.textDim }}>{example.word.meaningJa}</Text>
                   </View>
 
-                  {/* Retry button (incorrect only) */}
-                  {feedback === "incorrect" && (
-                    <Pressable
-                      onPress={handleRetry}
-                      style={({ pressed }) => ({
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 6,
-                        paddingVertical: 12,
-                        borderRadius: 10,
-                        borderWidth: 1.5,
-                        borderColor: colors.ratingAgain.color,
-                        backgroundColor: pressed ? colors.ratingAgain.bg : colors.surface,
-                      })}
-                    >
-                      <Ionicons name="refresh-outline" size={17} color={colors.ratingAgain.color} />
-                      <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ratingAgain.color }}>Retry</Text>
-                    </Pressable>
-                  )}
+                  {/* Retry button */}
+                  <Pressable
+                    onPress={handleRetry}
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      paddingVertical: 12,
+                      borderRadius: 10,
+                      borderWidth: 1.5,
+                      borderColor: feedback === "incorrect" ? colors.ratingAgain.color : colors.borderMid,
+                      backgroundColor: pressed ? (feedback === "incorrect" ? colors.ratingAgain.bg : colors.surfacePressed) : colors.surface,
+                    })}
+                  >
+                    <Ionicons name="refresh-outline" size={17} color={feedback === "incorrect" ? colors.ratingAgain.color : colors.textSub} />
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: feedback === "incorrect" ? colors.ratingAgain.color : colors.textSub }}>Retry</Text>
+                  </Pressable>
 
                   {/* Next button */}
                   <Pressable

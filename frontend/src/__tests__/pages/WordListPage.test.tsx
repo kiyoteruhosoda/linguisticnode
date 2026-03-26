@@ -27,11 +27,8 @@ describe("WordListPage", () => {
         {
           id: "w1",
           headword: "apple",
-          pos: "noun",
-          meaningJa: "りんご",
-          pronunciation: null,
-          examples: [],
-          tags: ["travel"],
+          pronunciation: undefined,
+          entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "りんご", tags: ["travel"], examples: [] }] }],
           memo: null,
           createdAt: "2024-01-01T00:00:00Z",
           updatedAt: "2024-01-01T00:00:00Z",

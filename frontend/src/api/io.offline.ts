@@ -4,15 +4,16 @@
  * Export/import operations using local IndexedDB
  */
 
-import type { 
-  AppData, 
-  AppDataForImport, 
-  WordEntry, 
-  ExampleSentence, 
+import type {
+  AppData,
+  AppDataForImport,
+  WordEntry,
+  ExampleSentence,
   MemoryState,
   WordEntryForImport,
   ExampleSentenceForImport,
-  MemoryStateForImport 
+  MemoryStateForImport,
+  Pos,
 } from "./types";
 import * as localRepo from "../db/localRepository";
 import type { VocabFile } from "../db/types";
@@ -26,6 +27,17 @@ function generateUUID(): string {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+const VALID_POS = new Set<Pos>(["noun", "verb", "adj", "adv", "prep", "conj", "pron", "det", "interj", "other"]);
+const POS_ALIAS: Record<string, Pos> = {
+  adjective: "adj", adverb: "adv", preposition: "prep",
+  conjunction: "conj", pronoun: "pron", determiner: "det", interjection: "interj",
+};
+function normalizePos(raw: string): Pos {
+  const lower = raw.toLowerCase();
+  if (VALID_POS.has(lower as Pos)) return lower as Pos;
+  return POS_ALIAS[lower] ?? "other";
 }
 
 /**
@@ -44,22 +56,51 @@ function normalizeAppDataForImport(data: AppDataForImport): AppData {
     const createdAt = w.createdAt || now;
     const updatedAt = w.updatedAt || now;
 
-    // Normalize examples
-    const normalizedExamples: ExampleSentence[] = (w.examples || []).map((ex: ExampleSentenceForImport) => ({
-      id: ex.id || generateUUID(),
-      en: ex.en,
-      ja: ex.ja,
-      source: ex.source,
-    }));
+    // v2 format with entries, or convert v1 flat to v2
+    let entries: WordEntry["entries"];
+    if (w.entries && w.entries.length > 0) {
+      entries = w.entries.map((e) => ({
+        pos: normalizePos(e.pos),
+        pronunciation: e.pronunciation,
+        meanings: e.meanings.map((m) => ({
+          meaningJa: m.meaningJa,
+          tags: m.tags,
+          examples: (m.examples ?? []).map((ex) => ({
+            id: ex.id || generateUUID(),
+            en: ex.en,
+            ja: ex.ja,
+            source: ex.source,
+          })),
+        })),
+      }));
+    } else {
+      // v1 flat format → convert to v2
+      const normalizedExamples: ExampleSentence[] = (w.examples || []).map((ex: ExampleSentenceForImport) => ({
+        id: ex.id || generateUUID(),
+        en: ex.en,
+        ja: ex.ja,
+        source: ex.source,
+      }));
+      entries = [{
+        pos: normalizePos(w.pos || "noun"),
+        meanings: [{
+          meaningJa: w.meaningJa || "",
+          tags: w.tags || [],
+          examples: normalizedExamples,
+        }],
+      }];
+    }
+
+    // Normalize pronunciation
+    const pronunciation = typeof w.pronunciation === "string"
+      ? { notation: w.pronunciation }
+      : w.pronunciation ?? undefined;
 
     return {
       id: wordId,
       headword: w.headword,
-      pronunciation: w.pronunciation,
-      pos: w.pos,
-      meaningJa: w.meaningJa,
-      examples: normalizedExamples,
-      tags: w.tags || [],
+      pronunciation,
+      entries,
       memo: w.memo,
       createdAt,
       updatedAt,

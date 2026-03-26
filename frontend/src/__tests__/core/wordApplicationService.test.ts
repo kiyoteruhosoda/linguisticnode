@@ -25,11 +25,8 @@ describe("WordApplicationService", () => {
       {
         id: "w1",
         headword: "apple",
-        pronunciation: null,
-        pos: "noun" as Pos,
-        meaningJa: "りんご",
-        examples: [],
-        tags: ["food"],
+        pronunciation: undefined,
+        entries: [{ pos: "noun" as Pos, meanings: [{ meaningJa: "りんご", tags: ["food"], examples: [] }] }],
         memo: null,
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
@@ -76,11 +73,8 @@ describe("WordApplicationService", () => {
 
     const draft = {
       headword: "book",
-      pronunciation: null,
-      pos: "noun" as Pos,
-      meaningJa: "本",
-      examples: [],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: "noun" as Pos, meanings: [{ meaningJa: "本", tags: [], examples: [] }] }],
       memo: null,
     };
 

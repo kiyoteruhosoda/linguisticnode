@@ -1,9 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import * as FileSystem from "expo-file-system";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { type AppColors, useTheme } from "../app/ThemeContext";
 import { debugLogger } from "../infra/debugLogger";
+
+// app.config.ts の extra に格納されたビルド時確定値を優先して使用する
+// nativeBuildVersion はネイティブ APK の実際の versionCode を返すため最優先
+// EAS Build autoIncrement は app.config.ts 評価後にネイティブ versionCode を変更するため
+// extra.versionCode と nativeBuildVersion が食い違う場合がある
+const _extra = Constants.expoConfig?.extra as
+  | { appVersion?: string; versionCode?: number; gitCommit?: string }
+  | undefined;
+const _nativeBuild = Constants.nativeBuildVersion;
+const _nativeBuildNum = _nativeBuild ? Number.parseInt(_nativeBuild, 10) : null;
+const _versionCode = _nativeBuildNum
+  ?? _extra?.versionCode
+  ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
+const _baseAppVersion = _extra?.appVersion ?? process.env.EXPO_PUBLIC_APP_VERSION;
+// nativeBuildNum が extra.versionCode と異なる場合は末尾の数字を置換して正確な番号を反映
+const _appVersion = (_nativeBuildNum && _baseAppVersion)
+  ? _baseAppVersion.replace(/-\d+$/, `-${_nativeBuildNum}`)
+  : _baseAppVersion ?? `dev-${_versionCode}`;
 
 export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors } = useTheme();
@@ -31,8 +50,9 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
     void loadInfo();
   }, [visible, refreshKey, loadInfo]);
 
-  const appVersion = process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0";
-  const gitCommit = process.env.EXPO_PUBLIC_GIT_COMMIT ?? "(unknown)";
+  const appVersion = _appVersion;
+  const versionCode = _versionCode;
+  const gitCommit = _extra?.gitCommit || process.env.EXPO_PUBLIC_GIT_COMMIT || "(unknown)";
   const debugMode = debugLogger.isDebugMode();
   const logLines = logContent ? logContent.split("\n").filter(Boolean).length : 0;
 
@@ -67,6 +87,8 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
           {/* App Info */}
           <InfoSection title="App" colors={colors}>
             <InfoRow label="Version" value={appVersion} colors={colors} />
+            <InfoRow label="Version Code" value={String(versionCode)} colors={colors} />
+            <InfoRow label="nativeBuildVersion" value={_nativeBuild ?? "(null)"} colors={colors} />
             <InfoRow
               label="Commit"
               value={gitCommit !== "(unknown)" ? gitCommit.slice(0, 7) : "(unknown)"}

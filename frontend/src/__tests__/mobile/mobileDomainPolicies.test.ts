@@ -108,7 +108,7 @@ describe("normalizeVocabFileForImport", () => {
     expect(result.words[0].id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
-    expect(result.words[0].examples[0].id).toMatch(
+    expect(result.words[0].entries[0]!.meanings[0]!.examples![0]!.id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
   });
@@ -128,7 +128,7 @@ describe("normalizeVocabFileForImport", () => {
     });
 
     expect(result.words[0].id).toBe("existing-word-id");
-    expect(result.words[0].examples[0].id).toBe("existing-ex-id");
+    expect(result.words[0].entries[0]!.meanings[0]!.examples![0]!.id).toBe("existing-ex-id");
   });
 
   it("uses injected generateId for deterministic testing", () => {
@@ -147,7 +147,7 @@ describe("normalizeVocabFileForImport", () => {
     );
 
     expect(result.words[0].id).toBe("id-1");
-    expect(result.words[0].examples[0].id).toBe("id-2");
+    expect(result.words[0].entries[0]!.meanings[0]!.examples![0]!.id).toBe("id-2");
     expect(result.words[1].id).toBe("id-3");
   });
 
@@ -219,11 +219,8 @@ describe("MobileLearningRepository clock injection", () => {
 
     const word = repo.createWord({
       headword: "clock-test",
-      pronunciation: null,
-      pos: "noun",
-      meaningJa: "時計テスト",
-      examples: [],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "時計テスト", tags: [], examples: [] }] }],
       memo: null,
     });
 
@@ -236,11 +233,8 @@ describe("MobileLearningRepository clock injection", () => {
     const repo = new MobileLearningRepository(() => fixedMs);
     const word = repo.createWord({
       headword: "grade-test",
-      pronunciation: null,
-      pos: "noun",
-      meaningJa: "採点テスト",
-      examples: [],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "採点テスト", tags: [], examples: [] }] }],
       memo: null,
     });
 
@@ -258,11 +252,8 @@ describe("MobileLearningRepository clock injection", () => {
 
     const draft = {
       headword: "timing",
-      pronunciation: null,
-      pos: "noun" as const,
-      meaningJa: "タイミング",
-      examples: [],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: "noun" as const, meanings: [{ meaningJa: "タイミング", tags: [], examples: [] }] }],
       memo: null,
     };
 

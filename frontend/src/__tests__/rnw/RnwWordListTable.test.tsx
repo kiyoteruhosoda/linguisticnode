@@ -9,12 +9,20 @@ describe("RnwWordListTable", () => {
       {
         id: "word-1",
         headword: "hello",
-        pos: "noun",
-        meaningJa: "こんにちは",
-        examples: [{ id: "ex-1", en: "Hello world", ja: "こんにちは世界", source: null }],
-        tags: [],
+        pronunciation: undefined,
+        entries: [
+          {
+            pos: "noun",
+            meanings: [
+              {
+                meaningJa: "こんにちは",
+                tags: [],
+                examples: [{ id: "ex-1", en: "Hello world", ja: "こんにちは世界", source: null }],
+              },
+            ],
+          },
+        ],
         memo: null,
-        pronunciation: null,
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
       },

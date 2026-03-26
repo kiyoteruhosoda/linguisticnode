@@ -43,7 +43,7 @@ export const darkColors = {
   textSub: "#adb5bd",
   textMuted: "#6c757d",
   textDim: "#ced4da",
-  primary: "#4d90fe",
+  primary: "#3d82f2",
   primaryBg: "#1a2940",
   primaryBgPressed: "#213a5e",
   primaryPressed: "#3a7aee",
@@ -51,7 +51,7 @@ export const darkColors = {
   memNew: { color: "#9ba5b0", bg: "#252c30" },
   memLearning: { color: "#ffc046", bg: "#3d2a00" },
   memReview: { color: "#74b4ff", bg: "#0d1f3d" },
-  memMastered: { color: "#5cd97d", bg: "#0d2f1a" },
+  memMastered: { color: "#44c46a", bg: "#0d2f1a" },
   // Rating colors
   ratingAgain: { color: "#ff6b7a", bg: "#2d0a0e" },
   ratingHard: { color: "#ffa040", bg: "#2d1800" },

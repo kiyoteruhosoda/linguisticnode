@@ -1,9 +1,11 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import Constants from "expo-constants";
 import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
@@ -11,9 +13,29 @@ import { DebugInfoScreen } from "./DebugInfoScreen";
 import { LicenseScreen } from "./LicenseScreen";
 import { debugLogger } from "../infra/debugLogger";
 
+const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
+
+// app.config.ts の extra に格納されたビルド時確定値を優先して使用する
+// nativeBuildVersion はネイティブ APK の実際の versionCode を返すため最優先
+// EAS Build autoIncrement は app.config.ts 評価後にネイティブ versionCode を変更するため
+// extra.versionCode と nativeBuildVersion が食い違う場合がある
+const _extra = Constants.expoConfig?.extra as
+  | { appVersion?: string; versionCode?: number }
+  | undefined;
+const _nativeBuild = Constants.nativeBuildVersion;
+const _nativeBuildNum = _nativeBuild ? Number.parseInt(_nativeBuild, 10) : null;
+const _versionCode = _nativeBuildNum
+  ?? _extra?.versionCode
+  ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
+const _baseAppVersion = _extra?.appVersion ?? process.env.EXPO_PUBLIC_APP_VERSION;
+// nativeBuildNum が extra.versionCode と異なる場合は末尾の数字を置換して正確な番号を反映
+const _appVersion = (_nativeBuildNum && _baseAppVersion)
+  ? _baseAppVersion.replace(/-\d+$/, `-${_nativeBuildNum}`)
+  : _baseAppVersion ?? `dev-${_versionCode}`;
+
 type ImportMode = "merge" | "overwrite";
 
-export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
+export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIoGateway; onImportSuccess?: () => void }) {
   const { isDark, colors, toggleTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -31,6 +53,8 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const toggleDebugMode = (value: boolean) => {
     setDebugMode(value);
     debugLogger.setDebugMode(value);
+    AsyncStorage.setItem(DEBUG_MODE_STORAGE_KEY, value ? "true" : "false").catch(() => {});
+    debugLogger.log("DataScreen", `debug mode set to: ${value ? "ON" : "OFF"}`);
   };
 
   const handleVersionTap = () => {
@@ -69,30 +93,39 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
   const handlePickFile = async () => {
     setImportError(null);
     setImportSuccess(false);
+    debugLogger.log("DataScreen", "handlePickFile: opening document picker");
     let result: DocumentPicker.DocumentPickerResult;
     try {
       result = await DocumentPicker.getDocumentAsync({
         type: "application/json",
         copyToCacheDirectory: true,
       });
-    } catch {
+    } catch (e) {
+      debugLogger.log("DataScreen", `handlePickFile: picker threw error: ${String(e)}`);
       setImportError("Failed to open file picker");
       return;
     }
+    debugLogger.log("DataScreen", `handlePickFile: picker result canceled=${result.canceled} assets=${result.assets?.length ?? 0}`);
     if (result.canceled || !result.assets?.length) return;
 
+    const uri = result.assets[0].uri;
+    debugLogger.log("DataScreen", `handlePickFile: reading file uri=${uri}`);
     setImportBusy(true);
     try {
-      const json = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+      const json = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
+      debugLogger.log("DataScreen", `handlePickFile: file read ok, length=${json.length}`);
       ioGateway.importData(JSON.parse(json) as AppDataForImport, importMode);
+      debugLogger.log("DataScreen", "handlePickFile: importData ok");
+      onImportSuccess?.();
       setImportSuccess(true);
       setTimeout(() => {
         setImportSuccess(false);
         setShowImportModal(false);
       }, 2000);
     } catch (e) {
+      debugLogger.log("DataScreen", `handlePickFile: error: ${String(e)}`);
       setImportError(e instanceof Error ? e.message : "Failed to read or parse the file");
     } finally {
       setImportBusy(false);
@@ -343,10 +376,10 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>App Version</Text>
             <Text style={{ fontSize: 13, color: colors.textSub, marginTop: 2 }}>
-              {process.env.EXPO_PUBLIC_APP_VERSION ?? "1.0.0"}
-              {process.env.EXPO_PUBLIC_GIT_COMMIT
-                ? `  (${process.env.EXPO_PUBLIC_GIT_COMMIT.slice(0, 7)})`
-                : ""}
+              {_appVersion}{"  "}
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                (build {_versionCode})
+              </Text>
             </Text>
           </View>
           {versionTapCount > 0 && !showDebug && (

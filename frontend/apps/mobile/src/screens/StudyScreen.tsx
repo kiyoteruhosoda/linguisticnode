@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { AntDesign, FontAwesome6, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import type { Rating } from "../../../../src/api/types";
+import type { MeaningEntry, PosEntry, Rating } from "../../../../src/api/types";
 import type { MobileStudyService } from "../app/mobileServices";
 import { mobileSpeechService } from "../app/mobileSpeechApplication";
 import { useTheme } from "../app/ThemeContext";
@@ -14,10 +14,14 @@ export function StudyScreen({
   studyService,
   preferredWordId,
   onNavigateToQuiz,
+  appliedTags,
+  onAppliedTagsChange,
 }: {
   studyService: MobileStudyService;
   preferredWordId?: string | null;
   onNavigateToQuiz?: (wordId: string) => void;
+  appliedTags: string[];
+  onAppliedTagsChange: (tags: string[]) => void;
 }) {
   const { colors } = useTheme();
   const [card, setCard] = useState<Card>(null);
@@ -27,8 +31,7 @@ export function StudyScreen({
 
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [appliedTags, setAppliedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([...appliedTags]);
 
   const canSpeak = mobileSpeechService.canSpeak();
 
@@ -92,13 +95,13 @@ export function StudyScreen({
   };
 
   const applyTagFilter = () => {
-    setAppliedTags([...selectedTags]);
+    onAppliedTagsChange([...selectedTags]);
     setShowTagPanel(false);
   };
 
   const clearTagFilter = () => {
     setSelectedTags([]);
-    setAppliedTags([]);
+    onAppliedTagsChange([]);
     setShowTagPanel(false);
   };
 
@@ -120,6 +123,25 @@ export function StudyScreen({
     if (level <= 3) return { ...colors.memLearning, label: "Learning" };
     if (level <= 6) return { ...colors.memReview, label: "Review" };
     return { ...colors.memMastered, label: "Mastered" };
+  }
+
+  // タグフィルタ適用後のエントリを計算
+  function getFilteredEntries(entries: PosEntry[]): PosEntry[] {
+    if (appliedTags.length === 0) return entries;
+    return entries.filter((e) =>
+      e.meanings.some((m) => appliedTags.some((tag) => m.tags?.includes(tag)))
+    );
+  }
+
+  // エントリ内のフィルタ済みmeaningsを取得
+  function getFilteredMeanings(meanings: MeaningEntry[]): MeaningEntry[] {
+    if (appliedTags.length === 0) return meanings;
+    return meanings.filter((m) => appliedTags.some((tag) => m.tags?.includes(tag)));
+  }
+
+  // 単語の全例文（詳細セクション用）
+  function hasAnyExamples(entries: PosEntry[]): boolean {
+    return entries.some((e) => e.meanings.some((m) => (m.examples ?? []).length > 0));
   }
 
   if (loading) {
@@ -281,6 +303,7 @@ export function StudyScreen({
               overflow: "hidden",
             }}
           >
+            {/* Card header: memory level + speak */}
             <View
               style={{
                 flexDirection: "row",
@@ -323,35 +346,148 @@ export function StudyScreen({
               )}
             </View>
 
+            {/* Card body */}
             <View style={{ padding: 28, alignItems: "center", gap: 10 }}>
-              <Text style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }}onLongPress={() => showMenu(card.word.headword)}>
+              {/* Headword */}
+              <Text
+                style={{ fontSize: 34, fontWeight: "800", color: colors.text, textAlign: "center" }}
+                onLongPress={() => showMenu(card.word.headword)}
+              >
                 {card.word.headword}
               </Text>
-              <View style={{ backgroundColor: colors.primaryBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}>
-                <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>{card.word.pos}</Text>
+
+              {/* POS badges — filtered entries only */}
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+                {getFilteredEntries(card.word.entries).map((entry) => (
+                  <View
+                    key={entry.pos}
+                    style={{ backgroundColor: colors.primaryBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>{entry.pos}</Text>
+                  </View>
+                ))}
               </View>
 
               <View style={{ width: "60%", height: 1, backgroundColor: colors.border, marginVertical: 4 }} />
 
               {revealed ? (
-                <View style={{ alignItems: "center", gap: 10, width: "100%" }}>
-                  <Text style={{ fontSize: 22, fontWeight: "700", color: colors.memMastered.color, textAlign: "center" }}onLongPress={() => showMenu(card.word.meaningJa)}>
-                    {card.word.meaningJa}
-                  </Text>
+                <View style={{ alignItems: "stretch", gap: 16, width: "100%" }}>
+                  {/* ── Summary section: filtered meanings ── */}
+                  <View style={{ gap: 8 }}>
+                    {getFilteredEntries(card.word.entries).map((entry) =>
+                      getFilteredMeanings(entry.meanings).map((meaning, mi) => (
+                        <View
+                          key={`${entry.pos}-${mi}`}
+                          style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+                        >
+                          <Text
+                            style={{ fontSize: 18, fontWeight: "700", color: colors.memMastered.color }}
+                            onLongPress={() => showMenu(meaning.meaningJa)}
+                          >
+                            {meaning.meaningJa}
+                          </Text>
+                          {(meaning.tags ?? []).map((tag) => (
+                            <View
+                              key={tag}
+                              style={{ backgroundColor: colors.surfacePressed, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}
+                            >
+                              <Text style={{ fontSize: 11, color: colors.textSub }}>{tag}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      ))
+                    )}
+                  </View>
+
                   {card.word.memo ? (
-                    <Text style={{ fontSize: 14, color: colors.textSub, textAlign: "center", fontStyle: "italic" }}>
+                    <Text style={{ fontSize: 14, color: colors.textSub, fontStyle: "italic" }}>
                       {card.word.memo}
                     </Text>
                   ) : null}
-                  {card.word.tags.length > 0 && (
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
-                      {card.word.tags.map((tag) => (
-                        <View key={tag} style={{ backgroundColor: colors.surfacePressed, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 }}>
-                          <Text style={{ fontSize: 12, color: colors.textSub }}>{tag}</Text>
+
+                  {/* ── Divider ── */}
+                  <View style={{ height: 1, backgroundColor: colors.border }} />
+
+                  {/* ── Detail section: ALL entries, ALL meanings (no filter) ── */}
+                  <View style={{ gap: 16 }}>
+                    {card.word.entries.map((entry) => (
+                      <View key={entry.pos} style={{ gap: 10 }}>
+                        {/* POS section header */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                          <Text style={{ fontSize: 11, fontWeight: "800", color: colors.primary, letterSpacing: 1 }}>
+                            {entry.pos.toUpperCase()}
+                          </Text>
+                          <View style={{ flex: 1, height: 1, backgroundColor: colors.borderLight }} />
                         </View>
-                      ))}
-                    </View>
-                  )}
+
+                        {entry.meanings.map((meaning, mi) => (
+                          <View key={mi} style={{ gap: 6 }}>
+                            {/* meaning + tags */}
+                            <Text
+                              style={{ fontSize: 16, fontWeight: "700", color: colors.text }}
+                              onLongPress={() => showMenu(meaning.meaningJa)}
+                            >
+                              {meaning.meaningJa}
+                            </Text>
+                            {(meaning.tags ?? []).length > 0 && (
+                              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+                                {(meaning.tags ?? []).map((tag) => (
+                                  <View
+                                    key={tag}
+                                    style={{ backgroundColor: colors.surfacePressed, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}
+                                  >
+                                    <Text style={{ fontSize: 11, color: colors.textSub }}>{tag}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            )}
+
+                            {/* examples */}
+                            {(meaning.examples ?? []).map((ex) => (
+                              <View
+                                key={ex.id}
+                                style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, paddingLeft: 12, gap: 4 }}
+                              >
+                                <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                                  <Text
+                                    style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }}
+                                    onLongPress={() => showMenu(ex.en)}
+                                  >
+                                    {ex.en}
+                                  </Text>
+                                  {canSpeak && (
+                                    <Pressable
+                                      onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
+                                      style={({ pressed }) => ({
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: 16,
+                                        backgroundColor: speakingKey === `ex-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                                        borderWidth: 1,
+                                        borderColor: colors.primary,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      })}
+                                    >
+                                      <Ionicons name="volume-high-outline" size={16} color={speakingKey === `ex-${ex.id}` ? "#fff" : colors.primary} />
+                                    </Pressable>
+                                  )}
+                                </View>
+                                {ex.ja ? (
+                                  <Text
+                                    style={{ fontSize: 13, color: colors.textSub }}
+                                    onLongPress={() => showMenu(ex.ja ?? "")}
+                                  >
+                                    {ex.ja}
+                                  </Text>
+                                ) : null}
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
                 </View>
               ) : (
                 <Pressable
@@ -370,54 +506,8 @@ export function StudyScreen({
             </View>
           </View>
 
-          {/* Examples */}
-          {revealed && card.word.examples.length > 0 && (
-            <View
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: colors.border,
-                overflow: "hidden",
-              }}
-            >
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surfaceAlt, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textDim }}>Examples</Text>
-              </View>
-              <View style={{ padding: 14, gap: 12 }}>
-                {card.word.examples.map((ex) => (
-                  <View key={ex.id} style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, paddingLeft: 12, gap: 4 }}>
-                    <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                      <Text style={{ fontSize: 14, color: colors.text, flex: 1, lineHeight: 20 }}onLongPress={() => showMenu(ex.en)}>{ex.en}</Text>
-                      {canSpeak && (
-                        <Pressable
-                          onPress={() => handleSpeak(`ex-${ex.id}`, ex.en)}
-                          style={({ pressed }) => ({
-                            width: 32,
-                            height: 32,
-                            borderRadius: 16,
-                            backgroundColor: speakingKey === `ex-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
-                            borderWidth: 1,
-                            borderColor: colors.primary,
-                            alignItems: "center",
-                            justifyContent: "center",
-                          })}
-                        >
-                          <Ionicons name="volume-high-outline" size={16} color={speakingKey === `ex-${ex.id}` ? "#fff" : colors.primary} />
-                        </Pressable>
-                      )}
-                    </View>
-                    {ex.ja ? (
-                      <Text style={{ fontSize: 13, color: colors.textSub }}onLongPress={() => showMenu(ex.ja ?? "")}>{ex.ja}</Text>
-                    ) : null}
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Practice in Quiz button: only show if the word has examples */}
-          {revealed && onNavigateToQuiz && card && card.word.examples.length > 0 && (
+          {/* Practice in Quiz button: only show if the word has any examples */}
+          {revealed && onNavigateToQuiz && card && hasAnyExamples(card.word.entries) && (
             <Pressable
               onPress={() => onNavigateToQuiz(card.word.id)}
               style={({ pressed }) => ({

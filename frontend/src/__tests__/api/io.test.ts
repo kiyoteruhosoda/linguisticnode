@@ -26,18 +26,15 @@ describe('io API', () => {
   describe('exportData', () => {
     it('should call GET /io/export and return AppData', async () => {
       const mockData: AppData = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         exportedAt: '2024-01-01T00:00:00Z',
         words: [
           {
             id: '1',
             headword: 'test',
-            pos: 'noun',
-            meaningJa: 'テスト',
-            examples: [],
-            tags: [],
+            pronunciation: undefined,
+            entries: [{ pos: 'noun', meanings: [{ meaningJa: 'テスト', tags: [], examples: [] }] }],
             memo: null,
-            pronunciation: null,
             createdAt: '2024-01-01T00:00:00Z',
             updatedAt: '2024-01-01T00:00:00Z',
           },

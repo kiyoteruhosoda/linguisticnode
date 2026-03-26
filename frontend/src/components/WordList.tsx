@@ -24,7 +24,7 @@ export function WordList({ items, onEdit, onDelete }: Props) {
           <thead className="table-light">
             <tr>
               <th>Word</th>
-              <th style={{ width: 120 }}>POS</th>
+              <th style={{ width: 160 }}>POS</th>
               <th>Meaning</th>
               <th style={{ width: 160 }}>Actions</th>
             </tr>
@@ -37,25 +37,34 @@ export function WordList({ items, onEdit, onDelete }: Props) {
                 </td>
               </tr>
             ) : (
-              items.map((w) => (
-                <tr key={w.id}>
-                  <td className="fw-semibold">{w.headword}</td>
-                  <td><span className="badge text-bg-secondary">{w.pos}</span></td>
-                  <td>{w.meaningJa}</td>
-                  <td>
-                    <div className="btn-group btn-group-sm" role="group">
-                      <button className="btn btn-outline-primary" onClick={() => onEdit(w)}>
-                        <i className="fa-solid fa-pen-to-square me-1" />
-                        Edit
-                      </button>
-                      <button className="btn btn-outline-danger" onClick={() => onDelete(w.id)}>
-                        <i className="fa-solid fa-trash me-1" />
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              items.map((w) => {
+                const primaryMeaning = w.entries[0]?.meanings[0]?.meaningJa ?? "";
+                return (
+                  <tr key={w.id}>
+                    <td className="fw-semibold">{w.headword}</td>
+                    <td>
+                      <div className="d-flex gap-1 flex-wrap">
+                        {w.entries.map((e) => (
+                          <span key={e.pos} className="badge text-bg-secondary">{e.pos}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>{primaryMeaning}</td>
+                    <td>
+                      <div className="btn-group btn-group-sm" role="group">
+                        <button className="btn btn-outline-primary" onClick={() => onEdit(w)}>
+                          <i className="fa-solid fa-pen-to-square me-1" />
+                          Edit
+                        </button>
+                        <button className="btn btn-outline-danger" onClick={() => onDelete(w.id)}>
+                          <i className="fa-solid fa-trash me-1" />
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

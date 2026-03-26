@@ -23,10 +23,9 @@ describe("WordDetailPage", () => {
     vi.mocked(wordApplicationService.getWord).mockResolvedValue({
       id: "w-1",
       headword: "apple",
-      pos: "noun",
-      meaningJa: "りんご",
-      examples: [],
-      tags: [],
+      pronunciation: undefined,
+      entries: [{ pos: "noun", meanings: [{ meaningJa: "りんご", tags: [], examples: [] }] }],
+      memo: null,
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-01T00:00:00Z",
     });

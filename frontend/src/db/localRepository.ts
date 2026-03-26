@@ -81,18 +81,19 @@ export async function getWords(
       words = words.filter(
         (w) =>
           w.headword.toLowerCase().includes(query) ||
-          w.meaningJa.toLowerCase().includes(query)
+          w.entries.some((e) => e.meanings.some((m) => m.meaningJa.toLowerCase().includes(query)))
       );
     }
 
     if (options?.pos) {
-      words = words.filter((w) => w.pos === options.pos);
+      words = words.filter((w) => w.entries.some((e) => e.pos === options.pos));
     }
-
 
     if (options?.tags && options.tags.length > 0) {
       const tags = new Set(options.tags);
-      words = words.filter((w) => w.tags.some((tag) => tags.has(tag)));
+      words = words.filter((w) =>
+        w.entries.some((e) => e.meanings.some((m) => m.tags?.some((tag) => tags.has(tag))))
+      );
     }
 
     const total = words.length;
@@ -160,8 +161,12 @@ export async function getAllTags(): Promise<string[]> {
 
     const tagSet = new Set<string>();
     for (const word of file.words) {
-      for (const tag of word.tags) {
-        tagSet.add(tag);
+      for (const entry of word.entries) {
+        for (const meaning of entry.meanings) {
+          for (const tag of (meaning.tags ?? [])) {
+            tagSet.add(tag);
+          }
+        }
       }
     }
 
@@ -192,11 +197,6 @@ export async function createWord(
       id: generateUuid(),
       createdAt: now,
       updatedAt: now,
-      // Ensure examples have IDs
-      examples: data.examples.map((ex) => ({
-        ...ex,
-        id: ex.id || generateUuid(),
-      })),
     };
 
     file.words.push(newWord);
@@ -236,11 +236,6 @@ export async function updateWord(
       id,
       createdAt: file.words[index].createdAt,
       updatedAt: now,
-      // Ensure examples have IDs
-      examples: data.examples.map((ex) => ({
-        ...ex,
-        id: ex.id || generateUuid(),
-      })),
     };
 
     file.words[index] = updatedWord;
@@ -327,8 +322,8 @@ export async function getNextCard(tags?: string[]): Promise<{
   // Filter by tags if specified
   if (tags && tags.length > 0) {
     const tagSet = new Set(tags);
-    candidates = candidates.filter((c) => 
-      c.word.tags.some((tag) => tagSet.has(tag))
+    candidates = candidates.filter((c) =>
+      c.word.entries.some((e) => e.meanings.some((m) => m.tags?.some((tag) => tagSet.has(tag))))
     );
   }
 
