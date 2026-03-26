@@ -17,16 +17,21 @@ const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
 
 // app.config.ts の extra に格納されたビルド時確定値を優先して使用する
 // nativeBuildVersion はネイティブ APK の実際の versionCode を返すため最優先
+// EAS Build autoIncrement は app.config.ts 評価後にネイティブ versionCode を変更するため
+// extra.versionCode と nativeBuildVersion が食い違う場合がある
 const _extra = Constants.expoConfig?.extra as
   | { appVersion?: string; versionCode?: number }
   | undefined;
 const _nativeBuild = Constants.nativeBuildVersion;
-const _versionCode = (_nativeBuild ? Number.parseInt(_nativeBuild, 10) : null)
+const _nativeBuildNum = _nativeBuild ? Number.parseInt(_nativeBuild, 10) : null;
+const _versionCode = _nativeBuildNum
   ?? _extra?.versionCode
   ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
-const _appVersion = _extra?.appVersion
-  ?? process.env.EXPO_PUBLIC_APP_VERSION
-  ?? `dev-${_versionCode}`;
+const _baseAppVersion = _extra?.appVersion ?? process.env.EXPO_PUBLIC_APP_VERSION;
+// nativeBuildNum が extra.versionCode と異なる場合は末尾の数字を置換して正確な番号を反映
+const _appVersion = (_nativeBuildNum && _baseAppVersion)
+  ? _baseAppVersion.replace(/-\d+$/, `-${_nativeBuildNum}`)
+  : _baseAppVersion ?? `dev-${_versionCode}`;
 
 type ImportMode = "merge" | "overwrite";
 
