@@ -126,6 +126,11 @@ function AppContent() {
     return () => subscription.remove();
   }, [route]);
 
+  const handleImportSuccess = useCallback(() => {
+    handleAppliedTagsChange([]);
+    setWordsResetKey((k) => k + 1);
+  }, [handleAppliedTagsChange]);
+
   // Tab bar press: clear navigation history and preferred word state
   // "words" タブは常に wordsResetKey をインクリメントして一覧に戻す
   const navigateToTab = useCallback((tab: MobileRoute) => {
@@ -188,7 +193,7 @@ function AppContent() {
     }
 
     if (route === "data") {
-      return <DataScreen ioGateway={compositionRoot.ioGateway} />;
+      return <DataScreen ioGateway={compositionRoot.ioGateway} onImportSuccess={handleImportSuccess} />;
     }
 
     return (
@@ -199,7 +204,7 @@ function AppContent() {
         onAppliedTagsChange={handleAppliedTagsChange}
       />
     );
-  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, appliedTags, handleAppliedTagsChange]);
+  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, appliedTags, handleAppliedTagsChange, handleImportSuccess]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>

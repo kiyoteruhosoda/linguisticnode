@@ -28,7 +28,7 @@ const _appVersion = _extra?.appVersion
 
 type ImportMode = "merge" | "overwrite";
 
-export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
+export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIoGateway; onImportSuccess?: () => void }) {
   const { isDark, colors, toggleTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -111,6 +111,7 @@ export function DataScreen({ ioGateway }: { ioGateway: MobileIoGateway }) {
       debugLogger.log("DataScreen", `handlePickFile: file read ok, length=${json.length}`);
       ioGateway.importData(JSON.parse(json) as AppDataForImport, importMode);
       debugLogger.log("DataScreen", "handlePickFile: importData ok");
+      onImportSuccess?.();
       setImportSuccess(true);
       setTimeout(() => {
         setImportSuccess(false);
