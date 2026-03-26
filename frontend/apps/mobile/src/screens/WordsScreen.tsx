@@ -145,8 +145,7 @@ export function WordsScreen({
   };
 
   const submitCreate = async () => {
-    const firstMeaning = draft.entries[0]?.meanings[0];
-    if (!draft.headword.trim() || !(firstMeaning?.meaningJa ?? "").trim()) {
+    if (!draft.headword.trim() || !draft.entries.some((e) => e.meanings[0]?.meaningJa.trim())) {
       setErrorMsg("Headword and meaning are required");
       return;
     }
