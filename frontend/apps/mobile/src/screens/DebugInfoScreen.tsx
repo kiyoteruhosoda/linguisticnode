@@ -226,14 +226,13 @@ function InfoRow({
       <Text style={{ fontSize: 13, color: colors.textSub, flexShrink: 0 }}>{label}</Text>
       <Text
         selectable
-        numberOfLines={small ? 2 : 1}
+        numberOfLines={small ? 2 : undefined}
         style={{
           fontSize: small ? 10 : 13,
           color: highlight ? colors.primary : colors.text,
           fontWeight: highlight ? "700" : "400",
           flex: 1,
           textAlign: "right",
-          flexWrap: "wrap",
         }}
       >
         {value}
