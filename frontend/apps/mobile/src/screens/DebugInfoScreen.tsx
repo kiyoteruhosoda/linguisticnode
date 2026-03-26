@@ -7,11 +7,13 @@ import { type AppColors, useTheme } from "../app/ThemeContext";
 import { debugLogger } from "../infra/debugLogger";
 
 // app.config.ts の extra に格納されたビルド時確定値を優先して使用する
-// extra が存在しない場合（Expo Go 等）は EXPO_PUBLIC_* 環境変数にフォールバック
+// nativeBuildVersion はネイティブ APK の実際の versionCode を返すため最優先
 const _extra = Constants.expoConfig?.extra as
   | { appVersion?: string; versionCode?: number; gitCommit?: string }
   | undefined;
-const _versionCode = _extra?.versionCode
+const _nativeBuild = Constants.nativeBuildVersion;
+const _versionCode = (_nativeBuild ? Number.parseInt(_nativeBuild, 10) : null)
+  ?? _extra?.versionCode
   ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
 const _appVersion = _extra?.appVersion
   ?? process.env.EXPO_PUBLIC_APP_VERSION
