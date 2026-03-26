@@ -991,13 +991,23 @@ function WordFormView({
     onChangeDraft({ ...draft, entries: draft.entries.map((e, i) => i === idx ? { ...e, ...update } : e) });
   };
 
-  const updateEntryMeaning = (entryIdx: number, update: Partial<{ meaningJa: string; tags: string[]; examples: typeof draft.entries[0]["meanings"][0]["examples"] }>) => {
+  const updateEntryMeaning = (entryIdx: number, meaningIdx: number, update: Partial<{ meaningJa: string; tags: string[]; examples: typeof draft.entries[0]["meanings"][0]["examples"] }>) => {
     const entry = draft.entries[entryIdx];
     if (!entry) return;
-    const m0 = entry.meanings[0] ?? { meaningJa: "", tags: [], examples: [] };
-    const updatedMeaning = { ...m0, ...update };
-    const meanings = entry.meanings.length > 0 ? entry.meanings.map((m, j) => j === 0 ? updatedMeaning : m) : [updatedMeaning];
+    const meanings = entry.meanings.map((m, j) => j === meaningIdx ? { ...m, ...update } : m);
     updateEntry(entryIdx, { meanings });
+  };
+
+  const addMeaning = (entryIdx: number) => {
+    const entry = draft.entries[entryIdx];
+    if (!entry) return;
+    updateEntry(entryIdx, { meanings: [...entry.meanings, { meaningJa: "", tags: [], examples: [] }] });
+  };
+
+  const removeMeaning = (entryIdx: number, meaningIdx: number) => {
+    const entry = draft.entries[entryIdx];
+    if (!entry || entry.meanings.length <= 1) return;
+    updateEntry(entryIdx, { meanings: entry.meanings.filter((_, j) => j !== meaningIdx) });
   };
 
   const addEntry = () => {
@@ -1009,26 +1019,26 @@ function WordFormView({
     onChangeDraft({ ...draft, entries: draft.entries.filter((_, i) => i !== idx) });
   };
 
-  const addExample = (entryIdx: number) => {
+  const addExample = (entryIdx: number, meaningIdx: number) => {
     const entry = draft.entries[entryIdx];
     if (!entry) return;
-    const m0 = entry.meanings[0] ?? { meaningJa: "", tags: [], examples: [] };
+    const m = entry.meanings[meaningIdx] ?? { meaningJa: "", tags: [], examples: [] };
     const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    updateEntryMeaning(entryIdx, { examples: [...(m0.examples ?? []), { id: newId, en: "", ja: null, source: null }] });
+    updateEntryMeaning(entryIdx, meaningIdx, { examples: [...(m.examples ?? []), { id: newId, en: "", ja: null, source: null }] });
   };
 
-  const updateExample = (entryIdx: number, id: string, field: "en" | "ja", value: string) => {
+  const updateExample = (entryIdx: number, meaningIdx: number, id: string, field: "en" | "ja", value: string) => {
     const entry = draft.entries[entryIdx];
     if (!entry) return;
-    const m0 = entry.meanings[0] ?? { meaningJa: "", tags: [], examples: [] };
-    updateEntryMeaning(entryIdx, { examples: (m0.examples ?? []).map((e) => e.id === id ? { ...e, [field]: value || null } : e) });
+    const m = entry.meanings[meaningIdx] ?? { meaningJa: "", tags: [], examples: [] };
+    updateEntryMeaning(entryIdx, meaningIdx, { examples: (m.examples ?? []).map((e) => e.id === id ? { ...e, [field]: value || null } : e) });
   };
 
-  const removeExample = (entryIdx: number, id: string) => {
+  const removeExample = (entryIdx: number, meaningIdx: number, id: string) => {
     const entry = draft.entries[entryIdx];
     if (!entry) return;
-    const m0 = entry.meanings[0] ?? { meaningJa: "", tags: [], examples: [] };
-    updateEntryMeaning(entryIdx, { examples: (m0.examples ?? []).filter((e) => e.id !== id) });
+    const m = entry.meanings[meaningIdx] ?? { meaningJa: "", tags: [], examples: [] };
+    updateEntryMeaning(entryIdx, meaningIdx, { examples: (m.examples ?? []).filter((e) => e.id !== id) });
   };
 
   const isValid = useMemo(
@@ -1115,142 +1125,171 @@ function WordFormView({
         </View>
 
         {/* POS Entries */}
-        {draft.entries.map((entry, entryIdx) => {
-          const m0 = entry.meanings[0] ?? { meaningJa: "", tags: [], examples: [] };
-          const entryExamples: DraftExample[] = (m0.examples ?? []).map((e) => ({ id: e.id, en: e.en, ja: e.ja ?? "" }));
-          return (
-            <View key={entryIdx} style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: "hidden", gap: 0 }}>
-              {/* Entry header */}
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surfaceAlt, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSub }}>
-                  Entry {entryIdx + 1}
-                  <Text style={{ fontWeight: "400", color: colors.textMuted }}>  {entry.pos}</Text>
-                </Text>
-                {draft.entries.length > 1 && (
-                  <Pressable onPress={() => removeEntry(entryIdx)} hitSlop={8}>
-                    <Text style={{ fontSize: 13, color: colors.ratingAgain.color, fontWeight: "600" }}>Remove</Text>
-                  </Pressable>
-                )}
-              </View>
-
-              {/* POS selector */}
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <Text style={[labelStyle, { marginBottom: 8 }]}>Part of Speech</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-                  {POS_OPTIONS.map((pos) => (
-                    <Pressable
-                      key={pos}
-                      onPress={() => updateEntry(entryIdx, { pos })}
-                      style={{
-                        paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1.5,
-                        borderColor: entry.pos === pos ? colors.primary : colors.borderMid,
-                        backgroundColor: entry.pos === pos ? colors.primaryBg : colors.bg,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12, fontWeight: entry.pos === pos ? "700" : "400", color: entry.pos === pos ? colors.primary : colors.textDim }}>
-                        {pos}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-
-              {/* Meaning + Tags */}
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <Text style={labelStyle}>{entryIdx === 0 ? "Meaning (JA) *" : "Meaning (JA)"}</Text>
-                <TextInput
-                  value={m0.meaningJa}
-                  onChangeText={(v) => updateEntryMeaning(entryIdx, { meaningJa: v })}
-                  placeholder="e.g. 走る、経営する"
-                  placeholderTextColor={colors.textMuted}
-                  style={fieldInputStyle}
-                />
-              </View>
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <Text style={labelStyle}>Tags (comma-separated)</Text>
-                <TextInput
-                  value={(m0.tags ?? []).join(", ")}
-                  onChangeText={(v) => updateEntryMeaning(entryIdx, { tags: v.split(",").map((t) => t.trim()).filter(Boolean) })}
-                  placeholder="e.g. TOEFL, important"
-                  placeholderTextColor={colors.textMuted}
-                  style={fieldInputStyle}
-                />
-              </View>
-
-              {/* Examples */}
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <Text style={labelStyle}>Examples ({entryExamples.length})</Text>
-                  <Pressable
-                    onPress={() => addExample(entryIdx)}
-                    style={({ pressed }) => ({
-                      flexDirection: "row", alignItems: "center", gap: 4,
-                      paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1,
-                      borderColor: colors.primary,
-                      backgroundColor: pressed ? colors.primaryBg : colors.surface,
-                    })}
-                  >
-                    <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "700" }}>+ Add</Text>
-                  </Pressable>
-                </View>
-                {entryExamples.length === 0 ? (
-                  <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: "center", paddingVertical: 4 }}>No examples yet</Text>
-                ) : (
-                  <View style={{ gap: 8 }}>
-                    {entryExamples.map((ex, exIndex) => (
-                      <View key={ex.id} style={{ backgroundColor: colors.bg, borderRadius: 10, borderWidth: 1, borderColor: colors.border, overflow: "hidden" }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.textSub }}>Example {exIndex + 1}</Text>
-                          <Pressable onPress={() => removeExample(entryIdx, ex.id)} hitSlop={8}>
-                            <Text style={{ fontSize: 12, color: colors.ratingAgain.color, fontWeight: "600" }}>Remove</Text>
-                          </Pressable>
-                        </View>
-                        <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-                          <Text style={[labelStyle, { marginBottom: 4 }]}>English</Text>
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                            <TextInput
-                              value={ex.en}
-                              onChangeText={(v) => updateExample(entryIdx, ex.id, "en", v)}
-                              placeholder="English sentence"
-                              placeholderTextColor={colors.textMuted}
-                              style={[fieldInputStyle, { flex: 1 }]}
-                            />
-                            {canSpeak && (
-                              <Pressable
-                                onPress={() => handleSpeak(`ex-${entryIdx}-${ex.id}`, ex.en)}
-                                disabled={!ex.en.trim()}
-                                style={({ pressed }) => ({
-                                  width: 30, height: 30, borderRadius: 15,
-                                  backgroundColor: !ex.en.trim() ? colors.surfacePressed : speakingKey === `ex-${entryIdx}-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
-                                  borderWidth: 1,
-                                  borderColor: !ex.en.trim() ? colors.borderMid : colors.primary,
-                                  alignItems: "center", justifyContent: "center",
-                                })}
-                              >
-                                <Ionicons name="volume-high-outline" size={14} color={!ex.en.trim() ? colors.textMuted : speakingKey === `ex-${entryIdx}-${ex.id}` ? "#fff" : colors.primary} />
-                              </Pressable>
-                            )}
-                          </View>
-                        </View>
-                        <Divider colors={colors} />
-                        <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-                          <Text style={[labelStyle, { marginBottom: 4 }]}>Japanese (optional)</Text>
-                          <TextInput
-                            value={ex.ja}
-                            onChangeText={(v) => updateExample(entryIdx, ex.id, "ja", v)}
-                            placeholder="Japanese translation"
-                            placeholderTextColor={colors.textMuted}
-                            style={fieldInputStyle}
-                          />
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
+        {draft.entries.map((entry, entryIdx) => (
+          <View key={entryIdx} style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: "hidden", gap: 0 }}>
+            {/* Entry header */}
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surfaceAlt, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSub }}>
+                Entry {entryIdx + 1}
+                <Text style={{ fontWeight: "400", color: colors.textMuted }}>  {entry.pos}</Text>
+              </Text>
+              {draft.entries.length > 1 && (
+                <Pressable onPress={() => removeEntry(entryIdx)} hitSlop={8}>
+                  <Text style={{ fontSize: 13, color: colors.ratingAgain.color, fontWeight: "600" }}>Remove</Text>
+                </Pressable>
+              )}
             </View>
-          );
-        })}
+
+            {/* POS selector */}
+            <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={[labelStyle, { marginBottom: 8 }]}>Part of Speech</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                {POS_OPTIONS.map((pos) => (
+                  <Pressable
+                    key={pos}
+                    onPress={() => updateEntry(entryIdx, { pos })}
+                    style={{
+                      paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1.5,
+                      borderColor: entry.pos === pos ? colors.primary : colors.borderMid,
+                      backgroundColor: entry.pos === pos ? colors.primaryBg : colors.bg,
+                    }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: entry.pos === pos ? "700" : "400", color: entry.pos === pos ? colors.primary : colors.textDim }}>
+                      {pos}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Meanings */}
+            {entry.meanings.map((meaning, meaningIdx) => {
+              const meaningExamples: DraftExample[] = (meaning.examples ?? []).map((e) => ({ id: e.id, en: e.en, ja: e.ja ?? "" }));
+              return (
+                <View key={meaningIdx}>
+                  {/* Meaning header (shown when multiple meanings) */}
+                  {entry.meanings.length > 1 && (
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 7, backgroundColor: colors.bg, borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: colors.textMuted }}>Meaning {meaningIdx + 1}</Text>
+                      <Pressable onPress={() => removeMeaning(entryIdx, meaningIdx)} hitSlop={8}>
+                        <Text style={{ fontSize: 12, color: colors.ratingAgain.color, fontWeight: "600" }}>Remove</Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {/* Meaning JA */}
+                  <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: entry.meanings.length > 1 ? 0 : 1, borderTopColor: colors.border }}>
+                    <Text style={labelStyle}>{entryIdx === 0 && meaningIdx === 0 ? "Meaning (JA) *" : "Meaning (JA)"}</Text>
+                    <TextInput
+                      value={meaning.meaningJa}
+                      onChangeText={(v) => updateEntryMeaning(entryIdx, meaningIdx, { meaningJa: v })}
+                      placeholder="e.g. 走る"
+                      placeholderTextColor={colors.textMuted}
+                      style={fieldInputStyle}
+                    />
+                  </View>
+
+                  {/* Tags */}
+                  <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+                    <Text style={labelStyle}>Tags (comma-separated)</Text>
+                    <TextInput
+                      value={(meaning.tags ?? []).join(", ")}
+                      onChangeText={(v) => updateEntryMeaning(entryIdx, meaningIdx, { tags: v.split(",").map((t) => t.trim()).filter(Boolean) })}
+                      placeholder="e.g. TOEFL, important"
+                      placeholderTextColor={colors.textMuted}
+                      style={fieldInputStyle}
+                    />
+                  </View>
+
+                  {/* Examples */}
+                  <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                      <Text style={labelStyle}>Examples ({meaningExamples.length})</Text>
+                      <Pressable
+                        onPress={() => addExample(entryIdx, meaningIdx)}
+                        style={({ pressed }) => ({
+                          flexDirection: "row", alignItems: "center", gap: 4,
+                          paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1,
+                          borderColor: colors.primary,
+                          backgroundColor: pressed ? colors.primaryBg : colors.surface,
+                        })}
+                      >
+                        <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "700" }}>+ Add</Text>
+                      </Pressable>
+                    </View>
+                    {meaningExamples.length === 0 ? (
+                      <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: "center", paddingVertical: 4 }}>No examples yet</Text>
+                    ) : (
+                      <View style={{ gap: 8 }}>
+                        {meaningExamples.map((ex, exIndex) => (
+                          <View key={ex.id} style={{ backgroundColor: colors.bg, borderRadius: 10, borderWidth: 1, borderColor: colors.border, overflow: "hidden" }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                              <Text style={{ fontSize: 12, fontWeight: "600", color: colors.textSub }}>Example {exIndex + 1}</Text>
+                              <Pressable onPress={() => removeExample(entryIdx, meaningIdx, ex.id)} hitSlop={8}>
+                                <Text style={{ fontSize: 12, color: colors.ratingAgain.color, fontWeight: "600" }}>Remove</Text>
+                              </Pressable>
+                            </View>
+                            <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+                              <Text style={[labelStyle, { marginBottom: 4 }]}>English</Text>
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <TextInput
+                                  value={ex.en}
+                                  onChangeText={(v) => updateExample(entryIdx, meaningIdx, ex.id, "en", v)}
+                                  placeholder="English sentence"
+                                  placeholderTextColor={colors.textMuted}
+                                  style={[fieldInputStyle, { flex: 1 }]}
+                                />
+                                {canSpeak && (
+                                  <Pressable
+                                    onPress={() => handleSpeak(`ex-${entryIdx}-${meaningIdx}-${ex.id}`, ex.en)}
+                                    disabled={!ex.en.trim()}
+                                    style={({ pressed }) => ({
+                                      width: 30, height: 30, borderRadius: 15,
+                                      backgroundColor: !ex.en.trim() ? colors.surfacePressed : speakingKey === `ex-${entryIdx}-${meaningIdx}-${ex.id}` ? colors.primary : pressed ? colors.primaryBgPressed : colors.bg,
+                                      borderWidth: 1,
+                                      borderColor: !ex.en.trim() ? colors.borderMid : colors.primary,
+                                      alignItems: "center", justifyContent: "center",
+                                    })}
+                                  >
+                                    <Ionicons name="volume-high-outline" size={14} color={!ex.en.trim() ? colors.textMuted : speakingKey === `ex-${entryIdx}-${meaningIdx}-${ex.id}` ? "#fff" : colors.primary} />
+                                  </Pressable>
+                                )}
+                              </View>
+                            </View>
+                            <Divider colors={colors} />
+                            <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+                              <Text style={[labelStyle, { marginBottom: 4 }]}>Japanese (optional)</Text>
+                              <TextInput
+                                value={ex.ja}
+                                onChangeText={(v) => updateExample(entryIdx, meaningIdx, ex.id, "ja", v)}
+                                placeholder="Japanese translation"
+                                placeholderTextColor={colors.textMuted}
+                                style={fieldInputStyle}
+                              />
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+
+            {/* Add Meaning button */}
+            <Pressable
+              onPress={() => addMeaning(entryIdx)}
+              style={({ pressed }) => ({
+                flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4,
+                paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
+                backgroundColor: pressed ? colors.primaryBg : colors.surface,
+              })}
+            >
+              <Ionicons name="add-outline" size={16} color={colors.primary} />
+              <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "600" }}>Add Meaning</Text>
+            </Pressable>
+          </View>
+        ))}
 
         {/* Add Entry button */}
         <Pressable
