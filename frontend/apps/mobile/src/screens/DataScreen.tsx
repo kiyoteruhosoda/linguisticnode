@@ -6,6 +6,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import Constants from "expo-constants";
+import * as Application from "expo-application";
 import type { AppDataForImport } from "../../../../src/api/types";
 import type { MobileIoGateway } from "../app/mobileServices";
 import { useTheme } from "../app/ThemeContext";
@@ -15,15 +16,14 @@ import { debugLogger } from "../infra/debugLogger";
 
 const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
 
-// app.config.ts の extra に格納されたビルド時確定値を優先して使用する
-// nativeBuildVersion はネイティブ APK の実際の versionCode を返すため最優先
 // EAS Build autoIncrement は app.config.ts 評価後にネイティブ versionCode を変更するため
-// extra.versionCode と nativeBuildVersion が食い違う場合がある
+// extra.versionCode はビルド時の古い値になる。Application.nativeBuildVersion が正確な値を返す。
 const _extra = Constants.expoConfig?.extra as
   | { appVersion?: string; versionCode?: number }
   | undefined;
-const _nativeBuild = Constants.nativeBuildVersion;
-const _nativeBuildNum = _nativeBuild ? Number.parseInt(_nativeBuild, 10) : null;
+// expo-application の nativeBuildVersion が実際の APK versionCode を返す（SDK 52 以降推奨）
+const _nativeBuildStr = Application.nativeBuildVersion;
+const _nativeBuildNum = _nativeBuildStr ? Number.parseInt(_nativeBuildStr, 10) : null;
 const _versionCode = _nativeBuildNum
   ?? _extra?.versionCode
   ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);

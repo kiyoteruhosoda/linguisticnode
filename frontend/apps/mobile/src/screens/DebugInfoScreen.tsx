@@ -2,19 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import * as FileSystem from "expo-file-system";
 import Constants from "expo-constants";
+import * as Application from "expo-application";
 import { Ionicons } from "@expo/vector-icons";
 import { type AppColors, useTheme } from "../app/ThemeContext";
 import { debugLogger } from "../infra/debugLogger";
 
-// app.config.ts の extra に格納されたビルド時確定値を優先して使用する
-// nativeBuildVersion はネイティブ APK の実際の versionCode を返すため最優先
 // EAS Build autoIncrement は app.config.ts 評価後にネイティブ versionCode を変更するため
-// extra.versionCode と nativeBuildVersion が食い違う場合がある
+// extra.versionCode はビルド時の古い値になる。Application.nativeBuildVersion が正確な値を返す。
 const _extra = Constants.expoConfig?.extra as
   | { appVersion?: string; versionCode?: number; gitCommit?: string }
   | undefined;
-const _nativeBuild = Constants.nativeBuildVersion;
-const _nativeBuildNum = _nativeBuild ? Number.parseInt(_nativeBuild, 10) : null;
+// expo-application の nativeBuildVersion が実際の APK versionCode を返す（SDK 52 以降推奨）
+const _nativeBuildStr = Application.nativeBuildVersion;
+const _nativeBuildNum = _nativeBuildStr ? Number.parseInt(_nativeBuildStr, 10) : null;
 const _versionCode = _nativeBuildNum
   ?? _extra?.versionCode
   ?? Number.parseInt(process.env.EXPO_PUBLIC_ANDROID_VERSION_CODE ?? "1", 10);
@@ -88,7 +88,7 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
           <InfoSection title="App" colors={colors}>
             <InfoRow label="Version" value={appVersion} colors={colors} />
             <InfoRow label="Version Code" value={String(versionCode)} colors={colors} />
-            <InfoRow label="nativeBuildVersion" value={_nativeBuild ?? "(null)"} colors={colors} />
+            <InfoRow label="nativeBuildVersion" value={_nativeBuildStr ?? "(null)"} colors={colors} />
             <InfoRow
               label="Commit"
               value={gitCommit !== "(unknown)" ? gitCommit.slice(0, 7) : "(unknown)"}
