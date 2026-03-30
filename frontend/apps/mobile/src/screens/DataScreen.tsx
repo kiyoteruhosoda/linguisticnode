@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -35,7 +35,17 @@ const _appVersion = (_nativeBuildNum && _baseAppVersion)
 
 type ImportMode = "merge" | "overwrite";
 
-export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIoGateway; onImportSuccess?: () => void }) {
+export function DataScreen({
+  ioGateway,
+  onImportSuccess,
+  sharedFileUri,
+  onSharedFileHandled,
+}: {
+  ioGateway: MobileIoGateway;
+  onImportSuccess?: () => void;
+  sharedFileUri?: string | null;
+  onSharedFileHandled?: () => void;
+}) {
   const { isDark, colors, toggleTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -56,6 +66,16 @@ export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIo
     AsyncStorage.setItem(DEBUG_MODE_STORAGE_KEY, value ? "true" : "false").catch(() => {});
     debugLogger.log("DataScreen", `debug mode set to: ${value ? "ON" : "OFF"}`);
   };
+
+  // 他アプリから JSON ファイルがシェアされたときにインポートモーダルを自動表示
+  useEffect(() => {
+    if (!sharedFileUri) return;
+    debugLogger.log("DataScreen", `sharedFileUri received: ${sharedFileUri}`);
+    setImportError(null);
+    setImportSuccess(false);
+    setImportMode("merge");
+    setShowImportModal(true);
+  }, [sharedFileUri]);
 
   const handleVersionTap = () => {
     const next = versionTapCount + 1;
@@ -90,9 +110,41 @@ export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIo
     }
   };
 
+  const handleImportFromUri = async (uri: string) => {
+    debugLogger.log("DataScreen", `handleImportFromUri: reading file uri=${uri}`);
+    setImportBusy(true);
+    try {
+      const json = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      debugLogger.log("DataScreen", `handleImportFromUri: file read ok, length=${json.length}`);
+      ioGateway.importData(JSON.parse(json) as AppDataForImport, importMode);
+      debugLogger.log("DataScreen", "handleImportFromUri: importData ok");
+      onImportSuccess?.();
+      onSharedFileHandled?.();
+      setImportSuccess(true);
+      setTimeout(() => {
+        setImportSuccess(false);
+        setShowImportModal(false);
+      }, 2000);
+    } catch (e) {
+      debugLogger.log("DataScreen", `handleImportFromUri: error: ${String(e)}`);
+      setImportError(e instanceof Error ? e.message : "Failed to read or parse the file");
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
   const handlePickFile = async () => {
     setImportError(null);
     setImportSuccess(false);
+
+    // 他アプリからシェアされたファイルがある場合はそのまま使用する
+    if (sharedFileUri) {
+      await handleImportFromUri(sharedFileUri);
+      return;
+    }
+
     debugLogger.log("DataScreen", "handlePickFile: opening document picker");
     let result: DocumentPicker.DocumentPickerResult;
     try {
@@ -109,27 +161,7 @@ export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIo
     if (result.canceled || !result.assets?.length) return;
 
     const uri = result.assets[0].uri;
-    debugLogger.log("DataScreen", `handlePickFile: reading file uri=${uri}`);
-    setImportBusy(true);
-    try {
-      const json = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-      debugLogger.log("DataScreen", `handlePickFile: file read ok, length=${json.length}`);
-      ioGateway.importData(JSON.parse(json) as AppDataForImport, importMode);
-      debugLogger.log("DataScreen", "handlePickFile: importData ok");
-      onImportSuccess?.();
-      setImportSuccess(true);
-      setTimeout(() => {
-        setImportSuccess(false);
-        setShowImportModal(false);
-      }, 2000);
-    } catch (e) {
-      debugLogger.log("DataScreen", `handlePickFile: error: ${String(e)}`);
-      setImportError(e instanceof Error ? e.message : "Failed to read or parse the file");
-    } finally {
-      setImportBusy(false);
-    }
+    await handleImportFromUri(uri);
   };
 
   const handleShareLog = async () => {
@@ -528,9 +560,13 @@ export function DataScreen({ ioGateway, onImportSuccess }: { ioGateway: MobileIo
         busy={importBusy}
         error={importError}
         success={importSuccess}
+        hasSharedFile={!!sharedFileUri}
         onChangeMode={setImportMode}
         onPickFile={() => void handlePickFile()}
-        onClose={() => setShowImportModal(false)}
+        onClose={() => {
+          onSharedFileHandled?.();
+          setShowImportModal(false);
+        }}
       />
     </View>
   );
@@ -542,6 +578,7 @@ function ImportModal({
   busy,
   error,
   success,
+  hasSharedFile,
   onChangeMode,
   onPickFile,
   onClose,
@@ -551,6 +588,7 @@ function ImportModal({
   busy: boolean;
   error: string | null;
   success: boolean;
+  hasSharedFile: boolean;
   onChangeMode: (m: ImportMode) => void;
   onPickFile: () => void;
   onClose: () => void;
@@ -701,9 +739,9 @@ function ImportModal({
                 gap: 6,
               })}
             >
-              <Ionicons name="folder-open-outline" size={18} color="#fff" />
+              <Ionicons name={hasSharedFile ? "download-outline" : "folder-open-outline"} size={18} color="#fff" />
               <Text style={{ fontWeight: "700", color: "#fff" }}>
-                {busy ? "Importing..." : "Choose File"}
+                {busy ? "Importing..." : hasSharedFile ? "Import" : "Choose File"}
               </Text>
             </Pressable>
           </View>
