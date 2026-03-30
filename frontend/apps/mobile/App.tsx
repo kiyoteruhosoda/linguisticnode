@@ -3,6 +3,7 @@ import { BackHandler, Pressable, StatusBar, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ShareIntentProvider, useShareIntent } from "expo-share-intent";
 import { createMobileCompositionRoot, type MobileCompositionRoot } from "./src/app/mobileCompositionRoot";
 import { ThemeProvider, useTheme } from "./src/app/ThemeContext";
 import { WordsScreen } from "./src/screens/WordsScreen";
@@ -35,11 +36,13 @@ const DEBUG_MODE_STORAGE_KEY = "@debug_mode";
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ShareIntentProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </ShareIntentProvider>
   );
 }
 
@@ -54,6 +57,9 @@ function AppContent() {
   const [appliedTags, setAppliedTagsState] = useState<string[]>([]);
   const routeHistoryRef = useRef<Array<{ route: MobileRoute; wordId: string | null }>>([]);
   const insets = useSafeAreaInsets();
+  // 他アプリからシェアされた JSON ファイルの URI
+  const [sharedFileUri, setSharedFileUri] = useState<string | null>(null);
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
 
   useEffect(() => {
     void createMobileCompositionRoot().then((root) => {
@@ -126,6 +132,17 @@ function AppContent() {
     return () => subscription.remove();
   }, [route]);
 
+  // 他アプリから JSON ファイルがシェアされたときの処理
+  useEffect(() => {
+    if (!hasShareIntent || !shareIntent?.files?.length) return;
+    const file = shareIntent.files[0];
+    debugLogger.log("App", `shareIntent received: path=${file.path} mimeType=${file.mimeType ?? ""}`);
+    resetShareIntent();
+    routeHistoryRef.current = [];
+    setRoute("data");
+    setSharedFileUri(file.path);
+  }, [hasShareIntent, shareIntent, resetShareIntent]);
+
   const handleImportSuccess = useCallback(() => {
     handleAppliedTagsChange([]);
     setWordsResetKey((k) => k + 1);
@@ -193,7 +210,14 @@ function AppContent() {
     }
 
     if (route === "data") {
-      return <DataScreen ioGateway={compositionRoot.ioGateway} onImportSuccess={handleImportSuccess} />;
+      return (
+        <DataScreen
+          ioGateway={compositionRoot.ioGateway}
+          onImportSuccess={handleImportSuccess}
+          sharedFileUri={sharedFileUri}
+          onSharedFileHandled={() => setSharedFileUri(null)}
+        />
+      );
     }
 
     return (
@@ -204,7 +228,7 @@ function AppContent() {
         onAppliedTagsChange={handleAppliedTagsChange}
       />
     );
-  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, appliedTags, handleAppliedTagsChange, handleImportSuccess]);
+  }, [compositionRoot, route, quizPreferredWordId, studyPreferredWordId, navigateToQuiz, navigateToStudy, colors, wordsResetKey, appliedTags, handleAppliedTagsChange, handleImportSuccess, sharedFileUri]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>
