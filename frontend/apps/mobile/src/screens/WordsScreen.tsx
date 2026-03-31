@@ -22,6 +22,16 @@ import { debugLogger } from "../infra/debugLogger";
 
 type WordItem = Awaited<ReturnType<MobileWordService["listWords"]>>["items"][number];
 type SubRoute = "list" | "create" | "edit";
+type SortKey = "az" | "za" | "mem-asc" | "mem-desc" | "newest" | "oldest";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "newest", label: "Newest" },
+  { key: "oldest", label: "Oldest" },
+  { key: "az", label: "A → Z" },
+  { key: "za", label: "Z → A" },
+  { key: "mem-asc", label: "Memory ↑" },
+  { key: "mem-desc", label: "Memory ↓" },
+];
 
 const POS_OPTIONS: Pos[] = ["noun", "verb", "adj", "adv", "prep", "conj", "pron", "det", "interj", "other"];
 
@@ -65,6 +75,22 @@ export function WordsScreen({
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showTagPanel, setShowTagPanel] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([...appliedTags]);
+
+  // Sort state
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
+
+  const sortedWords = useMemo(() => {
+    const sorted = [...words];
+    switch (sortKey) {
+      case "az":       sorted.sort((a, b) => a.headword.localeCompare(b.headword)); break;
+      case "za":       sorted.sort((a, b) => b.headword.localeCompare(a.headword)); break;
+      case "mem-asc":  sorted.sort((a, b) => (memoryMap[a.id]?.memoryLevel ?? 0) - (memoryMap[b.id]?.memoryLevel ?? 0)); break;
+      case "mem-desc": sorted.sort((a, b) => (memoryMap[b.id]?.memoryLevel ?? 0) - (memoryMap[a.id]?.memoryLevel ?? 0)); break;
+      case "newest":   sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt)); break;
+      case "oldest":   sorted.sort((a, b) => a.createdAt.localeCompare(b.createdAt)); break;
+    }
+    return sorted;
+  }, [words, memoryMap, sortKey]);
 
   // Bulk selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -290,7 +316,7 @@ export function WordsScreen({
 
   return (
     <WordListView
-      words={words}
+      words={sortedWords}
       memoryMap={memoryMap}
       query={query}
       showSearch={showSearch}
@@ -299,6 +325,8 @@ export function WordsScreen({
       selectedTags={selectedTags}
       appliedTags={appliedTags}
       busy={busy}
+      sortKey={sortKey}
+      onSortChange={setSortKey}
       selectionMode={selectionMode}
       selectedIds={selectedIds}
       onQueryChange={setQuery}
@@ -369,6 +397,8 @@ function WordListView({
   selectedTags,
   appliedTags,
   busy,
+  sortKey,
+  onSortChange,
   selectionMode,
   selectedIds,
   onQueryChange,
@@ -396,6 +426,8 @@ function WordListView({
   selectedTags: string[];
   appliedTags: string[];
   busy: boolean;
+  sortKey: SortKey;
+  onSortChange: (key: SortKey) => void;
   selectionMode: boolean;
   selectedIds: string[];
   onQueryChange: (q: string) => void;
@@ -415,6 +447,7 @@ function WordListView({
   onBulkChangeTags: (tags: string[], mode: "add" | "replace") => void;
 }) {
   const { colors } = useTheme();
+  const [showSortPanel, setShowSortPanel] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState<"delete" | "reset" | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagInput, setTagInput] = useState("");
@@ -507,6 +540,21 @@ function WordListView({
                   <FontAwesome6 name="tag" size={15} color={appliedTags.length > 0 ? colors.primary : colors.textDim} />
                 </Pressable>
               )}
+              <Pressable
+                onPress={() => setShowSortPanel((v) => !v)}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: showSortPanel ? colors.primaryBg : colors.surfacePressed,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: showSortPanel ? 1 : 0,
+                  borderColor: colors.primary,
+                }}
+              >
+                <Ionicons name="swap-vertical-outline" size={18} color={showSortPanel ? colors.primary : colors.textDim} />
+              </Pressable>
               <Pressable
                 onPress={onToggleSearch}
                 style={{
@@ -605,6 +653,43 @@ function WordListView({
             >
               <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>Apply</Text>
             </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* Sort Panel */}
+      {!selectionMode && showSortPanel && (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {SORT_OPTIONS.map((opt) => {
+              const active = sortKey === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => { onSortChange(opt.key); setShowSortPanel(false); }}
+                  style={{
+                    paddingVertical: 5,
+                    paddingHorizontal: 12,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: active ? colors.primary : colors.borderMid,
+                    backgroundColor: active ? colors.primaryBg : colors.bg,
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: active ? "700" : "400", color: active ? colors.primary : colors.textDim }}>
+                    {active ? "✓ " : ""}{opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       )}
