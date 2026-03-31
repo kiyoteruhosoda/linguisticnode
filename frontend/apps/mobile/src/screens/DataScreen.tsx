@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
@@ -53,7 +53,8 @@ export function DataScreen({
   const [importMode, setImportMode] = useState<ImportMode>("merge");
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-  const [importSuccess, setImportSuccess] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
   const [sharingLog, setSharingLog] = useState(false);
   const [debugMode, setDebugMode] = useState(() => debugLogger.isDebugMode());
   const [versionTapCount, setVersionTapCount] = useState(0);
@@ -72,7 +73,6 @@ export function DataScreen({
     if (!sharedFileUri) return;
     debugLogger.log("DataScreen", `sharedFileUri received: ${sharedFileUri}`);
     setImportError(null);
-    setImportSuccess(false);
     setImportMode("merge");
     setShowImportModal(true);
   }, [sharedFileUri]);
@@ -122,11 +122,15 @@ export function DataScreen({
       debugLogger.log("DataScreen", "handleImportFromUri: importData ok");
       onImportSuccess?.();
       onSharedFileHandled?.();
-      setImportSuccess(true);
-      setTimeout(() => {
-        setImportSuccess(false);
-        setShowImportModal(false);
-      }, 2000);
+      setShowImportModal(false);
+      // トーストを表示 (フェードイン → 2秒維持 → フェードアウト)
+      setShowToast(true);
+      toastOpacity.setValue(0);
+      Animated.sequence([
+        Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.delay(2000),
+        Animated.timing(toastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+      ]).start(() => setShowToast(false));
     } catch (e) {
       debugLogger.log("DataScreen", `handleImportFromUri: error: ${String(e)}`);
       setImportError(e instanceof Error ? e.message : "Failed to read or parse the file");
@@ -137,7 +141,6 @@ export function DataScreen({
 
   const handlePickFile = async () => {
     setImportError(null);
-    setImportSuccess(false);
 
     // 他アプリからシェアされたファイルがある場合はそのまま使用する
     if (sharedFileUri) {
@@ -269,7 +272,6 @@ export function DataScreen({
         <Pressable
           onPress={() => {
             setImportError(null);
-            setImportSuccess(false);
             setImportMode("merge");
             setShowImportModal(true);
           }}
@@ -559,7 +561,6 @@ export function DataScreen({
         mode={importMode}
         busy={importBusy}
         error={importError}
-        success={importSuccess}
         hasSharedFile={!!sharedFileUri}
         onChangeMode={setImportMode}
         onPickFile={() => void handlePickFile()}
@@ -568,6 +569,35 @@ export function DataScreen({
           setShowImportModal(false);
         }}
       />
+
+      {/* トースト通知 */}
+      {showToast && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 24,
+            left: 20,
+            right: 20,
+            opacity: toastOpacity,
+            backgroundColor: "#1a7f4b",
+            borderRadius: 12,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 6,
+          }}
+          pointerEvents="none"
+        >
+          <Ionicons name="checkmark-circle" size={20} color="#fff" />
+          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Import successful!</Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -577,7 +607,6 @@ function ImportModal({
   mode,
   busy,
   error,
-  success,
   hasSharedFile,
   onChangeMode,
   onPickFile,
@@ -587,7 +616,6 @@ function ImportModal({
   mode: ImportMode;
   busy: boolean;
   error: string | null;
-  success: boolean;
   hasSharedFile: boolean;
   onChangeMode: (m: ImportMode) => void;
   onPickFile: () => void;
@@ -691,22 +719,6 @@ function ImportModal({
             >
               <Ionicons name="close-circle-outline" size={18} color="#842029" style={{ marginTop: 1 }} />
               <Text style={{ fontSize: 13, color: "#842029", flex: 1 }}>{error}</Text>
-            </View>
-          )}
-
-          {success && (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                backgroundColor: "#d1e7dd",
-                borderRadius: 10,
-                padding: 12,
-              }}
-            >
-              <Ionicons name="checkmark-circle-outline" size={18} color="#0a3622" />
-              <Text style={{ fontSize: 13, fontWeight: "700", color: "#0a3622" }}>Import successful!</Text>
             </View>
           )}
 
