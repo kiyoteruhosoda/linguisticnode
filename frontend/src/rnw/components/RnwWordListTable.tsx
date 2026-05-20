@@ -171,7 +171,6 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     margin: 0,
     backgroundColor: "transparent",
-    outlineStyle: "none",
   },
 
   headerText: {
