@@ -68,6 +68,19 @@ const config: ExpoConfig = {
       },
     ],
     './plugins/withReactNativeVersion',
+    [
+      'expo-share-intent',
+      {
+        // JSON ファイルを他アプリから共有されたときにアプリで受け取る
+        iosActivationRules: {
+          NSExtensionActivationSupportsFileWithMaxCount: 1,
+        },
+        androidIntentFilters: ['application/json'],
+        androidMainActivityAttributes: {
+          'android:launchMode': 'singleTask',
+        },
+      },
+    ],
   ],
   extra: {
     eas: {

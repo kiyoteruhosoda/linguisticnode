@@ -146,19 +146,9 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
           </div>
 
           <div className="col-12">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <label className="form-label mb-0">
-                Example Sentences
-              </label>
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-primary"
-                onClick={addExample}
-              >
-                <i className="fa-solid fa-plus me-1" />
-                Add Example
-              </button>
-            </div>
+            <label className="form-label mb-2">
+              Example Sentences
+            </label>
 
             <div className="d-flex flex-column gap-3">
               {examples.map((ex) => (
@@ -217,6 +207,15 @@ export function WordForm({ initial, onSave, onCancel }: Props) {
                   </div>
                 ))}
               </div>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-primary mt-2"
+              onClick={addExample}
+            >
+              <i className="fa-solid fa-plus me-1" />
+              Add Example
+            </button>
           </div>
 
           <div className="col-12">
