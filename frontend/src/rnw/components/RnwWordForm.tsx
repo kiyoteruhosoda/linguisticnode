@@ -1,6 +1,6 @@
 // frontend/src/rnw/components/RnwWordForm.tsx
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ExampleSentence, Pos, WordEntry } from "../../api/types";
 import { buildWordSaveDraft, createEmptyExample, getFormInitialValues } from "../../core/word/wordDraftPolicy";
 import { createUuidGenerator } from "../../core/identity/uuid";
@@ -14,6 +14,38 @@ export type RnwWordFormProps = {
   onSave: (draft: Omit<WordEntry, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   onCancel?: () => void;
 };
+
+function AutoResizeTextarea({
+  value,
+  onChange,
+  placeholder,
+  style,
+}: {
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  style?: React.CSSProperties;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={1}
+      style={{ ...style, resize: "none", overflow: "hidden" }}
+    />
+  );
+}
 
 const sectionStyle = {
   display: "flex",
@@ -176,7 +208,7 @@ export function RnwWordForm({ initial, onSave, onCancel }: RnwWordFormProps) {
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "end" }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <span>English</span>
-                  <input
+                  <AutoResizeTextarea
                     value={example.en}
                     onChange={(event) => updateExample(example.id, "en", event.target.value)}
                     placeholder="English sentence"
@@ -195,7 +227,7 @@ export function RnwWordForm({ initial, onSave, onCancel }: RnwWordFormProps) {
 
               <label style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
                 <span>Japanese (optional)</span>
-                <input
+                <AutoResizeTextarea
                   value={example.ja ?? ""}
                   onChange={(event) => updateExample(example.id, "ja", event.target.value)}
                   placeholder="Japanese translation"

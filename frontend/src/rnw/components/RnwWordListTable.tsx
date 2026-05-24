@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   // 例：Word:2 / POS:1 / Meaning:4 / Examples:1 / Level:1
   wordCell: { flexGrow: 2, flexShrink: 1, flexBasis: 0 },
   posCell: { flexGrow: 1, flexShrink: 0, flexBasis: 0 },
-  meaningCell: { flexGrow: 4, flexShrink: 1, flexBasis: 0 },
+  meaningCell: { flexGrow: 4, flexShrink: 1, flexBasis: 0, display: "block" },
   examplesCell: { flexGrow: 1, flexShrink: 0, flexBasis: 0 },
   levelCell: { flexGrow: 1, flexShrink: 0, flexBasis: 0 },
 
