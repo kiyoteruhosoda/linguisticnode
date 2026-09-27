@@ -28,38 +28,6 @@ export default function SyncButton({ onSyncSuccess }: SyncButtonProps = {}) {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [selectedResolution, setSelectedResolution] = useState<ConflictResolution>("fetch-server");
 
-  // Load sync metadata on mount and when authentication changes
-  useEffect(() => {
-    void loadStatus();
-  }, [isAuthenticated]);
-
-  // Auto-sync after login if there was a pending sync and we are online
-  useEffect(() => {
-    void (async () => {
-      const shouldSync = await syncOrchestrationService.consumePendingSyncIfReady({
-        isAuthenticated,
-        isOnline,
-      });
-      if (!shouldSync) {
-        return;
-      }
-
-      const timer = setTimeout(() => {
-        void handleSync();
-      }, 100);
-      return () => clearTimeout(timer);
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSync depends on state
-  }, [isAuthenticated, isOnline]);
-
-  // Clear success message after 3 seconds
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
   const loadStatus = async () => {
     try {
       // We get the full status, but only store the parts we need, ignoring 'online'
@@ -145,6 +113,38 @@ export default function SyncButton({ onSyncSuccess }: SyncButtonProps = {}) {
       setSyncing(false);
     }
   };
+
+  // Load sync metadata on mount and when authentication changes
+  useEffect(() => {
+    void loadStatus();
+  }, [isAuthenticated]);
+
+  // Auto-sync after login if there was a pending sync and we are online
+  useEffect(() => {
+    void (async () => {
+      const shouldSync = await syncOrchestrationService.consumePendingSyncIfReady({
+        isAuthenticated,
+        isOnline,
+      });
+      if (!shouldSync) {
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        void handleSync();
+      }, 100);
+      return () => clearTimeout(timer);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSync depends on state
+  }, [isAuthenticated, isOnline]);
+
+  // Clear success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   if (!status) {
     return null;

@@ -5,7 +5,7 @@
   "type": "module",
   "peerDependencies": {
     "react": "^19.2.0",
-    "react-native": "^0.84.0"
+    "react-native": "^0.84.0 || ^0.87.0"
   },
   "exports": {
     ".": "./src/index.ts",
