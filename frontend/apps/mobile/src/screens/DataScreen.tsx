@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Animated, Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -54,7 +54,7 @@ export function DataScreen({
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
-  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const [toastOpacity] = useState(() => new Animated.Value(0));
   const [sharingLog, setSharingLog] = useState(false);
   const [debugMode, setDebugMode] = useState(() => debugLogger.isDebugMode());
   const [versionTapCount, setVersionTapCount] = useState(0);

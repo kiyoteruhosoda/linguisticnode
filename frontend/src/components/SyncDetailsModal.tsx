@@ -30,16 +30,6 @@ export function SyncDetailsModal({ show, onClose }: SyncDetailsModalProps) {
   const [serverWordCount, setServerWordCount] = useState<number | null>(null);
   const [serverUpdatedAt, setServerUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (show) {
-      loadStatus();
-      loadLocalCounts();
-      if (isAuthenticated) {
-        loadServerCounts();
-      }
-    }
-  }, [show, isAuthenticated]);
-
   const loadStatus = async () => {
     try {
       const s = await syncUseCase.getStatus();
@@ -106,6 +96,16 @@ export function SyncDetailsModal({ show, onClose }: SyncDetailsModalProps) {
       setSyncing(false);
     }
   };
+
+  useEffect(() => {
+    if (show) {
+      loadStatus();
+      loadLocalCounts();
+      if (isAuthenticated) {
+        loadServerCounts();
+      }
+    }
+  }, [show, isAuthenticated]);
 
   const formatLastSync = (lastSyncAt: string | null) => {
     if (!lastSyncAt) return "Never synced";

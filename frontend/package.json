@@ -8,9 +8,9 @@
     "apps/*"
   ],
   "overrides": {
-    "metro": "~0.87.0",
-    "metro-resolver": "~0.87.0",
-    "metro-config": "~0.87.0",
+    "metro": "~0.80.9",
+    "metro-resolver": "~0.80.9",
+    "metro-config": "~0.80.9",
     "@types/react": "^19.2.7"
   },
   "scripts": {
@@ -36,8 +36,8 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
     "bootstrap": "^5.3.8",
-    "expo-document-picker": "~13.1.0",
-    "expo-sharing": "~13.1.0",
+    "expo-document-picker": "~13.0.3",
+    "expo-sharing": "~13.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-native": "^0.87.0",
