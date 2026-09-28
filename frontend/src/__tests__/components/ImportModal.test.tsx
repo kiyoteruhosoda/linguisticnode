@@ -174,7 +174,11 @@ describe('ImportModal', () => {
 
   it('should disable buttons during import', async () => {
     const user = userEvent.setup();
-    vi.mocked(ioOffline.ioApi.import).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100))); // Resolves slowly
+    // The test decides when the import finishes, so it can end the import before teardown.
+    let finishImport: () => void = () => {};
+    vi.mocked(ioOffline.ioApi.import).mockImplementationOnce(
+      () => new Promise<{ ok: boolean }>(resolve => { finishImport = () => resolve({ ok: true }); })
+    );
     
     render(<ImportModal show={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
     
@@ -197,5 +201,11 @@ describe('ImportModal', () => {
     
     const cancelButton = screen.getByRole('button', { name: /Cancel/i });
     expect(cancelButton).toBeDisabled();
+
+    // Let the import settle while the component is still mounted.
+    finishImport();
+    await waitFor(() => {
+      expect(mockOnSuccess).toHaveBeenCalled();
+    });
   });
 });
