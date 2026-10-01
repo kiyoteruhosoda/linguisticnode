@@ -20,8 +20,9 @@ jobs:
 
       - name: Setup Node
         uses: actions/setup-node@v4
+        # node-version は書かない（setup-node は先に api.github.com の一覧を引く）。
+        # 台の像（node:24-bookworm）の Node 24 をそのまま使う（2026-10-01、task #174）。
         with:
-          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -41,54 +42,16 @@ jobs:
             echo "exist=true" >> "$GITHUB_OUTPUT"
           else
             echo "exist=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::No baseline snapshots found. Run the update-snapshots workflow to generate them."
+            echo "::warning::No baseline snapshots found (baselines are kept outside git; see frontend/.gitignore)."
           fi
 
       - name: Run visual regression
         if: steps.check_snapshots.outputs.exist == 'true'
         run: npm run test:e2e:ci
 
-  update-snapshots:
-    # ⚠ **自前の台で回す**（forge へ移したとき変えた）。
-    runs-on: [self-hosted, nolumialab]
-    if: github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: write
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox
-
-      - name: Update snapshots
-        run: npm run test:e2e:ci -- --update-snapshots || true
-
-      - name: Commit updated snapshots
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-          git add e2e/specs/
-          git diff --cached --quiet || git commit -m "chore: update visual regression snapshots"
-          git push origin HEAD
+  # ⚠ **基準画像を撮ってコミットする段（update-snapshots）は消した**（2026-10-01、task #174）。
+  #   github.com へ押していて forge では必ず落ちるうえ、frontend/.gitignore が `*.png` を
+  #   外している（「基準画像は git の外で持つ」という決め）ので、押せても何も載らなかった。
 
   mobile-regression:
     # ⚠ **自前の台で回す**（forge へ移したとき変えた）。
@@ -102,8 +65,9 @@ jobs:
 
       - name: Setup Node
         uses: actions/setup-node@v4
+        # node-version は書かない（setup-node は先に api.github.com の一覧を引く）。
+        # 台の像（node:24-bookworm）の Node 24 をそのまま使う（2026-10-01、task #174）。
         with:
-          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
