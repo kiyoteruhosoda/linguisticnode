@@ -20,8 +20,9 @@ jobs:
 
       - name: Setup Node
         uses: actions/setup-node@v4
+        # node-version は書かない（setup-node は先に api.github.com の一覧を引く）。
+        # 台の像（node:24-bookworm）の Node 24 をそのまま使う（2026-10-01、task #174）。
         with:
-          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -48,12 +49,16 @@ jobs:
         if: steps.check_snapshots.outputs.exist == 'true'
         run: npm run test:e2e:ci
 
+  # 基準画像（Linux で撮ったもの）を作り直して、手で起こした枝へ積む。
+  # ⚠ **forge へ押す**（2026-10-01、task #174）。以前は github.com へ押しており、
+  #   forge のトークンでは必ず落ちていた。押すのは actions-push の PUSH_TOKEN
+  #   （GITHUB_TOKEN は保護された枝へ押せない forge の不具合がある）。
+  # ⚠ **main では走らせない。** 基準画像は枝に積んで PR で見てから入れる
+  #   （main は保護されていて、検査を通らない直 push は入れない）。
   update-snapshots:
     # ⚠ **自前の台で回す**（forge へ移したとき変えた）。
     runs-on: [self-hosted, nolumialab]
-    if: github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: write
+    if: github.event_name == 'workflow_dispatch' && github.ref_name != 'main'
     defaults:
       run:
         working-directory: frontend
@@ -61,12 +66,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PUSH_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
+        # node-version は書かない（setup-node は先に api.github.com の一覧を引く）。
+        # 台の像（node:24-bookworm）の Node 24 をそのまま使う（2026-10-01、task #174）。
         with:
-          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -79,13 +85,11 @@ jobs:
       - name: Update snapshots
         run: npm run test:e2e:ci -- --update-snapshots || true
 
+      # origin は checkout が forge（PUSH_TOKEN 付き）に向けてある。付け替えない。
       - name: Commit updated snapshots
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git config user.name "actions-push"
+          git config user.email "actions-push@noreply.git.nolumia.com"
           git add e2e/specs/
           git diff --cached --quiet || git commit -m "chore: update visual regression snapshots"
           git push origin HEAD
@@ -102,8 +106,9 @@ jobs:
 
       - name: Setup Node
         uses: actions/setup-node@v4
+        # node-version は書かない（setup-node は先に api.github.com の一覧を引く）。
+        # 台の像（node:24-bookworm）の Node 24 をそのまま使う（2026-10-01、task #174）。
         with:
-          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
