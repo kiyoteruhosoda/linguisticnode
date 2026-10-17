@@ -1,5 +1,25 @@
-
 # LinguisticNode
+
+英単語を覚える（間隔をあけて復習する）アプリ。
+
+## いまの状態（2026-10-17）
+
+- **動いているのはスマホ版（Expo、`frontend/apps/mobile`）だけ。** 単語と覚えた具合は端末の中だけに持つ。
+  配る版にはサーバの宛先（`EXPO_PUBLIC_API_BASE_URL`）を入れていないので、同期の画面はあってもつなぐ先が無い
+- **Web 版とサーバ（FastAPI、`app/`・`frontend/apps/web`）は 2026-10-17 に廃止した**（[task #404](https://task.nolumia.com/tasks/404)）。
+  naso で動かしていた容れ物・像・公開名 `ln.nolumia.com` は撤去済み（記録は deploy-repo PR #359）。
+  サーバのデータ（利用者 3 人分）は naso の `/volume1/labbackup/migration/linguisticnode-retired-20261017/data.tgz` に退避してある
+- サーバと Web 版のコードはリポジトリに残している（どこでも動いていない）。消すかどうかは未定
+- **アカウント:** サーバを動かしていた頃は、誰でもアカウントを作れた（招待も人数の上限もなし）。それが意図だったかの記録は無い。
+  サーバを廃止したので、いまはアカウントを作る所が無い。サーバを戻すなら、誰でも作れるままにするかを先に決める
+- CI（forge）は `.forgejo/workflows/frontend-visual.yml`。`frontend/` を変えた PR で Web の品質の確かめ（`npm run test:ci`）と
+  スマホ版の流れの確かめ（`npm run test:mobile:regression`）が走る。サーバの試験（pytest）は CI に無い（廃止したため足さない）
+
+以下は廃止前の説明（2026-10-17 まで）。サーバの API 一覧・stg と本番の手順などは、いまは動かない。
+
+---
+
+## （廃止前）概要
 
 LinguisticNode is a vocabulary learning and spaced-repetition memory app, featuring a FastAPI backend and a React (TypeScript) frontend. The project is fully containerized with Docker.
 
