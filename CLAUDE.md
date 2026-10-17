@@ -1,18 +1,17 @@
 # Claude Code ルール
 
-## コード変更後の必須チェック
+## いまの状態（2026-10-17）
 
-**コードを変更したら必ず push 前に以下を実行すること。**
+- **Web 版とサーバ（`app/`・`frontend/apps/web`）は廃止した**（[task #404](https://task.nolumia.com/tasks/404)、deploy-repo PR #359）。
+  naso の容れ物・像・公開名 `ln.nolumia.com` は撤去済み。コードはリポジトリに残っているが、どこでも動いていない。
+  コードを消すかは持ち主がまだ決めていない。**決まるまで消さない・直さない**
+- 動いているのは**スマホ版（Expo、`frontend/apps/mobile`）だけ**。データは端末の中だけに持つ（配る版にはサーバの宛先 `EXPO_PUBLIC_API_BASE_URL` を入れていない）
 
-```bash
-cd frontend && npm run lint && npm run typecheck && npm run test -- --run && npm run build
-```
+## 変更を確かめる
 
-モバイル側を変更した場合は追加で:
-
-```bash
-cd apps/mobile && npx tsc --noEmit
-```
+- ⚠ **手元でビルドも試験も流さない**（`npm run build` / `npm run test` / `npx tsc` / `pytest` など）。PR を出して forge の CI で確かめる
+- CI は `.forgejo/workflows/frontend-visual.yml`（`frontend/` を変えた PR で、`npm run test:ci` と `npm run test:mobile:regression`）。
+  サーバの pytest は CI に無い（サーバは廃止したため足さない）
 
 ### ミスが起きた原因と対策
 
@@ -24,5 +23,4 @@ cd apps/mobile && npx tsc --noEmit
 
 ## ブランチ運用
 
-- 開発ブランチ: `claude/fix-ui-audio-issues-6JjXn`
-- push は必ず `git push -u origin <branch>` で行う
+- 置き場は forge（`https://git.nolumia.com/kyon/linguisticnode`）。main から作業の枝を切り、PR でマージする（main へ直接 push しない）
