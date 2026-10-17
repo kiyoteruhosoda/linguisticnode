@@ -15,8 +15,10 @@ import { debugLogger } from "./src/infra/debugLogger";
 // アプリ起動をログに記録（クラッシュ前後の区切りとして機能する）
 debugLogger.log("App", `===== APP START ${new Date().toISOString()} =====`);
 
-// SyncScreen is kept for future server sync UI
-// import { SyncScreen } from "./src/screens/SyncScreen";
+// There is no sync tab: the sync server was retired on 2026-10-17 (task #404)
+// and the app keeps its data on the device only (task #465). The sync screen
+// file stays in the tree, unmounted, until the owner decides what happens to
+// the server code. src/__tests__/mobile/mobileTabs.test.ts guards this.
 
 type MobileRoute = "words" | "study" | "quiz" | "data";
 

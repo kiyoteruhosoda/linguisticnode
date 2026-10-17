@@ -31,7 +31,7 @@
     "test:e2e:visual": "RUN_VISUAL_REGRESSION=1 playwright test e2e/specs/ui-regression.spec.ts",
     "test:e2e:rnw-poc": "RUN_VISUAL_REGRESSION=1 playwright test e2e/specs/rnw-poc.spec.ts",
     "test:e2e:visual:update": "RUN_VISUAL_REGRESSION=1 playwright test e2e/specs/ui-regression.spec.ts --update-snapshots",
-    "test:mobile:regression": "vitest run src/__tests__/mobile/mobileRegressionFlow.test.ts src/__tests__/mobile/mobileSyncGateway.test.ts src/__tests__/mobile/mobileLearningRepository.test.ts"
+    "test:mobile:regression": "vitest run src/__tests__/mobile/mobileTabs.test.ts src/__tests__/mobile/mobileRegressionFlow.test.ts src/__tests__/mobile/mobileSyncGateway.test.ts src/__tests__/mobile/mobileLearningRepository.test.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
