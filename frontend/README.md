@@ -2,7 +2,7 @@
 
 ## 現状のCI相当コマンド
 
-- CI: `.github/workflows/frontend-visual.yml` で `test:ci` + `test:e2e:ci` + `test:mobile:regression` を実行
+- CI: forge の `.forgejo/workflows/frontend-visual.yml` で `test:ci` + `test:e2e:ci` + `test:mobile:regression` を実行
 - `npm run dev`: 開発サーバー
 - `npm run build`: TypeScriptビルド + Vite build
 - `npm run preview`: build成果物のプレビュー
