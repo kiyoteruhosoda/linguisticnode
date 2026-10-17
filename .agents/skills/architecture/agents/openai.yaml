@@ -1,8 +1,0 @@
-interface:
-  display_name: "Architecture"
-  short_description: "FastAPI layering and dependency rules"
-  brand_color: "#3B82F6"
-  default_prompt: "Review the architecture and ensure proper layer separation"
-
-policy:
-  allow_implicit_invocation: true

@@ -15,35 +15,6 @@ log "NOTE: This script intentionally validates test-related checks only."
 log "NOTE: Release build/deploy verification must be executed in a separate release step."
 
 ########################################
-# Backend (Python)
-########################################
-cd "$ROOT_DIR"
-
-if [ -d ".venv" ]; then
-  # shellcheck disable=SC1091
-  source ".venv/bin/activate"
-fi
-
-if ! command -v python >/dev/null 2>&1; then
-  echo "python not found."
-  exit 1
-fi
-
-if ! python -c "import pytest" >/dev/null 2>&1; then
-  echo "pytest not found in this Python environment. Please install backend dependencies."
-  exit 1
-fi
-
-log "Running backend tests with coverage..."
-python -m pytest -v \
-  --cov=app \
-  --cov-report=term-missing \
-  --cov-report=html
-
-log "Backend coverage report:"
-log "  $ROOT_DIR/htmlcov/index.html"
-
-########################################
 # Frontend (React + TypeScript)
 ########################################
 if [ ! -d "$FRONTEND_DIR" ]; then

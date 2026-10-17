@@ -15,58 +15,11 @@ pr:
       - develop
 
 variables:
-  pythonVersion: '3.12'
   nodeVersion: '20.x'
-  dockerImageName: 'linguisticnode'
 
 stages:
   # ──────────────────────────────────────────
-  # Stage 1: Backend (Python / FastAPI)
-  # ──────────────────────────────────────────
-  - stage: Backend
-    displayName: 'Backend CI'
-    jobs:
-      - job: PythonTest
-        displayName: 'Lint & Test (Python)'
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '$(pythonVersion)'
-            displayName: 'Setup Python $(pythonVersion)'
-
-          - script: |
-              python -m pip install --upgrade pip
-              pip install -r requirements-dev.txt
-            displayName: 'Install dependencies'
-
-          - script: |
-              pip install mypy
-              mypy app --ignore-missing-imports
-            displayName: 'Type check (mypy)'
-            continueOnError: true
-
-          - script: |
-              pytest --junitxml=reports/pytest.xml --cov=app --cov-report=xml:reports/coverage.xml
-            displayName: 'Run pytest'
-
-          - task: PublishTestResults@2
-            condition: always()
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: 'reports/pytest.xml'
-              testRunTitle: 'Backend Tests'
-            displayName: 'Publish test results'
-
-          - task: PublishCodeCoverageResults@2
-            condition: always()
-            inputs:
-              summaryFileLocation: 'reports/coverage.xml'
-            displayName: 'Publish coverage'
-
-  # ──────────────────────────────────────────
-  # Stage 2: Frontend (React / TypeScript)
+  # Stage 1: Frontend (React / TypeScript)
   # ──────────────────────────────────────────
   - stage: Frontend
     displayName: 'Frontend CI'
@@ -116,7 +69,7 @@ stages:
             displayName: 'Publish frontend artifact'
 
   # ──────────────────────────────────────────
-  # Stage 3: Android (Expo / React Native)
+  # Stage 2: Android (Expo / React Native)
   # ──────────────────────────────────────────
   - stage: Android
     displayName: 'Android CI'
@@ -342,29 +295,3 @@ stages:
               targetPath: 'frontend/apps/mobile/android/app/build/outputs/bundle/release'
               artifact: 'android-aab'
             displayName: 'Publish AAB artifact'
-
-  # ──────────────────────────────────────────
-  # Stage 4: Docker build
-  # ──────────────────────────────────────────
-  - stage: Docker
-    displayName: 'Docker Build'
-    dependsOn:
-      - Backend
-      - Frontend
-      - Android
-    condition: succeeded()
-    jobs:
-      - job: DockerBuild
-        displayName: 'Build Docker image'
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - task: Docker@2
-            displayName: 'Build image'
-            inputs:
-              command: build
-              dockerfile: 'Dockerfile'
-              buildContext: '.'
-              tags: |
-                $(dockerImageName):$(Build.BuildId)
-                $(dockerImageName):latest

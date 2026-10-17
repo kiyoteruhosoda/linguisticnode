@@ -1,8 +1,0 @@
-services:
-  linguisticnode-api:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-      - "8000:8000"
-      - "5678:5678"
