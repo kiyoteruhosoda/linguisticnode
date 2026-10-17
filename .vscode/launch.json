@@ -2,31 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "API: Attach (debugpy in Docker)",
-      "type": "debugpy",
-      "request": "attach",
-      "preLaunchTask": "compose: up (dev)",
-      "connect": { "host": "localhost", "port": 5678 },
-      "pathMappings": [
-        { "localRoot": "${workspaceFolder}", "remoteRoot": "/app" }
-      ]
-    },
-    {
       "name": "Web: Chrome (Vite)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "vite: dev",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}/frontend"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "F5: API + Vite + Chrome",
-      "configurations": [
-        "API: Attach (debugpy in Docker)",
-        "Web: Chrome (Vite)"
-      ]
     }
   ]
 }

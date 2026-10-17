@@ -1,8 +1,0 @@
-interface:
-  display_name: "Backend Integration"
-  short_description: "FastAPI endpoints, schemas, and DI"
-  brand_color: "#10B981"
-  default_prompt: "Implement a new API endpoint following the backend integration patterns"
-
-policy:
-  allow_implicit_invocation: true

@@ -7,19 +7,21 @@ This is a personal vocabulary learning application.
 - **Only the mobile app (Expo, `frontend/apps/mobile`) is in use.** It keeps
   words and study progress on the device; release builds carry no server URL
   (`EXPO_PUBLIC_API_BASE_URL`), so there is no sync.
-- **The web app and the server (FastAPI, `app/`, `frontend/apps/web`) were
-  retired on 2026-10-17** (task #404). Their code is still in the repository
-  but runs nowhere. The owner has not decided whether to delete it: do not
-  delete or fix it until then.
+- **The web app and the server were retired on 2026-10-17** (task #404).
+- **The server (FastAPI: `app/`, `tests/`, `Dockerfile`, `docker-compose*.yml`,
+  `requirements*.txt`) was deleted from the repository on 2026-10-17**
+  (task #407, the owner's decision). Restore it from git history if needed.
+- The web app code (`frontend/apps/web`, `frontend/src`) is still in the
+  repository but runs nowhere. The owner has not decided whether to delete it:
+  do not delete or fix it until then. Its login and sync talk to the deleted
+  server, so they have nothing to connect to; build and tests do not need it.
 - See `readme.md` ("いまの状態") and `CLAUDE.md` for details.
 
 ## Project Skills
 
 All domain-specific knowledge is organized in **Agent Skills** under `.agents/skills/`:
 
-- **architecture** - FastAPI layering and dependency direction
-- **backend-integration** - API endpoints, Pydantic schemas, DI patterns
-- **testing** - pytest strategy and regression discipline
+- **testing** - Test strategy and regression discipline (written for the deleted server; the principles still apply)
 - **error-logging-observability** - Structured logging, request correlation
 - **security** - Input validation, secret handling, safe errors
 - **auditing-traceability** - Audit logging for state changes
@@ -32,14 +34,13 @@ All domain-specific knowledge is organized in **Agent Skills** under `.agents/sk
 
 - **Language**: Chat responses in Japanese; code comments in English; UI text in English
 - **Stack**: TypeScript, React Native (Expo) for the mobile app. The retired
-  server/web code is Python 3.11+ / FastAPI and React
+  web code is React
 - **Time**: All persisted timestamps must be UTC
 - **Logging**: Structured logs to stdout/stderr with request_id correlation
 - **Testing**: Do not run builds or tests locally (`npm run build`,
-  `npm run test`, `npx tsc`, `pytest`, ...). Open a pull request and let the
+  `npm run test`, `npx tsc`, ...). Open a pull request and let the
   forge CI (`.forgejo/workflows/frontend-visual.yml`: `npm run test:ci` and
-  `npm run test:mobile:regression`) check it. There is no pytest in CI: the
-  server is retired
+  `npm run test:mobile:regression`) check it
 
 ## Conflict Resolution
 
