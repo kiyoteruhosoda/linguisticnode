@@ -286,7 +286,6 @@ data/vault/u_{userId}/backups/
 
 - [MEMORY_LEVEL_SPEC.md](./MEMORY_LEVEL_SPEC.md) - 学習アルゴリズム仕様
 - [TESTING.md](./TESTING.md) - テスト戦略
-- [.github/skills/architecture/SKILL.md](../.github/skills/architecture/SKILL.md) - アーキテクチャルール
 
 ## まとめ
 
