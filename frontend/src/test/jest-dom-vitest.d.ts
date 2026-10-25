@@ -5,7 +5,8 @@ import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers"
 import "vitest";
 
 declare module "vitest" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  // 型引数は vitest の宣言と同じ名前・形でないと合わさらないので、使わない T も置く
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars
   interface Matchers<R extends void | Promise<void> = void | Promise<void>, T = unknown>
     extends TestingLibraryMatchers<unknown, R> {}
 }
