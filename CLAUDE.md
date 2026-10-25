@@ -13,7 +13,7 @@
 ## 変更を確かめる
 
 - ⚠ **手元でビルドも試験も流さない**（`npm run build` / `npm run test` / `npx tsc` など）。PR を出して forge の CI で確かめる
-- CI は `.forgejo/workflows/frontend-visual.yml`（`frontend/` を変えた PR で、`npm run test:ci` と `npm run test:mobile:regression`）。
+- CI は `.forgejo/workflows/frontend-visual.yml`（`frontend/` を変えた PR で、`npm run test:ci` と `npm run test:mobile:regression`、スマホ版の型検査と `npx expo export --platform android`）。
 
 ### ミスが起きた原因と対策
 

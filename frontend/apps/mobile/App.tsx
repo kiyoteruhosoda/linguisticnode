@@ -234,7 +234,7 @@ function AppContent() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }} edges={["top"]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.surface} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       <View style={{ flex: 1 }}>
         {routeContent}

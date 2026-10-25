@@ -76,3 +76,13 @@ jobs:
 
       - name: Run mobile regression flow
         run: npm run test:mobile:regression
+
+      # スマホ版の型検査と JS の束づくり（#688）。束を作るだけで EAS には出さない。
+      - name: Typecheck mobile app
+        run: npm run typecheck --workspace @linguisticnode/apps-mobile
+
+      - name: Bundle mobile app (Android JS)
+        working-directory: frontend/apps/mobile
+        env:
+          EXPO_NO_TELEMETRY: "1"
+        run: npx expo export --platform android --output-dir dist

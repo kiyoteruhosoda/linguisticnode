@@ -26,14 +26,8 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   platforms: ['ios', 'android', 'web'],
-  newArchEnabled: true,
 
   icon: './assets/icon.png',
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#0d6efd',
-  },
   web: {
     favicon: './assets/favicon.png',
   },
@@ -57,17 +51,25 @@ const config: ExpoConfig = {
   },
 
   plugins: [
+    // 起動画面は Expo 58 で上の段の splash から expo-splash-screen の plugin へ移った（#688）
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash.png',
+        resizeMode: 'contain',
+        backgroundColor: '#0d6efd',
+      },
+    ],
     [
       'expo-build-properties',
       {
+        // compileSdk / targetSdk は react-native の既定（0.88 で 37 / 36）に任せる。
+        // 35 に固定したままだと、新しい依存が求める SDK に届かない（#688）
         android: {
-          compileSdkVersion: 35,
-          targetSdkVersion: 35,
           minSdkVersion: 24,
         },
       },
     ],
-    './plugins/withReactNativeVersion',
     [
       'expo-share-intent',
       {
