@@ -33,7 +33,7 @@ export function DebugInfoScreen({ visible, onClose }: { visible: boolean; onClos
   const loadInfo = useCallback(async () => {
     const path = debugLogger.getLogFilePath();
     try {
-      const info = await FileSystem.getInfoAsync(path, { size: true });
+      const info = await FileSystem.getInfoAsync(path);
       if (info.exists && "size" in info) {
         setLogFileSize((info as { size: number }).size);
       } else {

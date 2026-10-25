@@ -28,11 +28,6 @@ const config: ExpoConfig = {
   platforms: ['ios', 'android', 'web'],
 
   icon: './assets/icon.png',
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#0d6efd',
-  },
   web: {
     favicon: './assets/favicon.png',
   },
@@ -56,6 +51,15 @@ const config: ExpoConfig = {
   },
 
   plugins: [
+    // 起動画面は Expo 58 で上の段の splash から expo-splash-screen の plugin へ移った（#688）
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash.png',
+        resizeMode: 'contain',
+        backgroundColor: '#0d6efd',
+      },
+    ],
     [
       'expo-build-properties',
       {
