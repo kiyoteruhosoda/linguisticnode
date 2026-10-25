@@ -26,7 +26,6 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   platforms: ['ios', 'android', 'web'],
-  newArchEnabled: true,
 
   icon: './assets/icon.png',
   splash: {
@@ -60,14 +59,13 @@ const config: ExpoConfig = {
     [
       'expo-build-properties',
       {
+        // compileSdk / targetSdk は react-native の既定（0.88 で 37 / 36）に任せる。
+        // 35 に固定したままだと、新しい依存が求める SDK に届かない（#688）
         android: {
-          compileSdkVersion: 35,
-          targetSdkVersion: 35,
           minSdkVersion: 24,
         },
       },
     ],
-    './plugins/withReactNativeVersion',
     [
       'expo-share-intent',
       {

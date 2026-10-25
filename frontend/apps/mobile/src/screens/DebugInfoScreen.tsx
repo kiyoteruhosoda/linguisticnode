@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
 import { Ionicons } from "@expo/vector-icons";

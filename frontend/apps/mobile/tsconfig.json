@@ -5,11 +5,16 @@
     "skipLibCheck": true,
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": ["node"],
-    "baseUrl": "../..",
+    "types": [
+      "node"
+    ],
     "paths": {
-      "@linguisticnode/core": ["./packages/core/src/index.ts"],
-      "@linguisticnode/core/*": ["./packages/core/src/*"]
+      "@linguisticnode/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@linguisticnode/core/*": [
+        "../../packages/core/src/*"
+      ]
     }
   },
   "include": [

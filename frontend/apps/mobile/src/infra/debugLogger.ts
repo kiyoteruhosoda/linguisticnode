@@ -9,7 +9,7 @@
  * - クリティカルな操作前に await flush() で書き込み完了を保証できる
  */
 
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 
 const MAX_MEMORY_LOGS = 500;
 /** 前セッションのログを何文字まで保持するか（約100〜200行分） */
