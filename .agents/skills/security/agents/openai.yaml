@@ -1,8 +1,0 @@
-interface:
-  display_name: "Security Baseline"
-  short_description: "Input validation and secret handling"
-  brand_color: "#EF4444"
-  default_prompt: "Review security aspects of this code"
-
-policy:
-  allow_implicit_invocation: true

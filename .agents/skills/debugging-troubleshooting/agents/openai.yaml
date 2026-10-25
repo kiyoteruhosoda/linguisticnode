@@ -1,8 +1,0 @@
-interface:
-  display_name: "Debugging Workflow"
-  short_description: "Repeatable troubleshooting steps"
-  brand_color: "#EC4899"
-  default_prompt: "Help debug this issue using the systematic workflow"
-
-policy:
-  allow_implicit_invocation: true

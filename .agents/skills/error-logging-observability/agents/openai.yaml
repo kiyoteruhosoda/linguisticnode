@@ -1,8 +1,0 @@
-interface:
-  display_name: "Observability"
-  short_description: "Structured logging and error handling"
-  brand_color: "#F59E0B"
-  default_prompt: "Review logging and error handling for observability best practices"
-
-policy:
-  allow_implicit_invocation: true

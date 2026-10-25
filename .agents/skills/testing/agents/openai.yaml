@@ -1,8 +1,0 @@
-interface:
-  display_name: "Testing Strategy"
-  short_description: "pytest-based test patterns"
-  brand_color: "#8B5CF6"
-  default_prompt: "Write tests for this feature following the testing strategy"
-
-policy:
-  allow_implicit_invocation: true

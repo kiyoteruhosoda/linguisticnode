@@ -1,8 +1,0 @@
-interface:
-  display_name: "Auditing & Traceability"
-  short_description: "Audit logging for state changes"
-  brand_color: "#6366F1"
-  default_prompt: "Add audit logging for this operation"
-
-policy:
-  allow_implicit_invocation: true
